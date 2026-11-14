@@ -2,7 +2,7 @@
 
 Spot what moved in real images from NASA's SPHEREx space telescope.
 
-**Play:** https://aufahannan222.github.io/planet-hunter/
+**Play:** https://slashsly5-rgb.github.io/planet-hunter/
 
 Built for the 2026 NASA Space Apps Challenge, "Planet X and SPHEREx".
 
