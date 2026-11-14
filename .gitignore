@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+prep/venv/
+prep/debug/
+prep/obs/*.log

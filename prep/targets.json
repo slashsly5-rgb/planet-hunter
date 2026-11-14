@@ -1,0 +1,13 @@
+[
+  {"id": "ceres",    "hid": "1;",      "name": "Ceres",    "kind": "dwarf planet in the asteroid belt", "blurb": "The largest object between Mars and Jupiter, about 940 km across. NASA's Dawn spacecraft orbited it from 2015."},
+  {"id": "pallas",   "hid": "2;",      "name": "Pallas",   "kind": "asteroid", "blurb": "One of the largest asteroids, about 510 km across, on a steeply tilted orbit."},
+  {"id": "juno",     "hid": "3;",      "name": "Juno",     "kind": "asteroid", "blurb": "The third asteroid ever discovered, found in 1804."},
+  {"id": "vesta",    "hid": "4;",      "name": "Vesta",    "kind": "asteroid", "blurb": "The brightest asteroid in the sky, about 525 km across. NASA's Dawn spacecraft orbited it in 2011 and 2012."},
+  {"id": "hygiea",   "hid": "10;",     "name": "Hygiea",   "kind": "asteroid", "blurb": "The fourth-largest object in the asteroid belt, about 430 km across, and very dark."},
+  {"id": "uranus",   "hid": "799",     "name": "Uranus",   "kind": "ice giant planet", "blurb": "The seventh planet, tipped on its side. It was the first planet found with a telescope, in 1781."},
+  {"id": "neptune",  "hid": "899",     "name": "Neptune",  "kind": "ice giant planet", "blurb": "The farthest known planet. In 1846 it was found where mathematics predicted it, from its pull on Uranus."},
+  {"id": "pluto",    "hid": "999",     "name": "Pluto",    "kind": "dwarf planet", "blurb": "Discovered in 1930 by Clyde Tombaugh, who flipped between two photographs exactly as you just did."},
+  {"id": "haumea",   "hid": "136108;", "name": "Haumea",   "kind": "dwarf planet", "blurb": "An egg-shaped world beyond Neptune that spins once every four hours and has a ring."},
+  {"id": "makemake", "hid": "136472;", "name": "Makemake", "kind": "dwarf planet", "blurb": "A bright, icy dwarf planet beyond Neptune, discovered in 2005."},
+  {"id": "eris",     "hid": "136199;", "name": "Eris",     "kind": "dwarf planet", "blurb": "Almost the size of Pluto and far beyond it. Its discovery in 2005 led astronomers to create the term dwarf planet."}
+]

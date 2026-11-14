@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planet Hunter: spot what moved in real SPHEREx images</title>
+<meta name="description" content="Flip between two real NASA SPHEREx images of the same sky and tap the object that moved.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+
+<section id="start" class="screen">
+  <h1>Planet Hunter</h1>
+  <p class="lead">Two real photos of the same sky. The stars stay still. <strong>One thing moved.</strong> Can you spot it?</p>
+  <p>In 1930, Clyde Tombaugh discovered Pluto by flipping between two photographs just like this. Now it is your turn, with images from NASA's SPHEREx space telescope.</p>
+  <button id="startBtn" class="primary" disabled>Loading…</button>
+  <p class="note">These are known objects. We have not found Planet X.</p>
+</section>
+
+<section id="play" class="screen" hidden>
+  <div class="bar"><span id="progress"></span><span id="tally"></span></div>
+  <p id="prompt" class="prompt">Tap the object that moves.</p>
+  <div id="stage" class="stage blink">
+    <div class="pane" id="paneA"><img id="imgA" alt="Sky image, first date"><svg class="mark"></svg><span class="date" id="dateA"></span></div>
+    <div class="pane" id="paneB"><img id="imgB" alt="Sky image, second date"><svg class="mark"></svg><span class="date" id="dateB"></span></div>
+  </div>
+  <div class="controls">
+    <button id="pauseBtn">Pause</button>
+    <button data-mode="blink" class="mode on">Blink</button>
+    <button data-mode="slide" class="mode">Slide</button>
+    <button data-mode="side" class="mode">Side by side</button>
+    <input id="slider" type="range" min="0" max="100" value="50" aria-label="Fade between the two images" hidden>
+  </div>
+  <div id="card" class="card" hidden>
+    <h2 id="verdict"></h2>
+    <h3 id="objName"></h3>
+    <p id="blurb"></p>
+    <ul id="facts"></ul>
+    <p class="badge">✔ Checked against NASA JPL Horizons</p>
+    <button id="nextBtn" class="primary">Next</button>
+  </div>
+</section>
+
+<section id="end" class="screen" hidden>
+  <h1 id="scoreLine"></h1>
+  <h2>So where is Planet X?</h2>
+  <p id="planetx"></p>
+  <p>Telescopes like SPHEREx photograph more than a billion objects. No one person can check them all. Computers help, but the search still needs people who know what to look for. Now you do.</p>
+  <button id="againBtn" class="primary">Play again</button>
+
+  <h2>What this can't do</h2>
+  <ul>
+    <li>It does not search for new objects. Every object here is already known, and we chose and checked each one.</li>
+    <li>It shows small prepared patches of sky, not the whole SPHEREx survey.</li>
+    <li>Brightness is adjusted so faint objects are visible. Brightness on screen is not a scientific measurement.</li>
+  </ul>
+
+  <h2>Where the images come from</h2>
+  <p>Every image is a real observation by NASA's <a href="https://spherex.caltech.edu/">SPHEREx</a> mission, from the <a href="https://irsa.ipac.caltech.edu/Missions/spherex.html">NASA/IPAC Infrared Science Archive</a>. Each object's position was confirmed with <a href="https://ssd.jpl.nasa.gov/horizons/">NASA JPL Horizons</a>. Images were aligned north-up and brightness-scaled; nothing else was changed.</p>
+  <p class="note">Built for the 2026 NASA Space Apps Challenge, "Planet X and SPHEREx". <a href="https://github.com/AufaHannan222/planet-hunter">Source code</a>.</p>
+</section>
+
+<p id="error" class="error" hidden></p>
+</main>
+<script type="module" src="game.js"></script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+[
+ {
+  "id": "pluto",
+  "name": "Pluto",
+  "kind": "dwarf planet",
+  "blurb": "Discovered in 1930 by Clyde Tombaugh, who flipped between two photographs exactly as you just did.",
+  "size": 484,
+  "arcsec_per_px": 1.5375,
+  "distance_au": 35.36,
+  "mag": 14.525,
+  "moved_arcsec": 80,
+  "days_between": 8.22,
+  "jpl_checked": true,
+  "frames": [
+   {
+    "img": "img/pluto_a.png",
+    "date": "2025-10-04T04:25:23",
+    "band": "D2",
+    "source": "dr1/level2/2025W40_2B/l2b-v27-2026-241/2/level2_2025W40_2B_0390_1D2_spx_l2b-v27-2026-241.fits",
+    "x": 171.9,
+    "y": 259.8,
+    "snr": 57.2
+   },
+   {
+    "img": "img/pluto_b.png",
+    "date": "2025-10-12T09:39:00",
+    "band": "D1",
+    "source": "dr1/level2/2025W41_2B/l2b-v27-2026-242/1/level2_2025W41_2B_0636_1D1_spx_l2b-v27-2026-242.fits",
+    "x": 224.1,
+    "y": 264.2,
+    "snr": 68.7
+   }
+  ]
+ }
+]
