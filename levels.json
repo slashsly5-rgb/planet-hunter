@@ -33,6 +33,39 @@
   ]
  },
  {
+  "id": "vesta",
+  "name": "Vesta",
+  "kind": "asteroid",
+  "blurb": "The brightest asteroid in the sky, about 525 km across. NASA's Dawn spacecraft orbited it in 2011 and 2012.",
+  "size": 484,
+  "arcsec_per_px": 1.5375,
+  "distance_au": 2.15,
+  "mag": 6.679,
+  "moved_arcsec": 139,
+  "days_between": 0.27,
+  "jpl_checked": true,
+  "frames": [
+   {
+    "img": "img/vesta_a.png",
+    "date": "2025-06-28T21:51:36",
+    "band": "D3",
+    "source": "dr1/level2/2025W26_2A/l2b-v27-2026-214/3/level2_2025W26_2A_0483_2D3_spx_l2b-v27-2026-214.fits",
+    "x": 206.1,
+    "y": 195.7,
+    "snr": 55853.4
+   },
+   {
+    "img": "img/vesta_b.png",
+    "date": "2025-06-29T04:20:06",
+    "band": "D3",
+    "source": "dr1/level2/2025W26_2A/l2b-v27-2026-214/3/level2_2025W26_2A_0535_1D3_spx_l2b-v27-2026-214.fits",
+    "x": 157.9,
+    "y": 272.3,
+    "snr": 40303.4
+   }
+  ]
+ },
+ {
   "id": "ceres",
   "name": "Ceres",
   "kind": "dwarf planet in the asteroid belt",
