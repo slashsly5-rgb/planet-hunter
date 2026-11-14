@@ -41,7 +41,7 @@ await shot("2-level.png");
 const results = [];
 for (let i = 0; i < levels.length; i++) {
   const L = levels[i], hit = i % 2 === 0;           // alternate: tap the object, then tap a wrong place
-  const r = await js(`(() => { const r = document.querySelector("#paneA").getBoundingClientRect(); return [r.left, r.top, r.width]; })()`);
+  const r = await js(`(() => { const r = document.querySelector("#huntView").getBoundingClientRect(); return [r.left, r.top, r.width]; })()`);
   const f = L.frames[0], k = r[2] / L.size;
   const [tx, ty] = hit ? [f.x, f.y] : [(f.x + L.size / 2) % L.size, (f.y + L.size / 2) % L.size];
   await click(r[0] + tx * k, r[1] + ty * k);
@@ -52,6 +52,12 @@ for (let i = 0; i < levels.length; i++) {
   await sleep(700);
 }
 await shot("4-end.png");
+await js(`document.querySelector('.top [data-view="explore"]').click()`); await sleep(500);
+await shot("5-explore.png");
+await js(`document.querySelector(".cardlink").click()`); await sleep(1800);
+await shot("6-object.png");
+await js(`window.scrollTo(0, 600)`); await sleep(300);
+await shot("7-object-info.png");
 const overflow = await js(`document.documentElement.scrollWidth > document.documentElement.clientWidth`);
 console.log(JSON.stringify({ results, score: await js(`document.querySelector("#scoreLine").textContent`), horizontalOverflow: overflow, errors }, null, 1));
 ws.close(); proc.kill();

@@ -3,51 +3,157 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Planet Hunter: spot what moved in real SPHEREx images</title>
-<meta name="description" content="Flip between two real NASA SPHEREx images of the same sky and tap the object that moved.">
+<title>Planet Hunter: see the sky move in real SPHEREx images</title>
+<meta name="description" content="Watch real NASA SPHEREx images change over time. Spot the worlds that move, play back their paths, and learn how Planet X could be found.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+<!-- False colour for the infrared images: brightness is mapped to a colour ramp. Switch off with the Colour button. -->
+<svg width="0" height="0" aria-hidden="true" style="position:absolute">
+  <filter id="ir" color-interpolation-filters="sRGB">
+    <feComponentTransfer>
+      <feFuncR type="table" tableValues="0.01 0.10 0.42 0.92 1"/>
+      <feFuncG type="table" tableValues="0.02 0.07 0.20 0.66 1"/>
+      <feFuncB type="table" tableValues="0.07 0.36 0.50 0.42 1"/>
+    </feComponentTransfer>
+  </filter>
+</svg>
+
+<header class="top">
+  <button class="brand" data-view="home"><span class="logo" aria-hidden="true"></span>Planet Hunter</button>
+  <nav>
+    <button data-view="hunt">Hunt</button>
+    <button data-view="explore">Explore</button>
+    <button data-view="about">About</button>
+  </nav>
+</header>
+
 <main>
+<p id="error" class="error" hidden></p>
 
-<section id="start" class="screen">
-  <h1>Planet Hunter</h1>
-  <p class="lead">Two real photos of the same sky. The stars stay still. <strong>One thing moved.</strong> Can you spot it?</p>
-  <p>In 1930, Clyde Tombaugh discovered Pluto by flipping between two photographs just like this. Now it is your turn, with images from NASA's SPHEREx space telescope.</p>
-  <button id="startBtn" class="primary" disabled>Loading…</button>
-  <p class="note">These are known objects. We have not found Planet X.</p>
-</section>
+<section id="home" class="view">
+  <div class="hero">
+    <div class="hero-text">
+      <p class="eyebrow">Real images from NASA's SPHEREx space telescope</p>
+      <h1>The stars stay still.<br><span class="hl">Worlds move.</span></h1>
+      <p class="lead">Flip between two photos of the same sky and something jumps: a planet, an asteroid, a dwarf planet. That is how Pluto was found in 1930, and how a hidden Planet X could be found next.</p>
+      <div class="cta">
+        <button id="startBtn" class="primary" disabled>Loading…</button>
+        <button id="exploreBtn" class="ghost" data-view="explore">Explore the sky</button>
+      </div>
+      <p class="note">Every object here is already known. We have not found Planet X.</p>
+    </div>
+    <figure class="hero-demo">
+      <div id="demoView"></div>
+      <figcaption id="demoCap">Loading real SPHEREx images…</figcaption>
+    </figure>
+  </div>
 
-<section id="play" class="screen" hidden>
-  <div class="bar"><span id="progress"></span><span id="tally"></span></div>
-  <p id="prompt" class="prompt">Tap the object that moves.</p>
-  <div id="stage" class="stage blink">
-    <div class="pane" id="paneA"><img id="imgA" alt="Sky image, first date"><svg class="mark"></svg><span class="date" id="dateA"></span></div>
-    <div class="pane" id="paneB"><img id="imgB" alt="Sky image, second date"><svg class="mark"></svg><span class="date" id="dateB"></span></div>
-  </div>
-  <div class="controls">
-    <button id="pauseBtn">Pause</button>
-    <button data-mode="blink" class="mode on">Blink</button>
-    <button data-mode="slide" class="mode">Slide</button>
-    <button data-mode="side" class="mode">Side by side</button>
-    <input id="slider" type="range" min="0" max="100" value="50" aria-label="Fade between the two images" hidden>
-  </div>
-  <div id="card" class="card" hidden>
-    <h2 id="verdict"></h2>
-    <h3 id="objName"></h3>
-    <p id="blurb"></p>
-    <ul id="facts"></ul>
-    <p class="badge">✔ Checked against NASA JPL Horizons</p>
-    <button id="nextBtn" class="primary">Next</button>
+  <div class="stats" id="stats"></div>
+
+  <h2>How it works</h2>
+  <div class="steps">
+    <div class="step"><b>1</b><h3>Same sky, two dates</h3><p>SPHEREx photographs the whole sky again and again. We line two images up so every star sits in the same place.</p></div>
+    <div class="step"><b>2</b><h3>Blink</h3><p>Flip between them. Stars are so far away that they do not shift. Anything in our Solar System does.</p></div>
+    <div class="step"><b>3</b><h3>Spot the mover</h3><p>Tap it. We show what it is, how far away it is, and its path across the sky, checked against NASA JPL.</p></div>
   </div>
 </section>
 
-<section id="end" class="screen" hidden>
-  <h1 id="scoreLine"></h1>
-  <h2>So where is Planet X?</h2>
-  <p id="planetx"></p>
-  <p>Telescopes like SPHEREx photograph more than a billion objects. No one person can check them all. Computers help, but the search still needs people who know what to look for. Now you do.</p>
-  <button id="againBtn" class="primary">Play again</button>
+<section id="hunt" class="view" hidden>
+  <div id="huntPlay">
+    <div class="hud"><span id="progress"></span><span class="dots" id="dots"></span><span id="tally"></span></div>
+    <p id="prompt" class="prompt">Tap the object that moves.</p>
+    <div class="stagewrap"><div id="huntView"></div></div>
+    <div class="controls" id="huntControls">
+      <button data-mode="blink" class="mode on">Blink</button>
+      <button data-mode="slide" class="mode">Slide</button>
+      <button data-mode="diff" class="mode" title="Subtract one image from the other">Difference</button>
+      <button id="pauseBtn">Pause</button>
+      <input id="slider" type="range" min="0" max="100" value="50" aria-label="Fade between the two images" hidden>
+    </div>
+    <p id="modeTip" class="note"></p>
+    <div id="card" class="card" hidden>
+      <h2 id="verdict"></h2>
+      <h3 id="objName"></h3>
+      <p id="blurb"></p>
+      <ul id="facts"></ul>
+      <div id="ruler"></div>
+      <p class="badge">✔ Checked against NASA JPL Horizons</p>
+      <div class="cta">
+        <button id="pathBtn" class="ghost">Watch its path</button>
+        <button id="nextBtn" class="primary">Next</button>
+      </div>
+    </div>
+  </div>
+  <div id="huntEnd" hidden>
+    <p class="eyebrow">Hunt complete</p>
+    <h1 id="scoreLine"></h1>
+    <p id="rank" class="lead"></p>
+    <h2>So where is Planet X?</h2>
+    <p id="planetx"></p>
+    <div id="rulerX"></div>
+    <p>Telescopes like SPHEREx photograph more than a billion objects. No one person can check them all. Computers help, but the search still needs people who know what to look for. Now you do.</p>
+    <div class="cta">
+      <button class="primary" data-view="explore">Explore every object</button>
+      <button id="againBtn" class="ghost">Hunt again</button>
+    </div>
+  </div>
+</section>
+
+<section id="explore" class="view" hidden>
+  <div id="exploreList">
+    <p class="eyebrow">Explore</p>
+    <h1>Watch the sky change</h1>
+    <p class="lead">Pick an object to play back real SPHEREx images of it, date by date.</p>
+    <div class="grid" id="grid"></div>
+  </div>
+  <div id="exploreDetail" hidden>
+    <button id="backBtn" class="ghost small">← All objects</button>
+    <h1 id="exName"></h1>
+    <p id="exBlurb" class="lead"></p>
+    <div class="detail">
+      <div>
+        <div class="stagewrap"><div id="exView"></div></div>
+        <div class="controls">
+          <button data-exmode="play" class="exmode on">Time-lapse</button>
+          <button data-exmode="blink" class="exmode">Blink first / last</button>
+          <button data-exmode="diff" class="exmode">Difference</button>
+          <button id="exPause">Pause</button>
+          <input id="scrub" type="range" min="0" max="1" value="0" step="1" aria-label="Choose an image by date">
+        </div>
+        <div class="controls">
+          <label class="check"><input type="checkbox" id="pathChk" checked> Show path</label>
+          <label class="check"><input type="checkbox" id="colourChk" checked> Infrared colour</label>
+        </div>
+      </div>
+      <div>
+        <h2>This image</h2>
+        <dl id="frameInfo" class="info"></dl>
+        <h2>The object</h2>
+        <dl id="objInfo" class="info"></dl>
+        <div id="exRuler"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="about" class="view" hidden>
+  <p class="eyebrow">About</p>
+  <h1>What you are looking at</h1>
+  <p class="lead">Planet Hunter was built for the 2026 NASA Space Apps Challenge, "Planet X and SPHEREx": make a public tool that shows SPHEREx images of the sky and makes it easy for anyone to see how they change over time.</p>
+
+  <h2>The telescope</h2>
+  <p>SPHEREx is a NASA space telescope launched in 2025. It maps the entire sky about every six months in 102 colours of near-infrared light, which our eyes cannot see. Each image here covers a patch of sky about a fifth of a degree across, smaller than half the width of the full Moon.</p>
+
+  <h2>How these images were made</h2>
+  <ul>
+    <li>For each object we asked <a href="https://ssd.jpl.nasa.gov/horizons/">NASA JPL Horizons</a> where it was on each date.</li>
+    <li>We found the SPHEREx exposures that covered that spot in the <a href="https://irsa.ipac.caltech.edu/Missions/spherex.html">NASA/IPAC Infrared Science Archive</a>.</li>
+    <li>We cut out the same small patch of sky from each, turned north up, and adjusted the brightness so faint things show.</li>
+    <li>A level is only included if the object is detected exactly where JPL says it should be.</li>
+  </ul>
+  <p>The orange and purple colours are false colour: brightness shown as colour. Switch it off in Explore to see the plain greyscale images. Small specks that appear in only one image are cosmic rays hitting the detector, not objects.</p>
 
   <h2>What this can't do</h2>
   <ul>
@@ -56,13 +162,11 @@
     <li>Brightness is adjusted so faint objects are visible. Brightness on screen is not a scientific measurement.</li>
   </ul>
 
-  <h2>Where the images come from</h2>
-  <p>Every image is a real observation by NASA's <a href="https://spherex.caltech.edu/">SPHEREx</a> mission, from the <a href="https://irsa.ipac.caltech.edu/Missions/spherex.html">NASA/IPAC Infrared Science Archive</a>. Each object's position was confirmed with <a href="https://ssd.jpl.nasa.gov/horizons/">NASA JPL Horizons</a>. Images were aligned north-up and brightness-scaled; nothing else was changed.</p>
-  <p class="note">Built for the 2026 NASA Space Apps Challenge, "Planet X and SPHEREx". <a href="https://github.com/slashsly5-rgb/planet-hunter">Source code</a>.</p>
+  <h2>Credits</h2>
+  <p>SPHEREx is a NASA mission managed by the Jet Propulsion Laboratory; its data are served by Caltech/IPAC. Object positions are from NASA JPL Horizons. <a href="https://github.com/slashsly5-rgb/planet-hunter">Source code</a>.</p>
 </section>
-
-<p id="error" class="error" hidden></p>
 </main>
-<script type="module" src="game.js"></script>
+
+<script type="module" src="app.js"></script>
 </body>
 </html>
