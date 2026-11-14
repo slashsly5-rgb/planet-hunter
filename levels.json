@@ -422,6 +422,89 @@
   }
  },
  {
+  "id": "pallas",
+  "name": "Pallas",
+  "kind": "asteroid",
+  "blurb": "One of the largest asteroids, about 510 km across, on a steeply tilted orbit.",
+  "size": 484,
+  "arcsec_per_px": 1.5375,
+  "distance_au": 3.37,
+  "mag": 10.116,
+  "moved_arcsec": 138,
+  "days_between": 0.2,
+  "jpl_checked": true,
+  "frames": [
+   {
+    "img": "img/pallas_a.png",
+    "date": "2025-10-18T18:48:48",
+    "band": "D1",
+    "source": "dr1/level2/2025W42_2A/l2b-v27-2026-243/1/level2_2025W42_2A_0472_1D1_spx_l2b-v27-2026-243.fits",
+    "x": 324.5,
+    "y": 165.9,
+    "snr": 1959.4
+   },
+   {
+    "img": "img/pallas_b.png",
+    "date": "2025-10-18T23:39:53",
+    "band": "D1",
+    "source": "dr1/level2/2025W42_2A/l2b-v27-2026-243/1/level2_2025W42_2A_0516_2D1_spx_l2b-v27-2026-243.fits",
+    "x": 271.5,
+    "y": 238.1,
+    "snr": 3309.0
+   }
+  ],
+  "track": [
+   {
+    "img": "img/pallas_t0.png",
+    "date": "2025-10-18T17:10:42",
+    "band": "D2",
+    "source": "dr1/level2/2025W42_2A/l2b-v27-2026-243/2/level2_2025W42_2A_0459_1D2_spx_l2b-v27-2026-243.fits",
+    "ra": 304.22242,
+    "dec": 1.23094,
+    "x": 342.3,
+    "y": 141.5,
+    "snr": 4342.3
+   },
+   {
+    "img": "img/pallas_t1.png",
+    "date": "2025-10-18T18:48:48",
+    "band": "D1",
+    "source": "dr1/level2/2025W42_2A/l2b-v27-2026-243/1/level2_2025W42_2A_0472_1D1_spx_l2b-v27-2026-243.fits",
+    "ra": 304.23001,
+    "dec": 1.22052,
+    "x": 324.5,
+    "y": 165.9,
+    "snr": 1959.4
+   },
+   {
+    "img": "img/pallas_t2.png",
+    "date": "2025-10-18T23:39:53",
+    "band": "D1",
+    "source": "dr1/level2/2025W42_2A/l2b-v27-2026-243/1/level2_2025W42_2A_0516_2D1_spx_l2b-v27-2026-243.fits",
+    "ra": 304.25265,
+    "dec": 1.18966,
+    "x": 271.5,
+    "y": 238.1,
+    "snr": 3309.0
+   },
+   {
+    "img": "img/pallas_t3.png",
+    "date": "2025-10-19T11:04:47",
+    "band": "D1",
+    "source": "dr1/level2/2025W42_2A/l2b-v27-2026-243/1/level2_2025W42_2A_0619_1D1_spx_l2b-v27-2026-243.fits",
+    "ra": 304.30662,
+    "dec": 1.1174,
+    "x": 145.2,
+    "y": 407.3,
+    "snr": 816.5
+   }
+  ],
+  "center": {
+   "ra": 304.26525,
+   "dec": 1.18801
+  }
+ },
+ {
   "id": "juno",
   "name": "Juno",
   "kind": "asteroid",
