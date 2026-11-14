@@ -1,88 +1,8 @@
 import { isHit } from "./score.js";
+import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js";
+import { speedChart } from "./lab.js";
 
 const HIT_RADIUS = 28;   // image pixels; forgiving enough for a fingertip
-const BLINK_MS = 700, PLAY_MS = 650;
-const BANDS = { D1: "0.75 to 1.11", D2: "1.10 to 1.65", D3: "1.63 to 2.43" };   // micrometres
-const ARCHIVE = "https://irsa.ipac.caltech.edu/ibe/data/spherex/";
-const $ = (id) => document.getElementById(id);
-const utc = (iso) => new Date(iso + "Z");
-const fmtDate = (iso) => utc(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
-const fmtTime = (iso) => utc(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" }) + " UTC";
-const span = (days) => (days >= 1 ? `${days.toFixed(1)} days` : `${(days * 24).toFixed(1)} hours`);
-
-// ---------- image viewer: a stack of aligned frames with blink, slide, difference and time-lapse ----------
-class Viewer {
-  constructor(root) {
-    this.root = root;
-    root.className = "viewer";
-    root.innerHTML = `<div class="imgs"></div><canvas hidden></canvas><svg class="mark"></svg>
-      <i class="corner tl"></i><i class="corner tr"></i><span class="chip date"></span><span class="chip tag"></span>`;
-    [this.imgs, this.canvas, this.svg] = ["div", "canvas", "svg"].map((s) => root.querySelector(s));
-    this.dateEl = root.querySelector(".date"); this.tagEl = root.querySelector(".tag");
-    this.frames = []; this.els = []; this.pair = [0, 1]; this.fade = 0.5; this.paused = false; this.ready = false;
-    root.addEventListener("click", (e) => {
-      if (!this.ready || !this.onTap) return;
-      const r = root.getBoundingClientRect();
-      this.onTap({ x: ((e.clientX - r.left) / r.width) * this.size, y: ((e.clientY - r.top) / r.height) * this.size });
-    });
-  }
-  async load(frames, size) {
-    this.stop(); this.ready = false; this.frames = frames; this.size = size;
-    this.svg.setAttribute("viewBox", `0 0 ${size} ${size}`); this.svg.innerHTML = "";
-    const token = (this.token = {});
-    const els = await Promise.all(frames.map((f) => new Promise((ok, bad) => {
-      const im = new Image(); im.alt = ""; im.draggable = false;
-      im.onload = () => ok(im); im.onerror = () => bad(new Error(f.img)); im.src = f.img;
-    })));
-    if (token !== this.token) return;          // a newer load started while these were downloading
-    this.els = els; this.imgs.replaceChildren(...els);
-    this.pair = [0, frames.length - 1]; this.ready = true; this.show(0);
-  }
-  show(i) {
-    this.i = i;
-    this.els.forEach((im, k) => (im.style.opacity = k === i ? 1 : 0));
-    this.dateEl.textContent = `${fmtDate(this.frames[i].date)}, ${fmtTime(this.frames[i].date)}`;
-    this.tagEl.textContent = `SPHEREx ${this.frames[i].band}`;
-    this.onFrame?.(i);
-  }
-  stop() { clearInterval(this.timer); this.timer = null; }
-  setMode(mode) {
-    this.stop(); this.mode = mode; this.canvas.hidden = mode !== "diff";
-    const [a, b] = this.pair;
-    if (mode === "blink") { let on = false; this.show(a); this.timer = setInterval(() => { if (!this.paused) { on = !on; this.show(on ? b : a); } }, BLINK_MS); }
-    if (mode === "play") this.timer = setInterval(() => { if (!this.paused) this.show((this.i + 1) % this.frames.length); }, PLAY_MS);
-    if (mode === "slide") this.setFade(this.fade);
-    if (mode === "diff") {
-      const c = this.canvas.getContext("2d"); this.canvas.width = this.canvas.height = this.size;
-      c.globalCompositeOperation = "source-over"; c.drawImage(this.els[a], 0, 0, this.size, this.size);
-      c.globalCompositeOperation = "difference"; c.drawImage(this.els[b], 0, 0, this.size, this.size);
-      this.dateEl.textContent = `${fmtDate(this.frames[a].date)} minus ${fmtDate(this.frames[b].date)}`; this.tagEl.textContent = "difference";
-    }
-  }
-  setFade(v) {
-    this.fade = v; const [a, b] = this.pair;   // b is later in the stack, so it draws on top of a
-    this.els.forEach((im, k) => (im.style.opacity = k === a ? 1 : k === b ? v : 0));
-    this.dateEl.textContent = `${fmtDate(this.frames[a].date)} ↔ ${fmtDate(this.frames[b].date)}`; this.tagEl.textContent = "";
-  }
-  mark(svg) { this.svg.innerHTML = svg; }
-}
-
-const ring = (f, cls = "") => `<circle class="ring ${cls}" cx="${f.x}" cy="${f.y}" r="18"/>`;
-const pathSvg = (frames, now = -1) =>
-  `<polyline class="path" points="${frames.map((f) => `${f.x},${f.y}`).join(" ")}"/>` +
-  frames.map((f, k) => `<circle class="dot ${k === now ? "now" : ""}" cx="${f.x}" cy="${f.y}" r="${k === now ? 6 : 4}"/>`).join("");
-
-// Distance from the Sun on a log scale, with the hypothetical Planet X zone for comparison.
-function ruler(name, au) {
-  const x = (d) => 30 + 540 * (Math.log10(d / 0.3) / Math.log10(1500 / 0.3));
-  const tick = (d, label) => `<line x1="${x(d)}" y1="42" x2="${x(d)}" y2="58" stroke="#5b6a9c" stroke-width="2"/><text x="${x(d)}" y="80" text-anchor="middle">${label}</text>`;
-  const me = name ? `<circle cx="${x(au)}" cy="50" r="8" fill="#ffb547"/><text class="me" x="${Math.min(Math.max(x(au), 90), 510)}" y="24" text-anchor="middle">${name}: ${au} au</text>` : "";
-  return `<div class="rulerbox"><svg viewBox="0 0 600 90" role="img" aria-label="Distance from the Sun${name ? `: ${name} at ${au} au` : ""}; a hypothetical Planet X would be at several hundred au">
-    <rect x="${x(300)}" y="38" width="${x(900) - x(300)}" height="24" rx="5" fill="#ff6f9133" stroke="#ff6f91"/>
-    <line x1="30" y1="50" x2="570" y2="50" stroke="#5b6a9c" stroke-width="2"/>
-    ${tick(1, "Earth")}${tick(5.2, "Jupiter")}${tick(30, "Neptune")}<text x="${x(520)}" y="80" text-anchor="middle" fill="#ff6f91">Planet X?</text>${me}
-  </svg><p class="note">Distance from the Sun (each step is about 10 times farther). 1 au is the distance from Earth to the Sun.</p></div>`;
-}
 
 // ---------- state ----------
 let levels = [], n = 0, results = [], answered = false;
@@ -169,6 +89,7 @@ function finish() {
     `${far === slow ? "It" : `The farthest, ${far.name},`} is ${Math.round(far.distance_au)} times as far from the Sun as Earth. ` +
     `If a "Planet X" exists, astronomers think it could be hundreds of times as far as Earth: much fainter, and moving much more slowly still. That is why nobody has found it yet.`;
   $("rulerX").innerHTML = ruler(far.name, far.distance_au);
+  $("endChart").innerHTML = speedChart(levels);
   window.scrollTo(0, 0);
 }
 function startHunt() { n = 0; results = []; $("huntPlay").hidden = false; $("huntEnd").hidden = true; go("hunt"); loadLevel(); }
@@ -191,12 +112,48 @@ function drawGrid() {
   document.querySelectorAll(".cardlink").forEach((b) => (b.onclick = () => openObject(levels[b.dataset.k])));
 }
 function exFrames() { return exLevel.track?.length > 1 ? exLevel.track : exLevel.frames; }
-function exMode(m) {
+const tip = (html) => { $("exTip").innerHTML = html; $("exTip").hidden = !html; };
+async function exMode(m) {
   document.querySelectorAll(".exmode").forEach((b) => b.classList.toggle("on", b.dataset.exmode === m));
   $("exPause").hidden = m === "diff"; $("scrub").hidden = m !== "play";
-  ex.setMode(m);
+  measure = null; ex.root.classList.remove("tappable"); tip("");
+  const L = exLevel, pass = m === "pass", want = pass ? [exFrames()[0], L.other_pass] : exFrames();
+  if (ex.frames !== want && ex.frames[1] !== want[1]) await guard(ex.load(want, L.size));   // swap between the time-lapse and the six-month pair
+  ex.setMode(pass ? "blink" : m);
   if (m === "diff") ex.mark("");
+  if (pass) {
+    const then = fmtDate(want[0].date), other = fmtDate(L.other_pass.date);
+    tip(`SPHEREx photographed this same patch on <strong>${then}</strong> and again on <strong>${other}</strong>, in a different pass over the sky. The stars are all still there. ${L.name} is not: it moved on long ago. The ring shows where it was.`);
+  }
 }
+
+// Measure it yourself: tap the object in the first and last image; compare with NASA JPL.
+let measure = null;
+function startMeasure() {
+  const frames = exFrames();
+  exMode("play").then(() => {
+    ex.stop(); measure = { pts: [] }; ex.root.classList.add("tappable");
+    ex.show(0); ex.mark("");
+    tip(`<strong>Step 1 of 2.</strong> This is the first image (${fmtDate(frames[0].date)}, ${fmtTime(frames[0].date)}). Tap ${exLevel.name}.`);
+  });
+}
+ex.onTap = (p) => {
+  if (!measure) return;
+  const frames = exFrames(), L = exLevel, last = frames.length - 1, dot = (q) => `<circle class="dot now" cx="${q.x}" cy="${q.y}" r="6"/>`;
+  measure.pts.push(p);
+  if (measure.pts.length === 1) {
+    ex.show(last); ex.mark(dot(p));
+    tip(`<strong>Step 2 of 2.</strong> Now the last image (${fmtDate(frames[last].date)}, ${fmtTime(frames[last].date)}). Tap ${L.name} again.`);
+    return;
+  }
+  const [a, b] = measure.pts, days = (new Date(frames[last].date) - new Date(frames[0].date)) / 864e5;
+  const mine = Math.hypot(b.x - a.x, b.y - a.y) * L.arcsec_per_px, jpl = Math.hypot(frames[last].x - frames[0].x, frames[last].y - frames[0].y) * L.arcsec_per_px;
+  ex.mark(`<line class="path" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"/>` + dot(a) + dot(b));
+  tip(`You measured <strong>${Math.round(mine)} arcseconds</strong> in ${span(days)}: about <strong>${Math.round(mine / days)} arcseconds a day</strong>. ` +
+      `NASA JPL's answer is ${Math.round(jpl)} arcseconds. You were ${Math.round(Math.abs(mine - jpl) / jpl * 100)}% off. ` +
+      `(An arcsecond is tiny: the full Moon is about 1,800 arcseconds wide.)`);
+  measure = null; ex.root.classList.remove("tappable");
+};
 function openObject(L) {
   exLevel = L;
   const frames = exFrames(), first = frames[0], last = frames[frames.length - 1];
@@ -209,22 +166,30 @@ function openObject(L) {
     ["Patch of sky", `${Math.round((L.size * L.arcsec_per_px) / 60)} arcminutes across, north up`],
   ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
   $("exRuler").innerHTML = ruler(L.name, L.distance_au);
+  $("exChart").innerHTML = speedChart(levels, L.id);
+  $("passBtn").hidden = !L.other_pass;
   ex.onFrame = (i) => {
-    const f = frames[i];
-    $("scrub").value = i;
-    ex.mark($("pathChk").checked ? pathSvg(frames, i) : "");
+    const f = ex.frames[i];
+    if (measure) return;
+    if (ex.frames !== frames) {                      // the six-month pair: ring where the object was in the first image
+      ex.mark(ring(frames[0], "was"));
+    } else {
+      $("scrub").value = i;
+      ex.mark($("pathChk").checked ? pathSvg(frames, i) : "");
+    }
     $("frameInfo").innerHTML = [
       ["Taken", `${fmtDate(f.date)}, ${fmtTime(f.date)}`],
       ["Detector", `SPHEREx ${f.band}, ${BANDS[f.band]} micrometres (infrared)`],
-      ["Object position", f.ra != null ? `RA ${f.ra}°, Dec ${f.dec}° (NASA JPL Horizons)` : "from NASA JPL Horizons"],
-      ["Detection", `${Math.round(f.snr)} times the background noise`],
+      ["Object position", f.ra != null ? `RA ${f.ra}°, Dec ${f.dec}° (NASA JPL Horizons)` : f.snr ? "from NASA JPL Horizons" : "not in this image"],
+      ...(f.snr ? [["Detection", `${Math.round(f.snr)} times the background noise`]] : []),
       ["Original file", `<a href="${ARCHIVE + f.source}" rel="noopener">NASA/IPAC archive (FITS, about 65 MB)</a>`],
     ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
   };
-  guard(ex.load(frames, L.size).then(() => exMode("play")));
+  ex.frames = []; exMode("play");
   window.scrollTo(0, 0);
 }
 $("backBtn").onclick = showList;
+$("measureBtn").onclick = startMeasure;
 $("exPause").onclick = () => { exPaused = !exPaused; ex.paused = exPaused; $("exPause").textContent = exPaused ? "Resume" : "Pause"; };
 $("scrub").oninput = (e) => { exPaused = true; ex.paused = true; $("exPause").textContent = "Resume"; ex.show(+e.target.value); };
 $("pathChk").onchange = () => ex.mode !== "diff" && ex.show(ex.i);

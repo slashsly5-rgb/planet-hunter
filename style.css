@@ -131,3 +131,17 @@ body.grey .thumb { filter: none; }
   .detail { grid-template-columns: 1fr; gap: 8px; }
   .top { padding: 6px 8px; } .top button { padding: 10px 8px; font-size: .95rem; }
 }
+
+/* lab, charts, tips */
+.chartbox svg { width: 100%; height: auto; display: block; max-width: 640px; }
+.chartbox text { fill: var(--dim); font-size: 16px; font-family: inherit; }
+.chartbox .me { fill: #fff; font-weight: 700; }
+.tip { background: var(--panel2); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 10px; padding: 10px 14px; margin: 10px auto 0; max-width: min(100%, 68vh); }
+.lbl { display: block; margin: 1em 0 .3em; font-weight: 600; }
+#distSlider { width: 100%; height: 44px; accent-color: var(--accent); }
+.controls.left { margin-left: 0; }
+.verdict { background: var(--panel2); border-left: 4px solid var(--accent2); border-radius: 10px; padding: 10px 14px; font-weight: 600; }
+#labOut { padding-left: 1.2em; }
+#lab .detail { margin-top: 10px; }
+@media (max-width: 760px) { .top .brand { font-size: .95rem; gap: 6px; } .top button { padding: 10px 6px; font-size: .9rem; } }
+@media (max-width: 380px) { .top .brand { font-size: 0; } }

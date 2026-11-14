@@ -14,8 +14,9 @@ def sia(coll, ra, dec, radius, mjd):
             if r.ok and r.text.startswith("s_ra"): return list(csv.DictReader(io.StringIO(r.text)))
         except requests.RequestException:
             pass
-        time.sleep(5)
-    raise RuntimeError("SIA failed 5 times")
+        time.sleep(15)
+    print("  WARNING: archive did not answer 5 times for MJD", round(mjd), "- skipping that date", flush=True)
+    return []   # one lost date costs a few exposures; crashing loses the whole 40-minute search
 
 def inside(region, ra, dec):
     """Is the point inside a 'POLYGON ICRS ra dec ra dec ...' footprint? Flat-sky test around the point."""

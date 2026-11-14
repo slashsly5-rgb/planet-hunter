@@ -58,6 +58,24 @@ await js(`document.querySelector(".cardlink").click()`); await sleep(1800);
 await shot("6-object.png");
 await js(`window.scrollTo(0, 600)`); await sleep(300);
 await shot("7-object-info.png");
+// six months apart
+await js(`window.scrollTo(0, 0)`); await js(`document.querySelector("#passBtn").click()`); await sleep(2500);
+await shot("8-six-months.png");
+// measure it yourself: tap the object in the first and last images
+await js(`document.querySelector("#measureBtn").click()`); await sleep(2000);
+const T = levels[0].track, tapEx = async (f) => { const r = await js(`(() => { const r = document.querySelector("#exView").getBoundingClientRect(); return [r.left, r.top, r.width]; })()`); await click(r[0] + f.x * r[2] / levels[0].size, r[1] + f.y * r[2] / levels[0].size); await sleep(500); };
+await tapEx(T[0]); await tapEx(T[T.length - 1]);
+const measured = await js(`document.querySelector("#exTip").textContent`);
+await shot("9-measure.png");
+// Planet X lab
+await js(`document.querySelector('.top [data-view="lab"]').click()`); await sleep(2500);
+await shot("10-lab-chart.png");
+await js(`document.querySelector("#labView").scrollIntoView()`); await sleep(400);
+await shot("11-lab-sim.png");
+await js(`document.querySelector("#labReveal").click()`); await sleep(400);
+await js(`document.querySelector("#labOut").scrollIntoView({block:"center"})`); await sleep(300);
+await shot("12-lab-readout.png");
+const lab = await js(`document.querySelector("#labOut").textContent + " | " + document.querySelector("#labVerdict").textContent`);
 const overflow = await js(`document.documentElement.scrollWidth > document.documentElement.clientWidth`);
-console.log(JSON.stringify({ results, score: await js(`document.querySelector("#scoreLine").textContent`), horizontalOverflow: overflow, errors }, null, 1));
+console.log(JSON.stringify({ results, score: await js(`document.querySelector("#scoreLine").textContent`), horizontalOverflow: overflow, measured, lab, errors }, null, 1));
 ws.close(); proc.kill();
