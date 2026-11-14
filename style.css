@@ -220,3 +220,23 @@ button.slabel.world:hover, .slabel.world.on { border-color: var(--c); background
 .world-panel h2 { font-size: 1.4rem; margin-top: .3em; }
 .world-panel p { font-size: .9rem; margin: .4em 0; }
 .world-panel .cta { margin: 8px 0 0; }
+
+/* hunt missions: step bar, quiz, score dots */
+.steps3 { list-style: none; display: flex; gap: 8px; justify-content: center; padding: 0; margin: 10px 0 4px; }
+.steps3 li { display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 6px; border-radius: 999px; border: 1px solid var(--line); color: var(--dim); font: 600 12px/1 ui-monospace, Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; }
+.steps3 li b { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--line); color: var(--text); letter-spacing: 0; }
+.steps3 li.now { border-color: var(--hud); color: var(--hud); box-shadow: 0 0 18px #6fe3ff33; } .steps3 li.now b { background: var(--hud); color: #04202b; }
+.steps3 li.done { color: var(--good); border-color: #2c6a55; } .steps3 li.done b { background: var(--good); color: #062417; }
+.prompt { font-weight: 500; max-width: 760px; margin-left: auto; margin-right: auto; }
+.quiz { display: grid; gap: 8px; max-width: min(100%, 68vh); margin: 12px auto 0; }
+.zone { text-align: left; padding: 12px 16px; }
+.zone:hover:not(:disabled) { border-color: var(--hud); }
+.zone.right { border-color: var(--good); color: var(--good); opacity: 1; } .zone.wrong { border-color: var(--accent2); color: var(--accent2); opacity: 1; }
+.dots i.mid { background: var(--accent); } .dots i.boss { border-radius: 2px; transform: rotate(45deg); }
+#hunt .tip { border-left-color: var(--hud); }
+.hunt-grid { display: grid; grid-template-columns: minmax(0, 66vh) minmax(0, 1fr); gap: 28px; align-items: start; max-width: 1120px; margin: 10px auto 0; }
+.hunt-grid .stagewrap, .hunt-grid .controls { max-width: none; }
+.hunt-right .prompt { text-align: left; margin: 0 0 .6em; font-size: 1.12rem; max-width: none; }
+.hunt-right .quiz, .hunt-right .tip, .hunt-right .card { max-width: none; margin-left: 0; margin-right: 0; }
+.hunt-right .prompt strong { color: var(--hud); text-transform: uppercase; letter-spacing: .08em; font-size: .9em; }
+@media (max-width: 860px) { .hunt-grid { grid-template-columns: 1fr; } }

@@ -39,7 +39,7 @@ export function speedChart(levels, markId) {
 // ---------- simulator ----------
 const view = new Viewer($("labView"));
 view.root.classList.add("tappable");
-let base = null, canvases = [], peaks = [], sim = null, sizeIx = 2, guessed = false;
+let base = null, sim = null, sizeIx = 2, guessed = false;
 const dist = () => Math.round(40 * Math.pow(20, $("distSlider").value / 100));   // 40 to 800 au, log scale
 
 function toCanvas(src) {
@@ -73,27 +73,38 @@ function plant(c, x, y, amp) {
   return out.toDataURL("image/png");
 }
 
-function rebuild(newSpot) {
-  const [a, b] = base.frames, d = dist(), near = base.distance_au / d;
-  const bright = (SIZES[sizeIx].km / PLUTO_KM) ** 2 * near ** 4;        // reflected sunlight: area × 1 / distance⁴
-  const dx = (b.x - a.x) * near, dy = (b.y - a.y) * near;                // motion scaled from the real object's
-  if (newSpot || !sim) {
-    let x, y;
-    do { x = 70 + Math.random() * (base.size - 140); y = 70 + Math.random() * (base.size - 140); }
-    while (Math.hypot(x - a.x, y - a.y) < 70 || Math.hypot(x - b.x, y - b.y) < 70);
-    sim = { x, y };
+// A made-up planet planted into a level's two real images. Movement and brightness are scaled from the level's real object.
+const simCache = new Map();
+export async function simFrames(level, au, km, spot) {
+  if (!simCache.has(level.id)) {
+    const cv = await Promise.all(level.frames.map((f) => toCanvas(f.img)));
+    simCache.set(level.id, { cv, peaks: level.frames.map((f, k) => peakOf(cv[k], f)) });
   }
-  const pos = [{ x: sim.x - dx / 2, y: sim.y - dy / 2 }, { x: sim.x + dx / 2, y: sim.y + dy / 2 }];
-  const frames = base.frames.map((f, k) => ({ ...f, ...pos[k], band: t`${f.band} + simulated object`, img: plant(canvases[k], pos[k].x, pos[k].y, peaks[k] * bright) }));
-  sim.frames = frames; guessed = false;
-  const snr = Math.min(a.snr, b.snr) * bright, moved = base.moved_arcsec * near;
+  const { cv, peaks: pk } = simCache.get(level.id), [a, b] = level.frames, near = level.distance_au / au;
+  const bright = (km / PLUTO_KM) ** 2 * near ** 4;                      // reflected sunlight: area × 1 / distance⁴
+  const dx = (b.x - a.x) * near, dy = (b.y - a.y) * near;                // motion scaled from the real object's
+  if (!spot) {
+    let x, y;
+    do { x = 70 + Math.random() * (level.size - 140); y = 70 + Math.random() * (level.size - 140); }
+    while (Math.hypot(x - a.x, y - a.y) < 70 || Math.hypot(x - b.x, y - b.y) < 70);
+    spot = { x, y };
+  }
+  const pos = [{ x: spot.x - dx / 2, y: spot.y - dy / 2 }, { x: spot.x + dx / 2, y: spot.y + dy / 2 }];
+  const frames = level.frames.map((f, k) => ({ ...f, ...pos[k], band: t`${f.band} + simulated object`, img: plant(cv[k], pos[k].x, pos[k].y, pk[k] * bright) }));
+  return { frames, spot, bright, moved: level.moved_arcsec * near, snr: Math.min(a.snr, b.snr) * bright };
+}
+
+async function rebuild(newSpot) {
+  const d = dist(), made = await simFrames(base, d, SIZES[sizeIx].km, newSpot || !sim ? null : sim);
+  sim = { x: made.spot.x, y: made.spot.y, frames: made.frames }; guessed = false;
+  const { frames, bright, snr, moved } = made;
   $("labDist").textContent = `${d} au`;
   $("labOut").innerHTML = [
     t`Moves <strong>${moved < 10 ? moved.toFixed(1) : Math.round(moved)} arcseconds</strong> in ${span(base.days_between)} (${base.name} moved ${base.moved_arcsec})`,
     bright >= 1 ? t`Brightness: <strong>${bright.toFixed(1)} times ${base.name}'s</strong>`
       : t`Brightness: <strong>${bright * 100 < 0.1 ? tr("under 0.1") : (bright * 100).toFixed(bright < 0.01 ? 1 : 0)}% of ${base.name}'s</strong>`,
     t`Signal: <strong>about ${snr < 1 ? snr.toFixed(1) : Math.round(snr)} times the background noise</strong>`,
-  ].map((t) => `<li>${t}</li>`).join("");
+  ].map((li) => `<li>${li}</li>`).join("");
   $("labVerdict").textContent = snr >= 5 && moved >= 6 ? tr("Findable: bright enough to see, and it moves enough to notice.")
     : snr >= 5 ? tr("Bright enough to see, but it barely moves in this time. You would need images taken further apart.")
     : tr("Too faint for a single SPHEREx image. Astronomers would have to add many images together to pull it out of the noise.");
@@ -111,8 +122,6 @@ view.onTap = (tap) => { if (sim && !guessed) reveal(isHit(tap, sim.frames, 28));
 fetch("levels.json").then((r) => r.json()).then(async (levels) => {
   $("labChart").innerHTML = speedChart(levels);
   base = levels.find((l) => l.id === "pluto") || levels.reduce((m, l) => (l.distance_au > m.distance_au ? l : m));
-  canvases = await Promise.all(base.frames.map((f) => toCanvas(f.img)));
-  peaks = base.frames.map((f, k) => peakOf(canvases[k], f));
   $("labSizes").innerHTML = SIZES.map((s, k) => `<button class="size ${k === sizeIx ? "on" : ""}" data-k="${k}">${tr(s.label)}</button>`).join("");
   document.querySelectorAll(".size").forEach((b) => (b.onclick = () => { sizeIx = +b.dataset.k; document.querySelectorAll(".size").forEach((x) => x.classList.toggle("on", x === b)); rebuild(false); }));
   $("distSlider").oninput = () => rebuild(false);

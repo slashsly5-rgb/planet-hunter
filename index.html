@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Planet Hunter: see the sky move in real SPHEREx images</title>
 <meta name="description" content="Watch real NASA SPHEREx images change over time. Spot the worlds that move, play back their paths, and learn how Planet X could be found.">
-<link rel="stylesheet" href="style.css?v=4">
+<link rel="stylesheet" href="style.css?v=5">
 <link rel="modulepreload" href="vendor/three.module.min.js">
 </head>
 <body>
@@ -102,26 +102,38 @@
 <section id="hunt" class="view" hidden>
   <div id="huntPlay">
     <div class="hud"><span id="progress"></span><span class="dots" id="dots"></span><span id="tally"></span></div>
-    <p id="prompt" class="prompt">Tap the object that moves.</p>
-    <div class="stagewrap"><div id="huntView"></div></div>
-    <div class="controls" id="huntControls">
-      <button data-mode="blink" class="mode on">Blink</button>
-      <button data-mode="slide" class="mode">Slide</button>
-      <button data-mode="diff" class="mode" title="Subtract one image from the other">Difference</button>
-      <button id="pauseBtn">Pause</button>
-      <input id="slider" type="range" min="0" max="100" value="50" aria-label="Fade between the two images" hidden>
-    </div>
-    <p id="modeTip" class="note"></p>
-    <div id="card" class="card" hidden>
-      <h2 id="verdict"></h2>
-      <h3 id="objName"></h3>
-      <p id="blurb"></p>
-      <ul id="facts"></ul>
-      <div id="ruler"></div>
-      <p class="badge">✔ Checked against NASA JPL Horizons</p>
-      <div class="cta">
-        <button id="pathBtn" class="ghost">Watch its path</button>
-        <button id="nextBtn" class="primary">Next</button>
+    <ol class="steps3" id="steps3">
+      <li data-step="detect"><b>1</b> Detect</li>
+      <li data-step="predict"><b>2</b> Predict</li>
+      <li data-step="classify"><b>3</b> Classify</li>
+    </ol>
+    <div class="hunt-grid">
+      <div class="hunt-left">
+        <div class="stagewrap"><div id="huntView"></div></div>
+        <div class="controls" id="huntControls">
+          <button data-mode="blink" class="mode on">Blink</button>
+          <button data-mode="slide" class="mode">Slide</button>
+          <button data-mode="diff" class="mode" title="Subtract one image from the other">Difference</button>
+          <button id="pauseBtn">Pause</button>
+          <input id="slider" type="range" min="0" max="100" value="50" aria-label="Fade between the two images" hidden>
+        </div>
+        <p id="modeTip" class="note"></p>
+      </div>
+      <div class="hunt-right">
+        <p id="prompt" class="prompt"></p>
+        <div id="quiz" class="quiz" hidden></div>
+        <p id="stepNote" class="tip" hidden></p>
+        <div id="card" class="card" hidden>
+          <h2 id="verdict"></h2>
+          <h3 id="objName"></h3>
+          <p id="blurb"></p>
+          <ul id="facts"></ul>
+          <div id="ruler"></div>
+          <p class="badge" id="badge"></p>
+          <div class="cta">
+            <button id="nextBtn" class="primary">Next</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -250,6 +262,6 @@
 </section>
 </main>
 
-<script type="module" src="app.js?v=4"></script>
+<script type="module" src="app.js?v=5"></script>
 </body>
 </html>

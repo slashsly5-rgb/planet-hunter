@@ -47,17 +47,23 @@ await sleep(1200);
 await shot("2-level.png");
 
 const results = [];
-for (let i = 0; i < levels.length; i++) {
-  const L = levels[i], hit = i % 2 === 0;           // alternate: tap the object, then tap a wrong place
-  const r = await js(`(() => { const r = document.querySelector("#huntView").getBoundingClientRect(); return [r.left, r.top, r.width]; })()`);
-  const f = L.frames[0], k = r[2] / L.size;
-  const [tx, ty] = hit ? [f.x, f.y] : [(f.x + L.size / 2) % L.size, (f.y + L.size / 2) % L.size];
-  await click(r[0] + tx * k, r[1] + ty * k);
-  await sleep(600);
-  results.push({ level: L.id, tapped: hit ? "object" : "wrong place", verdict: await js(`document.querySelector("#verdict").textContent`) });
+const tapHunt = async (pt, size) => { const r = await js(`(() => { const r = document.querySelector("#huntView").getBoundingClientRect(); return [r.left, r.top, r.width]; })()`); await click(r[0] + pt.x * r[2] / size, r[1] + pt.y * r[2] / size); await sleep(600); };
+const hs = () => js(`window.__hunt.state()`);
+for (let i = 0; i < 40; i++) {                       // each mission: detect, (predict), classify. Odd missions get wrong answers on purpose.
+  if (await js(`!document.querySelector("#huntEnd").hidden`)) break;
+  for (let w = 0; w < 30 && (await hs()).step !== "detect"; w++) await sleep(300);
+  let st = await hs(); const good = i % 2 === 0, far = (f) => ({ x: (f.x + st.size / 2) % st.size, y: (f.y + st.size / 2) % st.size });
+  await tapHunt(good ? st.frames[0] : far(st.frames[0]), st.size);
+  if (!good) await tapHunt(far(st.frames[0]), st.size);          // second try, also wrong
+  if (i < 2) await shot(`3-detect-${i}.png`);
+  st = await hs();
+  if (st.step === "predict") { await tapHunt(good ? st.target : far(st.target), st.size); if (i < 2) await shot(`3-predict-${i}.png`); }
+  st = await hs();
+  await js(`document.querySelector('.zone[data-z="${good ? st.zone : (st.zone === "belt" ? "outer" : "belt")}"]').click()`); await sleep(500);
   if (i < 2) await shot(`3-reveal-${i}.png`);
+  results.push({ mission: i + 1, played: good ? "well" : "badly", result: await js(`document.querySelector("#prompt").textContent`) });
   await js(`document.querySelector("#nextBtn").click()`);
-  await sleep(700);
+  await sleep(900);
 }
 await shot("4-end.png");
 await js(`document.querySelector('.top [data-view="explore"]').click()`); await sleep(500);
