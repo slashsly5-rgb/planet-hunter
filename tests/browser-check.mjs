@@ -32,6 +32,7 @@ await cdp("Runtime.enable"); await cdp("Page.enable");
 await cdp("Emulation.setDeviceMetricsOverride", { width: +W, height: +H, deviceScaleFactor: 1, mobile: +W < 600 });
 await cdp("Page.navigate", { url: "http://localhost:8765/index.html" });
 await sleep(1500);
+if (process.env.PH_LANG) { await js(`localStorage.setItem("lang", ${JSON.stringify(process.env.PH_LANG)})`); await cdp("Page.reload"); await sleep(1500); }
 await shot("1-start.png");
 const levels = await js(`fetch("levels.json").then(r => r.json())`);
 await click(...(await centre("#startBtn")));
@@ -77,5 +78,5 @@ await js(`document.querySelector("#labOut").scrollIntoView({block:"center"})`); 
 await shot("12-lab-readout.png");
 const lab = await js(`document.querySelector("#labOut").textContent + " | " + document.querySelector("#labVerdict").textContent`);
 const overflow = await js(`document.documentElement.scrollWidth > document.documentElement.clientWidth`);
-console.log(JSON.stringify({ results, score: await js(`document.querySelector("#scoreLine").textContent`), horizontalOverflow: overflow, measured, lab, errors }, null, 1));
+console.log(JSON.stringify({ results, score: await js(`document.querySelector("#scoreLine").textContent`), horizontalOverflow: overflow, measured, lab, missing: await js(`[...window.__missing]`), errors }, null, 1));
 ws.close(); proc.kill();

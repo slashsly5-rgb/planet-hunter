@@ -1,5 +1,6 @@
 // Planet X lab: a speed-versus-distance chart, and a simulator that hides a made-up planet in real SPHEREx images.
 import { $, Viewer, span } from "./viewer.js";
+import { t, tr } from "./i18n.js";
 import { isHit } from "./score.js";
 
 const PLUTO_KM = 1188;   // Pluto's radius; the simulator scales brightness from the real Pluto in the same images
@@ -24,15 +25,15 @@ export function speedChart(levels, markId) {
     return `<circle cx="${x}" cy="${y}" r="${l.id === markId ? 9 : 6}" fill="${l.id === markId ? "#fff" : "#ffb547"}" stroke="#ffb547" stroke-width="2"/>
     <text x="${x + 13}" y="${ty}" class="${l.id === markId ? "me" : ""}">${l.name}</text>`;
   }).join("");
-  return `<div class="chartbox"><svg viewBox="0 0 600 300" role="img" aria-label="Chart: the farther an object is from the Sun, the more slowly it moves across the sky">
+  return `<div class="chartbox"><svg viewBox="0 0 600 300" role="img" aria-label="${tr("Farther means slower")}">
     <rect x="${X(300)}" y="30" width="${X(900) - X(300)}" height="220" fill="#ff6f9122" stroke="#ff6f91" stroke-dasharray="4 4"/>
     <text x="${(X(300) + X(900)) / 2}" y="48" text-anchor="middle" fill="#ff6f91">Planet X?</text>
     <line x1="60" y1="250" x2="560" y2="250" stroke="#5b6a9c" stroke-width="2"/><line x1="60" y1="30" x2="60" y2="250" stroke="#5b6a9c" stroke-width="2"/>
     <line x1="${X(1)}" y1="${Y(Math.min(2000, fit(1)))}" x2="${X(1000)}" y2="${Y(fit(1000))}" stroke="#7dffcf" stroke-dasharray="6 6" opacity=".6"/>
     ${xt}${yt}${pts}
-    <text x="310" y="295" text-anchor="middle">Distance from the Sun (au)</text>
-    <text transform="translate(14 140) rotate(-90)" text-anchor="middle">Speed across the sky (arcseconds per day)</text>
-  </svg><p class="note">Each dot is a real measurement from the SPHEREx images on this site. The dashed line is the trend through them: the farther from the Sun, the slower across the sky. Exact speeds also depend on where Earth is in its orbit.</p></div>`;
+    <text x="310" y="295" text-anchor="middle">${tr("Distance from the Sun (au)")}</text>
+    <text transform="translate(14 140) rotate(-90)" text-anchor="middle">${tr("Speed across the sky (arcseconds per day)")}</text>
+  </svg><p class="note">${tr("Each dot is a real measurement from the SPHEREx images on this site. The dashed line is the trend through them: the farther from the Sun, the slower across the sky. Exact speeds also depend on where Earth is in its orbit.")}</p></div>`;
 }
 
 // ---------- simulator ----------
@@ -83,26 +84,27 @@ function rebuild(newSpot) {
     sim = { x, y };
   }
   const pos = [{ x: sim.x - dx / 2, y: sim.y - dy / 2 }, { x: sim.x + dx / 2, y: sim.y + dy / 2 }];
-  const frames = base.frames.map((f, k) => ({ ...f, ...pos[k], band: `${f.band} + simulated object`, img: plant(canvases[k], pos[k].x, pos[k].y, peaks[k] * bright) }));
+  const frames = base.frames.map((f, k) => ({ ...f, ...pos[k], band: t`${f.band} + simulated object`, img: plant(canvases[k], pos[k].x, pos[k].y, peaks[k] * bright) }));
   sim.frames = frames; guessed = false;
   const snr = Math.min(a.snr, b.snr) * bright, moved = base.moved_arcsec * near;
   $("labDist").textContent = `${d} au`;
   $("labOut").innerHTML = [
-    `Moves <strong>${moved < 10 ? moved.toFixed(1) : Math.round(moved)} arcseconds</strong> in ${span(base.days_between)} (${base.name} moved ${base.moved_arcsec})`,
-    `Brightness: <strong>${bright >= 1 ? bright.toFixed(1) + " times" : (bright * 100 < 0.1 ? "under 0.1%" : (bright * 100).toFixed(bright < 0.01 ? 1 : 0) + "%") + " of"} ${base.name}'s</strong>`,
-    `Signal: <strong>about ${snr < 1 ? snr.toFixed(1) : Math.round(snr)} times the background noise</strong>`,
+    t`Moves <strong>${moved < 10 ? moved.toFixed(1) : Math.round(moved)} arcseconds</strong> in ${span(base.days_between)} (${base.name} moved ${base.moved_arcsec})`,
+    bright >= 1 ? t`Brightness: <strong>${bright.toFixed(1)} times ${base.name}'s</strong>`
+      : t`Brightness: <strong>${bright * 100 < 0.1 ? tr("under 0.1") : (bright * 100).toFixed(bright < 0.01 ? 1 : 0)}% of ${base.name}'s</strong>`,
+    t`Signal: <strong>about ${snr < 1 ? snr.toFixed(1) : Math.round(snr)} times the background noise</strong>`,
   ].map((t) => `<li>${t}</li>`).join("");
-  $("labVerdict").textContent = snr >= 5 && moved >= 6 ? "Findable: bright enough to see, and it moves enough to notice."
-    : snr >= 5 ? "Bright enough to see, but it barely moves in this time. You would need images taken further apart."
-    : "Too faint for a single SPHEREx image. Astronomers would have to add many images together to pull it out of the noise.";
-  $("labMsg").textContent = "Tap where you think the simulated planet is.";
+  $("labVerdict").textContent = snr >= 5 && moved >= 6 ? tr("Findable: bright enough to see, and it moves enough to notice.")
+    : snr >= 5 ? tr("Bright enough to see, but it barely moves in this time. You would need images taken further apart.")
+    : tr("Too faint for a single SPHEREx image. Astronomers would have to add many images together to pull it out of the noise.");
+  $("labMsg").textContent = tr("Tap where you think the simulated planet is.");
   view.load(frames, base.size).then(() => { view.pair = [0, 1]; view.setMode("blink"); });
 }
 function reveal(hit) {
   guessed = true;
   const [a, b] = sim.frames;
   view.mark(`<circle class="ring was" cx="${a.x}" cy="${a.y}" r="18"/><circle class="ring" cx="${b.x}" cy="${b.y}" r="18"/><circle class="ring pulse" cx="${b.x}" cy="${b.y}" r="18"/>`);
-  $("labMsg").textContent = hit === true ? "You found it!" : hit === false ? "Not there. The rings show where it was hidden." : "The rings show where it was hidden.";
+  $("labMsg").textContent = hit === true ? tr("You found it!") : hit === false ? tr("Not there. The rings show where it was hidden.") : tr("The rings show where it was hidden.");
 }
 view.onTap = (tap) => { if (sim && !guessed) reveal(isHit(tap, sim.frames, 28)); };
 
@@ -111,11 +113,11 @@ fetch("levels.json").then((r) => r.json()).then(async (levels) => {
   base = levels.find((l) => l.id === "pluto") || levels.reduce((m, l) => (l.distance_au > m.distance_au ? l : m));
   canvases = await Promise.all(base.frames.map((f) => toCanvas(f.img)));
   peaks = base.frames.map((f, k) => peakOf(canvases[k], f));
-  $("labSizes").innerHTML = SIZES.map((s, k) => `<button class="size ${k === sizeIx ? "on" : ""}" data-k="${k}">${s.label}</button>`).join("");
+  $("labSizes").innerHTML = SIZES.map((s, k) => `<button class="size ${k === sizeIx ? "on" : ""}" data-k="${k}">${tr(s.label)}</button>`).join("");
   document.querySelectorAll(".size").forEach((b) => (b.onclick = () => { sizeIx = +b.dataset.k; document.querySelectorAll(".size").forEach((x) => x.classList.toggle("on", x === b)); rebuild(false); }));
   $("distSlider").oninput = () => rebuild(false);
   $("labNew").onclick = () => rebuild(true);
   $("labReveal").onclick = () => reveal(null);
-  $("labBase").textContent = `${base.name} is ${base.distance_au} au from the Sun`;
+  $("labBase").textContent = t`${base.name} is ${base.distance_au} au from the Sun`;
   rebuild(true);
 }).catch(() => {});   // app.js reports a failed load

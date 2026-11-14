@@ -144,4 +144,5 @@ body.grey .thumb { filter: none; }
 #labOut { padding-left: 1.2em; }
 #lab .detail { margin-top: 10px; }
 @media (max-width: 760px) { .top .brand { font-size: .95rem; gap: 6px; } .top button { padding: 10px 6px; font-size: .9rem; } }
-@media (max-width: 380px) { .top .brand { font-size: 0; } }
+.top .lang { border: 1px solid var(--line); color: var(--accent); font-weight: 700; margin-left: 4px; }
+@media (max-width: 520px) { .top .brand { font-size: 0; gap: 0; padding-right: 0; } .top { gap: 2px; } }
