@@ -18,9 +18,11 @@ def measure(arr, x, y):
     """(snr, clean): peak near x,y against robust background noise; clean=False if data is missing there."""
     ix, iy = round(x), round(y)
     box = arr[iy - 3:iy + 4, ix - 3:ix + 4]
-    if box.shape != (7, 7) or np.isnan(box).any(): return 0.0, False
+    if box.shape != (7, 7) or np.isnan(box).all(): return 0.0, False
     bg = np.nanmedian(arr); noise = 1.4826 * np.nanmedian(np.abs(arr - bg))
-    return float((box[1:6, 1:6].max() - bg) / noise), True
+    snr = float((np.nanmax(box[1:6, 1:6]) - bg) / noise)
+    # Missing pixels are fine only where a very bright object overloaded the detector (its edge still shows, far above the noise).
+    return snr, not np.isnan(box).any() or snr > 200
 
 def build(t, obs):
     pairs = [(a, b) for a, b in itertools.combinations(obs, 2) if MIN_SEP <= sep_px(a, b) <= MAX_SEP]

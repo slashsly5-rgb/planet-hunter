@@ -1,5 +1,137 @@
 [
  {
+  "id": "uranus",
+  "name": "Uranus",
+  "kind": "ice giant planet",
+  "blurb": "The seventh planet, tipped on its side. It was the first planet found with a telescope, in 1781.",
+  "size": 484,
+  "arcsec_per_px": 1.5375,
+  "distance_au": 19.51,
+  "mag": 5.731,
+  "moved_arcsec": 135,
+  "days_between": 4.0,
+  "jpl_checked": true,
+  "frames": [
+   {
+    "img": "img/uranus_a.png",
+    "date": "2025-08-23T22:15:05",
+    "band": "D3",
+    "source": "dr1/level2/2025W34_2B/l2b-v27-2026-229/3/level2_2025W34_2B_0454_2D3_spx_l2b-v27-2026-229.fits",
+    "x": 205.1,
+    "y": 230.9,
+    "snr": 972.3
+   },
+   {
+    "img": "img/uranus_b.png",
+    "date": "2025-08-27T22:22:01",
+    "band": "D3",
+    "source": "dr1/level2/2025W35_1A/l2b-v27-2026-230/3/level2_2025W35_1A_0564_1D3_spx_l2b-v27-2026-230.fits",
+    "x": 118.9,
+    "y": 213.1,
+    "snr": 234.9
+   }
+  ]
+ },
+ {
+  "id": "ceres",
+  "name": "Ceres",
+  "kind": "dwarf planet in the asteroid belt",
+  "blurb": "The largest object between Mars and Jupiter, about 940 km across. NASA's Dawn spacecraft orbited it from 2015.",
+  "size": 484,
+  "arcsec_per_px": 1.5375,
+  "distance_au": 2.97,
+  "mag": 8.991,
+  "moved_arcsec": 143,
+  "days_between": 0.2,
+  "jpl_checked": true,
+  "frames": [
+   {
+    "img": "img/ceres_a.png",
+    "date": "2025-07-03T02:15:08",
+    "band": "D2",
+    "source": "dr1/level2/2025W27_1A/l2b-v27-2026-214/2/level2_2025W27_1A_0591_4D2_spx_l2b-v27-2026-214.fits",
+    "x": 212.1,
+    "y": 316.2,
+    "snr": 25752.1
+   },
+   {
+    "img": "img/ceres_b.png",
+    "date": "2025-07-03T07:02:56",
+    "band": "D2",
+    "source": "dr1/level2/2025W27_1A/l2b-v27-2026-214/2/level2_2025W27_1A_0632_1D2_spx_l2b-v27-2026-214.fits",
+    "x": 119.9,
+    "y": 303.8,
+    "snr": 20615.9
+   }
+  ]
+ },
+ {
+  "id": "juno",
+  "name": "Juno",
+  "kind": "asteroid",
+  "blurb": "The third asteroid ever discovered, found in 1804.",
+  "size": 484,
+  "arcsec_per_px": 1.5375,
+  "distance_au": 3.0,
+  "mag": 10.601,
+  "moved_arcsec": 135,
+  "days_between": 0.2,
+  "jpl_checked": true,
+  "frames": [
+   {
+    "img": "img/juno_a.png",
+    "date": "2026-04-29T14:04:08",
+    "band": "D3",
+    "source": "dr1/level2/2026W18_1A/l2b-v27-2026-244/3/level2_2026W18_1A_0534_2D3_spx_l2b-v27-2026-244.fits",
+    "x": 245.0,
+    "y": 250.3,
+    "snr": 4381.2
+   },
+   {
+    "img": "img/juno_b.png",
+    "date": "2026-04-29T18:57:24",
+    "band": "D3",
+    "source": "dr1/level2/2026W18_1A/l2b-v27-2026-244/3/level2_2026W18_1A_0575_1D3_spx_l2b-v27-2026-244.fits",
+    "x": 167.0,
+    "y": 209.7,
+    "snr": 3649.7
+   }
+  ]
+ },
+ {
+  "id": "hygiea",
+  "name": "Hygiea",
+  "kind": "asteroid",
+  "blurb": "The fourth-largest object in the asteroid belt, about 430 km across, and very dark.",
+  "size": 484,
+  "arcsec_per_px": 1.5375,
+  "distance_au": 3.46,
+  "mag": 11.809,
+  "moved_arcsec": 129,
+  "days_between": 0.27,
+  "jpl_checked": true,
+  "frames": [
+   {
+    "img": "img/hygiea_a.png",
+    "date": "2025-09-30T19:51:49",
+    "band": "D3",
+    "source": "dr1/level2/2025W40_1A/l2b-v27-2026-239/3/level2_2025W40_1A_0404_1D3_spx_l2b-v27-2026-239.fits",
+    "x": 251.8,
+    "y": 143.8,
+    "snr": 651.3
+   },
+   {
+    "img": "img/hygiea_b.png",
+    "date": "2025-10-01T02:25:28",
+    "band": "D3",
+    "source": "dr1/level2/2025W40_1A/l2b-v27-2026-239/3/level2_2025W40_1A_0464_3D3_spx_l2b-v27-2026-239.fits",
+    "x": 168.2,
+    "y": 148.2,
+    "snr": 465.3
+   }
+  ]
+ },
+ {
   "id": "pluto",
   "name": "Pluto",
   "kind": "dwarf planet",

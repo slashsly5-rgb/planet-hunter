@@ -84,7 +84,7 @@ function finish() {
   const far = levels.reduce((m, l) => (l.distance_au > m.distance_au ? l : m));
   $("planetx").textContent =
     `The slowest object you hunted, ${slow.name}, crept only about ${Math.round(slow.moved_arcsec / slow.days_between)} arcseconds a day. ` +
-    `The farthest, ${far.name}, is ${Math.round(far.distance_au)} times as far from the Sun as Earth. ` +
+    `${far === slow ? "It" : `The farthest, ${far.name},`} is ${Math.round(far.distance_au)} times as far from the Sun as Earth. ` +
     `If a "Planet X" exists, astronomers think it could be hundreds of times as far as Earth: much fainter, and moving much more slowly still. ` +
     `That is why nobody has found it yet.`;
   show("end");
