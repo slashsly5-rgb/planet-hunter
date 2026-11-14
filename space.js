@@ -157,6 +157,7 @@ export async function initSpace(levels, actions) {
     }
   }
   place(); setPlaying(true); requestAnimationFrame(frame);
+  stage.classList.add("ready");
   window.__space = { select: (id) => select(worlds.find((w) => w.L.id === id)), px: () => $("pxBtn").click() };   // used by the browser check
   return true;
 }

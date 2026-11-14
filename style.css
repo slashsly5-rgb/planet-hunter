@@ -193,3 +193,7 @@ button.slabel.world:hover, .slabel.world.on { border-color: var(--c); background
 .stackview canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
 .space.mid .slabel.inner:not(.on) { opacity: 0 !important; pointer-events: none !important; }
 .world-panel .viewer { max-width: 290px; }
+.space-loading { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; padding: 12px 20px; border-radius: 999px; background: #070b18d9; border: 1px solid var(--line); color: var(--accent); font-weight: 600; animation: breathe 1.4s ease-in-out infinite; }
+@keyframes breathe { 50% { opacity: .45; } }
+.space.ready .space-loading, .space.no3d .space-loading { display: none; }
+.space:not(.ready) .space-worlds, .space:not(.ready) .space-time { visibility: hidden; }

@@ -167,6 +167,7 @@ export const MS = {
   "This browser cannot show the 3D view. Use Hunt and Explore above.": "Pelayar ini tidak dapat memaparkan paparan 3D. Gunakan Buru dan Teroka di atas.",
   "3D time stack": "Timbunan masa 3D",
   "Drag to rotate, scroll to zoom": "Seret untuk memutar, tatal untuk zum",
+  "Loading the 3D Solar System…": "Memuatkan Sistem Suria 3D…",
   "Sun": "Matahari",
   "Saturn": "Zuhal",
   "Planet X? Somewhere out here (hypothetical)": "Planet X? Di sekitar sini (hipotesis)",

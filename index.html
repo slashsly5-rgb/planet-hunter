@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Planet Hunter: see the sky move in real SPHEREx images</title>
 <meta name="description" content="Watch real NASA SPHEREx images change over time. Spot the worlds that move, play back their paths, and learn how Planet X could be found.">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=3">
+<link rel="modulepreload" href="vendor/three.module.min.js">
 </head>
 <body>
 
@@ -38,6 +39,7 @@
   <div id="space" class="space">
     <div class="space-canvas"></div>
     <div class="labels"></div>
+    <p class="space-loading">Loading the 3D Solar System…</p>
 
     <div class="space-title">
       <p class="eyebrow">Real images from NASA's SPHEREx space telescope</p>
@@ -241,6 +243,6 @@
 </section>
 </main>
 
-<script type="module" src="app.js"></script>
+<script type="module" src="app.js?v=3"></script>
 </body>
 </html>
