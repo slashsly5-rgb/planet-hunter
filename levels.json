@@ -991,5 +991,116 @@
    "band": "D3",
    "source": "dr1/level2/2026W01_1A/l2b-v27-2026-211/3/level2_2026W01_1A_0455_1D3_spx_l2b-v27-2026-211.fits"
   }
+ },
+ {
+  "id": "haumea",
+  "name": "Haumea",
+  "kind": "dwarf planet",
+  "blurb": "An egg-shaped world beyond Neptune that spins once every four hours and has a ring.",
+  "size": 484,
+  "arcsec_per_px": 1.5375,
+  "distance_au": 49.87,
+  "mag": 17.262,
+  "moved_arcsec": 137,
+  "days_between": 3.73,
+  "jpl_checked": true,
+  "frames": [
+   {
+    "img": "img/haumea_a.png",
+    "date": "2025-06-25T23:41:43",
+    "band": "D1",
+    "source": "dr1/level2/2025W26_1A/l2b-v27-2026-213/1/level2_2025W26_1A_0577_3D1_spx_l2b-v27-2026-213.fits",
+    "x": 121.8,
+    "y": 304.2,
+    "snr": 11.2
+   },
+   {
+    "img": "img/haumea_b.png",
+    "date": "2025-06-29T17:16:14",
+    "band": "D1",
+    "source": "dr1/level2/2025W26_2A/l2b-v27-2026-214/1/level2_2025W26_2A_0628_1D1_spx_l2b-v27-2026-214.fits",
+    "x": 194.2,
+    "y": 355.8,
+    "snr": 19.5
+   }
+  ],
+  "track": [
+   {
+    "img": "img/haumea_t0.png",
+    "date": "2025-06-23T12:54:51",
+    "band": "D2",
+    "source": "dr1/level2/2025W26_1A/l2b-v27-2026-213/2/level2_2025W26_1A_0145_1D2_spx_l2b-v27-2026-213.fits",
+    "ra": 218.60315,
+    "dec": 14.97851,
+    "x": 69.7,
+    "y": 273.3,
+    "snr": 16.9
+   },
+   {
+    "img": "img/haumea_t1.png",
+    "date": "2025-06-25T08:57:35",
+    "band": "D2",
+    "source": "dr1/level2/2025W26_1A/l2b-v27-2026-213/2/level2_2025W26_1A_0469_1D2_spx_l2b-v27-2026-213.fits",
+    "ra": 218.58574,
+    "dec": 14.96873,
+    "x": 109.1,
+    "y": 296.2,
+    "snr": 18.8
+   },
+   {
+    "img": "img/haumea_t2.png",
+    "date": "2025-06-25T12:13:00",
+    "band": "D2",
+    "source": "dr1/level2/2025W26_1A/l2b-v27-2026-213/2/level2_2025W26_1A_0495_1D2_spx_l2b-v27-2026-213.fits",
+    "ra": 218.58449,
+    "dec": 14.96798,
+    "x": 111.9,
+    "y": 298.0,
+    "snr": 13.2
+   },
+   {
+    "img": "img/haumea_t3.png",
+    "date": "2025-06-25T17:06:08",
+    "band": "D1",
+    "source": "dr1/level2/2025W26_1A/l2b-v27-2026-213/1/level2_2025W26_1A_0529_1D1_spx_l2b-v27-2026-213.fits",
+    "ra": 218.58262,
+    "dec": 14.96686,
+    "x": 116.2,
+    "y": 300.6,
+    "snr": 5.3
+   },
+   {
+    "img": "img/haumea_t4.png",
+    "date": "2025-06-25T23:41:43",
+    "band": "D1",
+    "source": "dr1/level2/2025W26_1A/l2b-v27-2026-213/1/level2_2025W26_1A_0577_3D1_spx_l2b-v27-2026-213.fits",
+    "ra": 218.58012,
+    "dec": 14.96533,
+    "x": 121.8,
+    "y": 304.2,
+    "snr": 11.2
+   },
+   {
+    "img": "img/haumea_t5.png",
+    "date": "2025-06-29T17:16:14",
+    "band": "D1",
+    "source": "dr1/level2/2025W26_2A/l2b-v27-2026-214/1/level2_2025W26_2A_0628_1D1_spx_l2b-v27-2026-214.fits",
+    "ra": 218.54813,
+    "dec": 14.94331,
+    "x": 194.2,
+    "y": 355.8,
+    "snr": 19.5
+   }
+  ],
+  "center": {
+   "ra": 218.52699,
+   "dec": 14.9919
+  },
+  "other_pass": {
+   "img": "img/haumea_pass.png",
+   "date": "2026-01-16T22:27:21",
+   "band": "D2",
+   "source": "dr1/level2/2026W03_2A/l2b-v27-2026-216/2/level2_2026W03_2A_0289_1D2_spx_l2b-v27-2026-216.fits"
+  }
  }
 ]
