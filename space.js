@@ -4,6 +4,7 @@ import { OrbitControls } from "./vendor/OrbitControls.js";
 import { $, Viewer, fmtDate } from "./viewer.js";
 import { t, tr } from "./i18n.js";
 import { irTexture } from "./irtex.js";
+import { composite } from "./colour.js";
 
 const v3 = ([x, y, z]) => new THREE.Vector3(x, z, -y);   // ecliptic x,y,z (au) → scene, with y up
 const COLORS = ["#8ab4ff", "#ffb547", "#6fe3ff", "#f7e26b", "#ff9a5c", "#c79bff", "#b6ff8a", "#ff6f91", "#7dffcf", "#ffd1dc"];
@@ -137,7 +138,7 @@ export async function initSpace(levels, actions) {
 
   // the picture panel
   const view = new Viewer($("worldView"));
-  view.onFrame = (i) => { if (sel) { win.material.map = tex(sel.frames[i].img); win.material.needsUpdate = true; } };
+  view.onFrame = (i) => { if (sel && !sel.rgb) { win.material.map = tex(sel.frames[i].img); win.material.needsUpdate = true; } };
   function select(w) {
     sel = w; const L = w.L;
     tt = Math.min(N - 1, Math.max(0, w.when)); setPlaying(false);
@@ -148,7 +149,13 @@ export async function initSpace(levels, actions) {
     $("worldBlurb").textContent = tr(L.blurb);
     const first = w.frames[0], last = w.frames[w.frames.length - 1];
     $("worldSaw").textContent = t`The white line is where SPHEREx was looking. It took these ${w.frames.length} real pictures between ${fmtDate(first.date)} and ${fmtDate(last.date)}.`;
-    beam.visible = win.visible = true; win.material.map = tex(first.img);
+    beam.visible = win.visible = true; win.material.map = w.rgb || tex(first.img);
+    // the floating window shows the three-colour picture once it is ready; the side panel keeps blinking the single images
+    if (!w.rgb) composite(L).then((r) => {
+      if (!r) return;
+      w.rgb = new THREE.TextureLoader().load(r.url, () => { if (sel === w) { win.material.map = w.rgb; win.material.needsUpdate = true; } });
+      w.rgb.colorSpace = THREE.SRGBColorSpace;
+    }).catch(() => {});
     view.load(w.frames, L.size).then(() => { view.pair = [0, w.frames.length - 1]; view.setMode("blink"); view.mark(""); });
     place();
     const p = w.marker.position, r = Math.max(4, p.length());

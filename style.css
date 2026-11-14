@@ -249,3 +249,4 @@ line.det.mv { stroke-dasharray: 5 5; }
 /* three-colour pictures are shown as they are, without the infrared tint */
 .viewer.nofilter img { filter: none; }
 .thumb.rgb { filter: none; }
+.world-panel .viewer .tag { display: none; }
