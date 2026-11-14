@@ -40,6 +40,8 @@
     <div class="space-canvas"></div>
     <div class="labels"></div>
     <p class="space-loading">Loading the 3D Solar System…</p>
+    <div class="frame-hud" aria-hidden="true"><i class="hb tl"></i><i class="hb tr"></i><i class="hb bl"></i><i class="hb br"></i></div>
+    <p class="hud-strip">Mission control · SPHEREx all-sky survey · orbits from NASA JPL Horizons</p>
 
     <div class="space-title">
       <p class="eyebrow">Real images from NASA's SPHEREx space telescope</p>
@@ -66,6 +68,10 @@
       <div id="worldView"></div>
       <p id="worldBlurb"></p>
       <p id="worldSaw" class="note"></p>
+      <dl class="telemetry">
+        <dt>Distance from Earth</dt><dd id="teleDist"></dd>
+        <dt>Its light reaches us in</dt><dd id="teleLight"></dd>
+      </dl>
       <p id="worldAngle" class="note"></p>
       <div class="cta">
         <button id="worldStack" class="primary">See it in 3D time</button>

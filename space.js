@@ -7,6 +7,7 @@ import { irTexture } from "./irtex.js";
 
 const v3 = ([x, y, z]) => new THREE.Vector3(x, z, -y);   // ecliptic x,y,z (au) → scene, with y up
 const COLORS = ["#8ab4ff", "#ffb547", "#6fe3ff", "#f7e26b", "#ff9a5c", "#c79bff", "#b6ff8a", "#ff6f91", "#7dffcf", "#ffd1dc"];
+const TRAIL = 30, TRAIL_STEP = 1.2;   // trail: 30 points, 1.2 timeline steps (6 days) apart
 const DAY = 864e5, HOME = { cam: [0, 46, 74], look: [0, 0, 0] };
 
 function dotTexture(color) {
@@ -33,11 +34,18 @@ export async function initSpace(levels, actions) {
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true; controls.minDistance = 0.4; controls.maxDistance = 9000;
 
-  // background stars (decoration only, not real star positions)
-  const far = new Float32Array(1800 * 3);
-  for (let i = 0; i < 1800; i++) new THREE.Vector3().randomDirection().multiplyScalar(20000).toArray(far, i * 3);
-  const starGeo = new THREE.BufferGeometry(); starGeo.setAttribute("position", new THREE.BufferAttribute(far, 3));
-  scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0x9fb0ff, size: 1.4, sizeAttenuation: false, transparent: true, opacity: 0.7 })));
+  // backdrop (decoration only, not real star positions): three layers of stars that drift at different speeds, and soft nebula glow
+  const skies = [[2600, 0x8d9fe8, 1.1, 0.55, 0.004], [700, 0xcfe0ff, 1.9, 0.8, 0.007], [90, 0xffe2b8, 3.2, 1, 0.011]].map(([count, color, size, opacity, spin]) => {
+    const pos = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) new THREE.Vector3().randomDirection().multiplyScalar(20000).toArray(pos, i * 3);
+    const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    const pts = new THREE.Points(g, new THREE.PointsMaterial({ color, size, sizeAttenuation: false, transparent: true, opacity, depthWrite: false }));
+    pts.userData.spin = spin; scene.add(pts); return pts;
+  });
+  for (const [color, x, y, z, s] of [["#5b2a9a", -9000, 3000, -12000, 17000], ["#12508a", 11000, -2000, -9000, 15000], ["#0f6a70", 2000, 6000, 13000, 14000], ["#8a2a5a", -12000, -4000, 8000, 13000]]) {
+    const n = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTexture(color), transparent: true, opacity: 0.2, depthWrite: false, blending: THREE.AdditiveBlending }));
+    n.position.set(x, y, z); n.scale.setScalar(s); scene.add(n);
+  }
 
   // labels: HTML elements pinned to 3D points
   const labels = [];
@@ -49,7 +57,11 @@ export async function initSpace(levels, actions) {
 
   // Sun, planets, Earth
   const sun = dot("#ffd66b", 0.05); scene.add(sun); label(tr("Sun"), () => sun.position, "dim");
-  for (const p of data.planets) scene.add(line(p.path.map(v3), 0x3a4670, 0.8));
+  const corona = [0.07, 0.12].map((size, k) => {
+    const c = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTexture(k ? "#ff8a3c" : "#ffc65c"), sizeAttenuation: false, depthTest: false, transparent: true, opacity: k ? 0.25 : 0.45, blending: THREE.AdditiveBlending }));
+    c.userData.size = size; scene.add(c); return c;
+  });
+  for (const p of data.planets) scene.add(line(p.path.map(v3), 0x3a4670, 0.55));
   for (const name of ["Jupiter", "Saturn"]) { const p = data.planets.find((q) => q.name === name), at = v3(p.path[0]); label(tr(name), () => at, "dim"); }
   scene.add(line(data.earth.path.map(v3), 0x4d7cff));
   const earth = dot("#4d9bff", 0.022); scene.add(earth); label(tr("Earth"), () => earth.position, "earth");
@@ -57,9 +69,15 @@ export async function initSpace(levels, actions) {
   // the worlds SPHEREx photographed
   const worlds = levels.map((L, k) => {
     const o = data.objects[L.id], color = COLORS[k % COLORS.length], marker = dot(color, 0.026);
-    scene.add(line(o.path.map(v3), color, 0.75), marker);
+    scene.add(line(o.path.map(v3), color, 0.38), marker);
+    // glowing trail behind the world: bright at the head, fading to nothing
+    const tg = new THREE.BufferGeometry(), tcol = new Float32Array(TRAIL * 3), c3 = new THREE.Color(color);
+    for (let i = 0; i < TRAIL; i++) { const f = (i / (TRAIL - 1)) ** 2; tcol.set([c3.r * f, c3.g * f, c3.b * f], i * 3); }
+    tg.setAttribute("position", new THREE.BufferAttribute(new Float32Array(TRAIL * 3), 3)); tg.setAttribute("color", new THREE.BufferAttribute(tcol, 3));
+    const trail = new THREE.Line(tg, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+    trail.frustumCulled = false; scene.add(trail);
     const frames = L.track?.length > 1 ? L.track : L.frames;
-    const w = { L, o, color, marker, frames, when: (Date.parse(frames[0].date + "Z") - startMs) / (data.step_days * DAY) };
+    const w = { L, o, color, marker, frames, trail, when: (Date.parse(frames[0].date + "Z") - startMs) / (data.step_days * DAY) };
     w.label = label(L.name, () => marker.position, L.distance_au < 6 ? "world inner" : "world", () => select(w));
     w.label.style.setProperty("--c", color);
     return w;
@@ -74,7 +92,17 @@ export async function initSpace(levels, actions) {
   // line of sight from Earth to the chosen world, and the SPHEREx picture as a window beside it
   const beam = line([new THREE.Vector3(), new THREE.Vector3()], 0xffffff, 0.9); beam.visible = false; scene.add(beam);
   const win = new THREE.Sprite(new THREE.SpriteMaterial({ sizeAttenuation: false, depthTest: false }));
-  win.scale.setScalar(0.17); win.center.set(1.12, -0.12);   // up and to the left of the world, clear of the side panel win.visible = false; scene.add(win);
+  win.scale.setScalar(0.17); win.center.set(1.12, -0.12);   // up and to the left of the world, clear of the side panel
+  win.visible = false; scene.add(win);
+
+  // SPHEREx near Earth: it sweeps a circle of sky at right angles to the Sun (drawn much larger than life so it can be seen)
+  const fanGeo = new THREE.BufferGeometry(), fanPts = [0, 0, 0];
+  for (let i = 0; i <= 8; i++) { const a = (i / 8 - 0.5) * 0.16; fanPts.push(Math.cos(a), Math.sin(a), 0); }
+  fanGeo.setAttribute("position", new THREE.Float32BufferAttribute(fanPts, 3)); fanGeo.setIndex(Array.from({ length: 8 }, (_, i) => [0, i + 1, i + 2]).flat());
+  const scan = new THREE.Group(), fan = new THREE.Mesh(fanGeo, new THREE.MeshBasicMaterial({ color: 0x6fe3ff, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }));
+  const scanRing = line(Array.from({ length: 97 }, (_, i) => new THREE.Vector3(Math.cos(i / 96 * 6.2832), Math.sin(i / 96 * 6.2832), 0)), 0x6fe3ff, 0.28);
+  scan.add(fan, scanRing); scene.add(scan);
+  const scanTip = new THREE.Vector3(); label(tr("SPHEREx scanning"), () => scanTip, "scan");
   const texOf = new Map();
   const tex = (src) => texOf.get(src) || (texOf.set(src, irTexture(src)), texOf.get(src));
 
@@ -84,12 +112,20 @@ export async function initSpace(levels, actions) {
   const isoAt = (x) => new Date(startMs + x * data.step_days * DAY).toISOString().slice(0, 19);
   function place() {
     earth.position.copy(at(data.earth.track, tt));
-    for (const w of worlds) w.marker.position.copy(at(w.o.track, tt));
+    for (const w of worlds) {
+      w.marker.position.copy(at(w.o.track, tt));
+      const pos = w.trail.geometry.attributes.position;
+      for (let i = 0; i < TRAIL; i++) { const q = at(w.o.track, Math.max(0, tt - (TRAIL - 1 - i) * TRAIL_STEP)); pos.setXYZ(i, q.x, q.y, q.z); }
+      pos.needsUpdate = true;
+    }
     $("timeLabel").textContent = fmtDate(isoAt(tt)); $("timeSlider").value = Math.round(tt);
     if (sel) {
       beam.geometry.setFromPoints([earth.position, sel.marker.position]); win.position.copy(sel.marker.position);
       const toSun = earth.position.clone().negate(), toObj = sel.marker.position.clone().sub(earth.position);
       $("worldAngle").textContent = t`Right now it is ${Math.round(THREE.MathUtils.radToDeg(toSun.angleTo(toObj)))}° away from the Sun in Earth's sky.`;
+      const au = toObj.length(), minutes = au * 8.317;   // light crosses 1 au in 8.317 minutes
+      $("teleDist").textContent = `${au.toFixed(2)} au`;
+      $("teleLight").textContent = minutes < 90 ? t`${Math.round(minutes)} minutes` : t`${(minutes / 60).toFixed(1)} hours`;
     }
   }
   $("timeSlider").max = N - 1;
@@ -97,7 +133,7 @@ export async function initSpace(levels, actions) {
   const setPlaying = (on) => { playing = on; $("playBtn").textContent = on ? tr("Pause") : tr("Play"); };
   $("playBtn").onclick = () => setPlaying(!playing);
 
-  function flyTo(cam, look) { fly = { t0: performance.now(), c0: camera.position.clone(), l0: controls.target.clone(), c1: new THREE.Vector3(...cam), l1: new THREE.Vector3(...look) }; }
+  function flyTo(cam, look, ms = 1500) { fly = { ms, t0: performance.now(), c0: camera.position.clone(), l0: controls.target.clone(), c1: new THREE.Vector3(...cam), l1: new THREE.Vector3(...look) }; }
 
   // the picture panel
   const view = new Viewer($("worldView"));
@@ -142,10 +178,18 @@ export async function initSpace(levels, actions) {
     const dt = Math.min(0.1, (now - last) / 1000); last = now;
     if (playing) { tt += dt * 10; if (tt > N - 1) tt = 0; place(); }
     if (fly) {
-      const k = Math.min(1, (now - fly.t0) / 1500), e = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
+      const k = Math.min(1, (now - fly.t0) / fly.ms), e = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
       camera.position.lerpVectors(fly.c0, fly.c1, e); controls.target.lerpVectors(fly.l0, fly.l1, e);
-      if (k === 1) fly = null;
+      if (k === 1) { fly = null; stage.classList.remove("intro"); }
     }
+    // living scene: drifting star layers, breathing Sun, sweeping SPHEREx scan
+    for (const s of skies) s.rotation.y += s.userData.spin * dt;
+    const pulse = 1 + 0.07 * Math.sin(now / 520);
+    corona.forEach((c) => c.scale.setScalar(c.userData.size * pulse));
+    const reach = THREE.MathUtils.clamp(camera.position.distanceTo(earth.position) * 0.13, 0.3, 26);
+    scan.position.copy(earth.position); scan.lookAt(0, 0, 0); scan.scale.setScalar(reach);
+    fan.rotation.z = now / 900;
+    scanTip.set(Math.cos(fan.rotation.z), Math.sin(fan.rotation.z), 0).multiplyScalar(reach).applyQuaternion(scan.quaternion).add(earth.position);
     controls.update(); renderer.render(scene, camera);
     const w = holder.clientWidth, h = holder.clientHeight, far = camera.position.distanceTo(controls.target);
     stage.classList.toggle("mid", far > 14); stage.classList.toggle("wide", far > 55); stage.classList.toggle("deep", far > 400);
@@ -157,7 +201,11 @@ export async function initSpace(levels, actions) {
     }
   }
   place(); setPlaying(true); requestAnimationFrame(frame);
-  stage.classList.add("ready");
+  stage.classList.add("ready", "intro");
+  // opening shot: start far out, where a Planet X might be, and sweep in. Any click or scroll takes over.
+  camera.position.set(-500, 1100, 1900); flyTo(HOME.cam, HOME.look, 7000);
+  const skip = () => { if (stage.classList.contains("intro")) { fly = null; stage.classList.remove("intro"); } };
+  renderer.domElement.addEventListener("pointerdown", skip); renderer.domElement.addEventListener("wheel", skip, { passive: true });
   window.__space = { select: (id) => select(worlds.find((w) => w.L.id === id)), px: () => $("pxBtn").click() };   // used by the browser check
   return true;
 }
