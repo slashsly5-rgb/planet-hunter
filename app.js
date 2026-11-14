@@ -5,6 +5,7 @@ import { initSpace } from "./space.js";
 import { showStack, hideStack } from "./stack3d.js";
 import { initHunt } from "./hunt.js";
 import { detect, judge, overlay } from "./detect.js";
+import { composite, colourMarks } from "./colour.js";
 
 // ---------- state ----------
 let levels = [], hunt = null;
@@ -31,14 +32,17 @@ function drawGrid() {
     return `<button class="cardlink" data-k="${k}"><span class="thumb" style="display:block;background-image:url(${f.img});background-position:${pos(f.x)}% ${pos(f.y)}%"></span>
       <span class="meta"><b>${L.name}</b><span>${tr(L.kind)}</span><span>${t`${L.distance_au} au from the Sun · ${(L.track || L.frames).length} images`}</span></span></button>`;
   }).join("");
-  document.querySelectorAll(".cardlink").forEach((b) => (b.onclick = () => openObject(levels[b.dataset.k])));
+  document.querySelectorAll(".cardlink").forEach((b) => {
+    b.onclick = () => openObject(levels[b.dataset.k]);
+    composite(levels[b.dataset.k]).then((rgb) => { if (rgb) { const th = b.querySelector(".thumb"); th.style.backgroundImage = `url(${rgb.url})`; th.classList.add("rgb"); } }).catch(() => {});
+  });
 }
 function exFrames() { return exLevel.track?.length > 1 ? exLevel.track : exLevel.frames; }
 const tip = (html) => { $("exTip").innerHTML = html; $("exTip").hidden = !html; };
 async function exMode(m) {
   document.querySelectorAll(".exmode").forEach((b) => b.classList.toggle("on", b.dataset.exmode === m));
   const stack = m === "stack";
-  $("exPause").hidden = m === "diff" || stack; $("scrub").hidden = m !== "play";
+  $("exPause").hidden = m === "diff" || stack || m === "rgb"; $("scrub").hidden = m !== "play";
   measure = null; ex.root.classList.remove("tappable"); tip("");
   ex.root.hidden = stack;
   if (stack) {
@@ -47,9 +51,13 @@ async function exMode(m) {
     return;
   }
   hideStack();
-  const L = exLevel, pass = m === "pass", scan = m === "scan", want = pass ? [exFrames()[0], L.other_pass] : scan ? L.frames : exFrames();
+  const L = exLevel, pass = m === "pass", scan = m === "scan", rgb = m === "rgb" ? await composite(L) : null;
+  if (m === "rgb" && !rgb) return exMode("play");          // fewer than three images: nothing to combine
+  ex.root.classList.toggle("nofilter", !!rgb);             // the three-colour picture is shown as it is, without the infrared tint
+  if (rgb && !rgb.frames) rgb.frames = [{ img: rgb.url, date: rgb.channels[0].frame.date, band: rgb.channels.map((ch) => ch.frame.band).join(" + "), combined: true }];
+  const want = rgb ? rgb.frames : pass ? [exFrames()[0], L.other_pass] : scan ? L.frames : exFrames();
   scanSvg = null;
-  if (ex.frames !== want && ex.frames[1] !== want[1]) await guard(ex.load(want, L.size));   // swap between the time-lapse, the six-month pair and the scan pair
+  if (ex.frames !== want && (ex.frames[1] !== want[1] || ex.frames.length !== want.length)) await guard(ex.load(want, L.size));   // swap between the time-lapse, the six-month pair and the scan pair
   if (scan) {
     const r = detect(ex.els[0], ex.els[1], L.size), j = judge(r, L.frames);
     scanSvg = overlay(r);
@@ -58,7 +66,15 @@ async function exMode(m) {
         : j.listed ? t`The real ${L.name} is on its list, but its top pick is a false alarm.`
         : t`It missed the real ${L.name} completely: too faint for this simple method. This is why people still check.`));
   }
-  ex.setMode(pass || scan ? "blink" : m);
+  if (rgb) {
+    scanSvg = colourMarks(rgb);
+    tip(rgb.channels.map((ch) => `<strong style="color:${ch.css}">${tr(ch.name)}</strong>: SPHEREx ${ch.frame.band}, ${BANDS[ch.frame.band]} µm, ${fmtDate(ch.frame.date)}, ${fmtTime(ch.frame.date)}`).join("<br>") + "<br>" +
+      (rgb.bands > 1 ? tr("Three real images, one per colour. Stars are in all three, so their colour shows how bright they are at each infrared wavelength.")
+        : tr("Three real images at the same wavelength, one per colour. Stars are in all three, so they look white.")) + " " +
+      t`${L.name} moved between the images, so it appears three times, once in each colour (ringed).`);
+  }
+  ex.setMode(pass || scan ? "blink" : rgb ? "still" : m);
+  if (rgb) ex.show(0);
   if (m === "diff") ex.mark("");
   if (pass) {
     const then = fmtDate(want[0].date), other = fmtDate(L.other_pass.date);
@@ -93,7 +109,7 @@ ex.onTap = (p) => {
       tr("(An arcsecond is tiny: the full Moon is about 1,800 arcseconds wide.)"));
   measure = null; ex.root.classList.remove("tappable");
 };
-function openObject(L, mode = "play") {
+function openObject(L, mode = "rgb") {
   exLevel = L; go("explore");
   const frames = exFrames(), first = frames[0], last = frames[frames.length - 1];
   $("exploreList").hidden = true; $("exploreDetail").hidden = false;
@@ -110,6 +126,7 @@ function openObject(L, mode = "play") {
   ex.onFrame = (i) => {
     const f = ex.frames[i];
     if (measure) return;
+    if (f.combined) ex.dateEl.textContent = tr("three dates combined");
     if (scanSvg) {
       ex.mark(scanSvg);
     } else if (ex.frames !== frames) {               // the six-month pair: ring where the object was in the first image
@@ -119,9 +136,9 @@ function openObject(L, mode = "play") {
       ex.mark($("pathChk").checked ? pathSvg(frames, i) : "");
     }
     $("frameInfo").innerHTML = [
-      [tr("Taken"), `${fmtDate(f.date)}, ${fmtTime(f.date)}`],
-      [tr("Detector"), t`SPHEREx ${f.band}, ${BANDS[f.band]} micrometres (infrared)`],
-      [tr("Object position"), f.ra != null ? `RA ${f.ra}°, Dec ${f.dec}° (NASA JPL Horizons)` : f.snr ? tr("from NASA JPL Horizons") : tr("not in this image")],
+      [tr("Taken"), f.combined ? tr("three dates, listed under the picture") : `${fmtDate(f.date)}, ${fmtTime(f.date)}`],
+      [tr("Detector"), f.combined ? t`three images combined: SPHEREx ${f.band}` : t`SPHEREx ${f.band}, ${BANDS[f.band]} micrometres (infrared)`],
+      [tr("Object position"), f.combined ? tr("ringed once in each colour") : f.ra != null ? `RA ${f.ra}°, Dec ${f.dec}° (NASA JPL Horizons)` : f.snr ? tr("from NASA JPL Horizons") : tr("not in this image")],
       ...(f.snr ? [[tr("Detection"), t`${Math.round(f.snr)} times the background noise`]] : []),
       [tr("Original file"), `<a href="${ARCHIVE + f.source}" rel="noopener">${tr("NASA/IPAC archive (FITS, about 65 MB)")}</a>`],
     ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");

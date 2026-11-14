@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Planet Hunter: see the sky move in real SPHEREx images</title>
 <meta name="description" content="Watch real NASA SPHEREx images change over time. Spot the worlds that move, play back their paths, and learn how Planet X could be found.">
-<link rel="stylesheet" href="style.css?v=6">
+<link rel="stylesheet" href="style.css?v=7">
 <link rel="modulepreload" href="vendor/three.module.min.js">
 </head>
 <body>
@@ -170,7 +170,8 @@
       <div>
         <div class="stagewrap"><div id="exView"></div><div id="stackView" class="stackview" hidden></div></div>
         <div class="controls">
-          <button data-exmode="play" class="exmode on">Time-lapse</button>
+          <button data-exmode="rgb" class="exmode on">Three-colour</button>
+          <button data-exmode="play" class="exmode">Time-lapse</button>
           <button data-exmode="blink" class="exmode">Blink first / last</button>
           <button data-exmode="diff" class="exmode">Difference</button>
           <button data-exmode="stack" class="exmode">3D time stack</button>
@@ -249,6 +250,9 @@
   <p>The orange and purple colours are false colour: brightness shown as colour. Switch it off in Explore to see the plain greyscale images. Small specks that appear in only one image are cosmic rays hitting the detector, not objects.</p>
   <p>In the 3D Solar System, the orbits and positions are real, from NASA JPL Horizons. The small background stars there are decoration, and the pink ring marking where a Planet X might be is hypothetical.</p>
 
+  <h2>Three-colour pictures</h2>
+  <p>The three-colour view combines three real SPHEREx images of the same patch, taken at different times and usually at different infrared wavelengths, as red, green and blue. Longer wavelengths are shown redder. Stars are in all three images, so their colour reflects how bright they are at each wavelength. A moving world is in a different place each time, so it appears three times, once in each colour. Each image's brightness is scaled separately, so the colours are a guide, not a measurement.</p>
+
   <h2>The hunt and the automatic detector</h2>
   <p>Each hunt mission has three steps taken from real astronomy: detect the object, predict where it will be in a third real image, and classify it by how fast it moves. The last two missions are Planet X drills: a made-up planet placed into real images, always labelled as simulated.</p>
   <p>The "Computer scan" is classic image processing, not machine learning: it subtracts one image from the other and flags what is left. On our ten real worlds its top pick is right for seven. It is fooled by cosmic rays and it misses the two faintest, most distant worlds, which is exactly where a Planet X would be.</p>
@@ -268,6 +272,6 @@
 </section>
 </main>
 
-<script type="module" src="app.js?v=6"></script>
+<script type="module" src="app.js?v=7"></script>
 </body>
 </html>

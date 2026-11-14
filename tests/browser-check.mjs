@@ -105,6 +105,8 @@ const detector = await js(`(async () => { const { detect, judge } = await import
   for (const l of L) { const [a, b] = await Promise.all(l.frames.map((f) => load(f.img))); const r = detect(a, b, l.size), j = judge(r, l.frames);
     out.push(l.id + ": " + (j.found ? "FOUND" : j.listed ? "listed, not top" : "missed") + " (movers " + r.movers.length + ", single " + r.singles.length + ", changed " + r.changed.length + (j.top ? ", top " + j.top.confidence + "%" : "") + ")"); }
   return out; })()`);
+const colours = await js(`(async () => { const { composite } = await import("./colour.js"); const L = await (await fetch("levels.json")).json(); const out = [];
+  for (const l of L) { const r = await composite(l); out.push(l.id + ": " + (r ? r.channels.map((c) => c.name[0] + "=" + c.frame.band).join(" ") + ", " + r.bands + " band(s)" : "none")); } return out; })()`);
 const overflow = await js(`document.documentElement.scrollWidth > document.documentElement.clientWidth`);
-console.log(JSON.stringify({ results, score: await js(`document.querySelector("#scoreLine").textContent`), horizontalOverflow: overflow, has3d, detector, scanTip, vs: await js(`document.querySelector('#vsLine').textContent`), measured, lab, missing: await js(`[...window.__missing]`), errors }, null, 1));
+console.log(JSON.stringify({ results, score: await js(`document.querySelector("#scoreLine").textContent`), horizontalOverflow: overflow, has3d, colours, detector, scanTip, vs: await js(`document.querySelector('#vsLine').textContent`), measured, lab, missing: await js(`[...window.__missing]`), errors }, null, 1));
 ws.close(); proc.kill();

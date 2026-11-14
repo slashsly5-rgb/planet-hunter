@@ -245,3 +245,7 @@ button.slabel.world:hover, .slabel.world.on { border-color: var(--c); background
 .det { fill: none; stroke-width: 2.5; } .det.mv { stroke: #5ee6a8; } .det.one { stroke: #ffb547; stroke-dasharray: 4 3; } .det.chg { stroke: #8fa0c8; opacity: .7; stroke-width: 1.5; }
 line.det.mv { stroke-dasharray: 5 5; }
 .dett { fill: #5ee6a8; font: 700 15px ui-monospace, Consolas, monospace; paint-order: stroke; stroke: #000; stroke-width: 3px; }
+
+/* three-colour pictures are shown as they are, without the infrared tint */
+.viewer.nofilter img { filter: none; }
+.thumb.rgb { filter: none; }
