@@ -8,7 +8,7 @@ import { join } from "node:path";
 const [out = ".", W = "390", H = "844"] = process.argv.slice(2);
 const edge = "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe";
 const proc = spawn(edge, ["--headless=new", "--remote-debugging-port=9333", `--user-data-dir=${mkdtempSync(join(tmpdir(), "ph-"))}`,
-  `--window-size=${W},${H}`, "about:blank"], { stdio: "ignore" });
+  `--window-size=${W},${H}`, "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "about:blank"], { stdio: "ignore" });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 let targets;
@@ -34,6 +34,13 @@ await cdp("Page.navigate", { url: "http://localhost:8765/index.html" });
 await sleep(1500);
 if (process.env.PH_LANG) { await js(`localStorage.setItem("lang", ${JSON.stringify(process.env.PH_LANG)})`); await cdp("Page.reload"); await sleep(1500); }
 await shot("1-start.png");
+// 3D Solar System: fly to a world, then out to the Planet X zone, then back
+const has3d = await js(`!!window.__space`);
+if (has3d) {
+  await js(`window.__space.select("pluto")`); await sleep(3000); await shot("1b-world.png");
+  await js(`window.__space.px()`); await sleep(2500); await shot("1c-planetx.png");
+  await js(`document.querySelector("#homeBtn").click()`); await sleep(1800);
+}
 const levels = await js(`fetch("levels.json").then(r => r.json())`);
 await click(...(await centre("#startBtn")));
 await sleep(1200);
@@ -59,6 +66,10 @@ await js(`document.querySelector(".cardlink").click()`); await sleep(1800);
 await shot("6-object.png");
 await js(`window.scrollTo(0, 600)`); await sleep(300);
 await shot("7-object-info.png");
+// 3D time stack
+await js(`window.scrollTo(0, 0)`); await js(`document.querySelector('[data-exmode="stack"]').click()`); await sleep(3000);
+await shot("7b-stack.png");
+await js(`document.querySelector('[data-exmode="play"]').click()`); await sleep(1500);
 // six months apart
 await js(`window.scrollTo(0, 0)`); await js(`document.querySelector("#passBtn").click()`); await sleep(2500);
 await shot("8-six-months.png");
@@ -78,5 +89,5 @@ await js(`document.querySelector("#labOut").scrollIntoView({block:"center"})`); 
 await shot("12-lab-readout.png");
 const lab = await js(`document.querySelector("#labOut").textContent + " | " + document.querySelector("#labVerdict").textContent`);
 const overflow = await js(`document.documentElement.scrollWidth > document.documentElement.clientWidth`);
-console.log(JSON.stringify({ results, score: await js(`document.querySelector("#scoreLine").textContent`), horizontalOverflow: overflow, measured, lab, missing: await js(`[...window.__missing]`), errors }, null, 1));
+console.log(JSON.stringify({ results, score: await js(`document.querySelector("#scoreLine").textContent`), horizontalOverflow: overflow, has3d, measured, lab, missing: await js(`[...window.__missing]`), errors }, null, 1));
 ws.close(); proc.kill();

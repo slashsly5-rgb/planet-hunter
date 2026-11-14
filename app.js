@@ -2,12 +2,14 @@ import { isHit } from "./score.js";
 import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js";
 import { speedChart } from "./lab.js";
 import { t, tr } from "./i18n.js";
+import { initSpace } from "./space.js";
+import { showStack, hideStack } from "./stack3d.js";
 
 const HIT_RADIUS = 28;   // image pixels; forgiving enough for a fingertip
 
 // ---------- state ----------
 let levels = [], n = 0, results = [], answered = false;
-const demo = new Viewer($("demoView")), hunt = new Viewer($("huntView")), ex = new Viewer($("exView"));
+const hunt = new Viewer($("huntView")), ex = new Viewer($("exView"));
 hunt.root.classList.add("tappable");
 
 function fail(msg) { $("error").textContent = msg; $("error").hidden = false; }
@@ -16,8 +18,8 @@ const guard = (p) => p.catch(() => fail(tr("An image did not load. Check your co
 function go(view) {
   document.querySelectorAll(".view").forEach((s) => (s.hidden = s.id !== view));
   document.querySelectorAll(".top nav button").forEach((b) => b.classList.toggle("on", b.dataset.view === view));
-  demo.paused = view !== "home"; hunt.paused = view !== "hunt" || userPaused; ex.paused = view !== "explore" || exPaused;
-  if (view === "explore") showList();
+  hunt.paused = view !== "hunt" || userPaused; ex.paused = view !== "explore" || exPaused;
+  if (view === "explore") showList(); else hideStack();
   window.scrollTo(0, 0);
 }
 document.querySelectorAll("[data-view]").forEach((b) => (b.onclick = () => go(b.dataset.view)));
@@ -103,7 +105,7 @@ document.querySelectorAll(".mode").forEach((b) => (b.onclick = () => huntMode(b.
 
 // ---------- explore ----------
 let exLevel = null, exPaused = false;
-function showList() { $("exploreList").hidden = false; $("exploreDetail").hidden = true; ex.stop(); }
+function showList() { $("exploreList").hidden = false; $("exploreDetail").hidden = true; ex.stop(); hideStack(); }
 function drawGrid() {
   $("grid").innerHTML = levels.map((L, k) => {
     const f = L.frames[0], z = 3.3, pos = (v) => Math.max(0, Math.min(100, (((v / L.size) * z - 0.5) / (z - 1)) * 100));
@@ -116,8 +118,16 @@ function exFrames() { return exLevel.track?.length > 1 ? exLevel.track : exLevel
 const tip = (html) => { $("exTip").innerHTML = html; $("exTip").hidden = !html; };
 async function exMode(m) {
   document.querySelectorAll(".exmode").forEach((b) => b.classList.toggle("on", b.dataset.exmode === m));
-  $("exPause").hidden = m === "diff"; $("scrub").hidden = m !== "play";
+  const stack = m === "stack";
+  $("exPause").hidden = m === "diff" || stack; $("scrub").hidden = m !== "play";
   measure = null; ex.root.classList.remove("tappable"); tip("");
+  ex.root.hidden = stack;
+  if (stack) {
+    ex.stop(); showStack($("stackView"), exLevel, exFrames());
+    tip(t`Each sheet is one real SPHEREx image, and time runs upward. Stars do not move, so they line up into straight pillars. ${exLevel.name} moves, so it cuts a slanted line through them. Drag to turn it.`);
+    return;
+  }
+  hideStack();
   const L = exLevel, pass = m === "pass", want = pass ? [exFrames()[0], L.other_pass] : exFrames();
   if (ex.frames !== want && ex.frames[1] !== want[1]) await guard(ex.load(want, L.size));   // swap between the time-lapse and the six-month pair
   ex.setMode(pass ? "blink" : m);
@@ -155,8 +165,8 @@ ex.onTap = (p) => {
       tr("(An arcsecond is tiny: the full Moon is about 1,800 arcseconds wide.)"));
   measure = null; ex.root.classList.remove("tappable");
 };
-function openObject(L) {
-  exLevel = L;
+function openObject(L, mode = "play") {
+  exLevel = L; go("explore");
   const frames = exFrames(), first = frames[0], last = frames[frames.length - 1];
   $("exploreList").hidden = true; $("exploreDetail").hidden = false;
   $("exName").textContent = L.name; $("exBlurb").textContent = tr(L.blurb);
@@ -186,7 +196,7 @@ function openObject(L) {
       [tr("Original file"), `<a href="${ARCHIVE + f.source}" rel="noopener">${tr("NASA/IPAC archive (FITS, about 65 MB)")}</a>`],
     ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
   };
-  ex.frames = []; exMode("play");
+  ex.frames = []; exMode(mode);
   window.scrollTo(0, 0);
 }
 $("backBtn").onclick = showList;
@@ -208,8 +218,6 @@ fetch("levels.json")
       .map(([b, label]) => `<div class="stat"><b>${b}</b><span>${label}</span></div>`).join("");
     $("startBtn").textContent = tr("Start the hunt"); $("startBtn").disabled = false;
     drawGrid();
-    const L = levels[0];
-    $("demoCap").textContent = t`Live: two real SPHEREx images, ${span(L.days_between)} apart. Can you see what moves?`;
-    return demo.load(L.frames, L.size).then(() => demo.setMode("blink"));
+    return initSpace(levels, { explore: (L) => openObject(L), stack: (L) => openObject(L, "stack") });
   })
   .catch(() => fail(tr("The game data did not load. Check your connection and refresh the page.")));

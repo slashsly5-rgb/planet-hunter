@@ -146,3 +146,50 @@ body.grey .thumb { filter: none; }
 @media (max-width: 760px) { .top .brand { font-size: .95rem; gap: 6px; } .top button { padding: 10px 6px; font-size: .9rem; } }
 .top .lang { border: 1px solid var(--line); color: var(--accent); font-weight: 700; margin-left: 4px; }
 @media (max-width: 520px) { .top .brand { font-size: 0; gap: 0; padding-right: 0; } .top { gap: 2px; } }
+
+/* 3D Solar System (home) */
+main:has(#home:not([hidden])) { max-width: none; padding-top: 0; }
+#home > :not(.space) { max-width: 1040px; margin-left: auto; margin-right: auto; }
+.space { position: relative; height: calc(100vh - 61px); min-height: 640px; margin: 0 -16px 24px; overflow: hidden; border-bottom: 1px solid var(--line); }
+.space-canvas, .space .labels { position: absolute; inset: 0; }
+.space-canvas canvas { width: 100%; height: 100%; display: block; cursor: grab; }
+.labels { pointer-events: none; overflow: hidden; }
+.slabel { position: absolute; left: 0; top: 0; margin: -9px 0 0 12px; font: 600 13px/1 system-ui, sans-serif; color: var(--text); white-space: nowrap; text-shadow: 0 1px 4px #000, 0 0 8px #000; background: none; border: 0; padding: 0; min-height: 0; will-change: transform; }
+.slabel.dim { color: var(--dim); font-weight: 500; font-size: 12px; }
+.slabel.earth { color: #7fb4ff; }
+.slabel.px { color: var(--accent2); font-size: 15px; display: none !important; }
+.space.deep .slabel.px { display: block !important; }
+button.slabel.world { pointer-events: auto; cursor: pointer; color: var(--c); padding: 5px 9px; margin: -14px 0 0 10px; border-radius: 999px; background: #05070fb3; border: 1px solid transparent; }
+button.slabel.world:hover, .slabel.world.on { border-color: var(--c); background: #05070fe6; }
+.space.wide .slabel.world:not(.on), .space.deep .slabel.dim, .space.deep .slabel.earth { opacity: .0; pointer-events: none; }
+.space:not(.deep).wide .slabel.world:not(.on) { opacity: .75; pointer-events: auto; font-size: 12px; }
+.space-title, .space-worlds, .world-panel, .space-time { position: absolute; background: #070b18d9; border: 1px solid var(--line); border-radius: 14px; backdrop-filter: blur(6px); }
+.space-title { left: 20px; top: 20px; width: min(400px, 40vw); padding: 16px 18px; }
+.space-title h1 { font-size: clamp(1.6rem, 2.6vw, 2.4rem); }
+.space-title .lead { font-size: 1rem; margin: .4em 0; }
+.space.picked .space-title .lead, .space.picked .space-title .note { display: none; }
+.space-worlds { right: 20px; top: 20px; width: 232px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.space-worlds h3 { font-size: .9rem; color: var(--dim); margin: 0; }
+#worldList { display: grid; gap: 4px; }
+.worldbtn { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 4px 10px; text-align: left; background: transparent; border-color: transparent; }
+.worldbtn i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); flex: none; }
+.worldbtn small { margin-left: auto; color: var(--dim); font-variant-numeric: tabular-nums; }
+.worldbtn:hover, .worldbtn.on { border-color: var(--c); background: var(--panel2); }
+.space.picked .space-worlds { display: none; }
+.world-panel { right: 20px; top: 20px; bottom: 78px; width: min(380px, 34vw); padding: 14px 16px; overflow: auto; }
+.world-panel h2 { margin: .4em 0 0; font-size: 1.6rem; }
+.world-panel .viewer { margin: 8px 0; }
+.world-panel p { margin: .5em 0; font-size: .95rem; }
+.space-time { left: 20px; right: 20px; bottom: 16px; padding: 8px 14px; display: flex; align-items: center; gap: 12px; }
+.space-time input { flex: 1; accent-color: var(--accent); height: 36px; }
+#timeLabel { min-width: 8.5em; font-variant-numeric: tabular-nums; font-weight: 600; }
+.space-help { color: var(--dim); font-size: .85rem; margin: 0; }
+.no3d-msg { display: none; }
+.space.no3d { height: auto; min-height: 0; } .space.no3d .space-worlds, .space.no3d .space-time, .space.no3d .labels { display: none; }
+.space.no3d .space-title { position: static; width: auto; } .space.no3d .no3d-msg { display: block; padding: 0 20px; color: var(--dim); }
+
+/* 3D time stack (explore) */
+.stackview { position: relative; aspect-ratio: 1; width: 100%; border-radius: 10px; overflow: hidden; background: radial-gradient(circle at 50% 40%, #131a36, #04060d); border: 1px solid #3a4a80; box-shadow: 0 0 0 4px #0b1020, 0 12px 50px #000a; }
+.stackview canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
+.space.mid .slabel.inner:not(.on) { opacity: 0 !important; pointer-events: none !important; }
+.world-panel .viewer { max-width: 290px; }

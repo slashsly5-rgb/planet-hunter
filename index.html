@@ -35,21 +35,49 @@
 <p id="error" class="error" hidden></p>
 
 <section id="home" class="view">
-  <div class="hero">
-    <div class="hero-text">
+  <div id="space" class="space">
+    <div class="space-canvas"></div>
+    <div class="labels"></div>
+
+    <div class="space-title">
       <p class="eyebrow">Real images from NASA's SPHEREx space telescope</p>
       <h1>The stars stay still.<br><span class="hl">Worlds move.</span></h1>
-      <p class="lead">Flip between two photos of the same sky and something jumps: a planet, an asteroid, a dwarf planet. That is how Pluto was found in 1930, and how a hidden Planet X could be found next.</p>
+      <p class="lead">This is our Solar System, with every world where NASA says it really is. Pick one to fly there and see the real pictures SPHEREx took of it.</p>
       <div class="cta">
         <button id="startBtn" class="primary" disabled>Loading…</button>
         <button id="exploreBtn" class="ghost" data-view="explore">Explore the sky</button>
       </div>
       <p class="note">Every object here is already known. We have not found Planet X.</p>
     </div>
-    <figure class="hero-demo">
-      <div id="demoView"></div>
-      <figcaption id="demoCap">Loading real SPHEREx images…</figcaption>
-    </figure>
+
+    <div class="space-worlds">
+      <h3>Worlds SPHEREx photographed</h3>
+      <div id="worldList"></div>
+      <button id="pxBtn" class="small">Zoom out to where Planet X might be</button>
+      <button id="homeBtn" class="small ghost">Whole Solar System</button>
+    </div>
+
+    <aside id="worldPanel" class="world-panel" hidden>
+      <button id="worldBack" class="ghost small">← All worlds</button>
+      <h2 id="worldName"></h2>
+      <p id="worldKind" class="note"></p>
+      <div id="worldView"></div>
+      <p id="worldBlurb"></p>
+      <p id="worldSaw" class="note"></p>
+      <p id="worldAngle" class="note"></p>
+      <div class="cta">
+        <button id="worldStack" class="primary">See it in 3D time</button>
+        <button id="worldExplore" class="ghost">Explore it</button>
+      </div>
+    </aside>
+
+    <div class="space-time">
+      <button id="playBtn" class="small">Pause</button>
+      <input id="timeSlider" type="range" min="0" max="1" value="0" step="1" aria-label="Date">
+      <span id="timeLabel"></span>
+      <p class="space-help">Drag to rotate, scroll to zoom</p>
+    </div>
+    <p class="no3d-msg">This browser cannot show the 3D view. Use Hunt and Explore above.</p>
   </div>
 
   <div class="stats" id="stats"></div>
@@ -119,11 +147,12 @@
     <p id="exBlurb" class="lead"></p>
     <div class="detail">
       <div>
-        <div class="stagewrap"><div id="exView"></div></div>
+        <div class="stagewrap"><div id="exView"></div><div id="stackView" class="stackview" hidden></div></div>
         <div class="controls">
           <button data-exmode="play" class="exmode on">Time-lapse</button>
           <button data-exmode="blink" class="exmode">Blink first / last</button>
           <button data-exmode="diff" class="exmode">Difference</button>
+          <button data-exmode="stack" class="exmode">3D time stack</button>
           <button data-exmode="pass" class="exmode" id="passBtn" hidden>Six months apart</button>
           <button id="exPause">Pause</button>
           <input id="scrub" type="range" min="0" max="1" value="0" step="1" aria-label="Choose an image by date">
