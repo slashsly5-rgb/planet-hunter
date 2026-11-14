@@ -4,6 +4,7 @@ import { t, tr } from "./i18n.js";
 import { initSpace } from "./space.js";
 import { showStack, hideStack } from "./stack3d.js";
 import { initHunt } from "./hunt.js";
+import { detect, judge, overlay } from "./detect.js";
 
 // ---------- state ----------
 let levels = [], hunt = null;
@@ -46,9 +47,18 @@ async function exMode(m) {
     return;
   }
   hideStack();
-  const L = exLevel, pass = m === "pass", want = pass ? [exFrames()[0], L.other_pass] : exFrames();
-  if (ex.frames !== want && ex.frames[1] !== want[1]) await guard(ex.load(want, L.size));   // swap between the time-lapse and the six-month pair
-  ex.setMode(pass ? "blink" : m);
+  const L = exLevel, pass = m === "pass", scan = m === "scan", want = pass ? [exFrames()[0], L.other_pass] : scan ? L.frames : exFrames();
+  scanSvg = null;
+  if (ex.frames !== want && ex.frames[1] !== want[1]) await guard(ex.load(want, L.size));   // swap between the time-lapse, the six-month pair and the scan pair
+  if (scan) {
+    const r = detect(ex.els[0], ex.els[1], L.size), j = judge(r, L.frames);
+    scanSvg = overlay(r);
+    tip(t`The computer subtracted one image from the other and flagged what was left: <strong>${r.movers.length} possible movers</strong> (green), ${r.singles.length} things seen in only one image (amber, usually cosmic rays) and ${r.changed.length} stars whose brightness changed (grey).` + " " +
+      (j.found ? t`Its top pick, at ${j.top.confidence}% confidence, is the real ${L.name}.`
+        : j.listed ? t`The real ${L.name} is on its list, but its top pick is a false alarm.`
+        : t`It missed the real ${L.name} completely: too faint for this simple method. This is why people still check.`));
+  }
+  ex.setMode(pass || scan ? "blink" : m);
   if (m === "diff") ex.mark("");
   if (pass) {
     const then = fmtDate(want[0].date), other = fmtDate(L.other_pass.date);
@@ -57,7 +67,7 @@ async function exMode(m) {
 }
 
 // Measure it yourself: tap the object in the first and last image; compare with NASA JPL.
-let measure = null;
+let measure = null, scanSvg = null;
 function startMeasure() {
   const frames = exFrames();
   exMode("play").then(() => {
@@ -100,7 +110,9 @@ function openObject(L, mode = "play") {
   ex.onFrame = (i) => {
     const f = ex.frames[i];
     if (measure) return;
-    if (ex.frames !== frames) {                      // the six-month pair: ring where the object was in the first image
+    if (scanSvg) {
+      ex.mark(scanSvg);
+    } else if (ex.frames !== frames) {               // the six-month pair: ring where the object was in the first image
       ex.mark(ring(frames[0], "was"));
     } else {
       $("scrub").value = i;

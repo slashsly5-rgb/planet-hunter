@@ -7,6 +7,7 @@ import { isHit } from "./score.js";
 import { $, Viewer, fmtDate, fmtTime, span, ring, ruler } from "./viewer.js";
 import { speedChart, simFrames } from "./lab.js";
 import { t, tr } from "./i18n.js";
+import { detect, judge } from "./detect.js";
 
 const FOUND_RADIUS = 20;          // image pixels: how close a tap must be to count as a detection
 const TRIES = 2;
@@ -93,6 +94,8 @@ export function initHunt(levels, go) {
   function afterDetect() {
     $("huntControls").hidden = true; $("modeTip").textContent = "";
     view.stop(); view.canvas.hidden = true; view.show(1); marks();   // freeze on the second image with both positions ringed
+    m.human = pts.detect > 0;
+    m.machine = judge(detect(view.els[0], view.els[1], m.L.size), m.L.frames);   // the same pair, given to the automatic detector
     if (!m.target) return toClassify();
     step = "predict"; bar();
     const [a, b] = m.L.frames, f = m.target.frame;
@@ -129,6 +132,9 @@ export function initHunt(levels, go) {
     $("facts").innerHTML = [
       t`Moved <strong>${L.moved_arcsec} arcseconds</strong> across the sky in <strong>${span(L.days_between)}</strong>`,
       t`Distance from the Sun: <strong>${L.distance_au} au</strong>`,
+      m.machine.found ? t`Automatic detector: found it too, at ${m.machine.top.confidence}% confidence`
+        : m.machine.listed ? tr("Automatic detector: fooled. The real object was on its list, but its top pick was a false alarm")
+        : tr("Automatic detector: missed it. Too faint for simple image subtraction"),
     ].map((li) => `<li>${li}</li>`).join("");
     $("ruler").innerHTML = ruler(L.name, L.distance_au);
     $("badge").textContent = L.sim ? tr("⚠ Simulated object on real SPHEREx images") : tr("✔ Checked against NASA JPL Horizons");
@@ -177,12 +183,14 @@ export function initHunt(levels, go) {
       t`The farthest, ${far.name}, is ${Math.round(far.distance_au)} times as far from the Sun as Earth.` + " " +
       tr(`If a "Planet X" exists, astronomers think it could be hundreds of times as far as Earth: much fainter, and moving much more slowly still. That is why nobody has found it yet.`);
     $("rulerX").innerHTML = ruler(far.name, far.distance_au);
+    const done = missions.filter((x) => x.machine);
+    $("vsLine").innerHTML = t`<strong>You against the machine.</strong> You detected ${done.filter((x) => x.human).length} of ${done.length}. The automatic detector's top pick was right ${done.filter((x) => x.machine.found).length} times. Software is fast, but it is fooled by cosmic rays and misses faint objects, so people still check.`;
     $("endChart").innerHTML = speedChart(levels);
     window.scrollTo(0, 0);
   }
 
   function start() {
-    n = 0; scores = []; missions.forEach((x) => { if (x.boss) { delete x.L; delete x.target; } });   // new hiding places each run
+    n = 0; scores = []; missions.forEach((x) => { delete x.machine; delete x.human; if (x.boss) { delete x.L; delete x.target; } });   // new hiding places each run
     $("huntPlay").hidden = false; $("huntEnd").hidden = true; go("hunt"); startMission();
   }
   $("nextBtn").onclick = () => { if (step !== "done") return; if (++n < missions.length) startMission(); else finish(); };

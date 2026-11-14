@@ -76,6 +76,11 @@ await shot("7-object-info.png");
 await js(`window.scrollTo(0, 0)`); await js(`document.querySelector('[data-exmode="stack"]').click()`); await sleep(3000);
 await shot("7b-stack.png");
 await js(`document.querySelector('[data-exmode="play"]').click()`); await sleep(1500);
+// computer scan
+await js(`document.querySelector('[data-exmode="scan"]').click()`); await sleep(2500);
+await shot("7c-scan.png");
+const scanTip = await js(`document.querySelector("#exTip").textContent`);
+await js(`document.querySelector('[data-exmode="play"]').click()`); await sleep(1500);
 // six months apart
 await js(`window.scrollTo(0, 0)`); await js(`document.querySelector("#passBtn").click()`); await sleep(2500);
 await shot("8-six-months.png");
@@ -94,6 +99,12 @@ await js(`document.querySelector("#labReveal").click()`); await sleep(400);
 await js(`document.querySelector("#labOut").scrollIntoView({block:"center"})`); await sleep(300);
 await shot("12-lab-readout.png");
 const lab = await js(`document.querySelector("#labOut").textContent + " | " + document.querySelector("#labVerdict").textContent`);
+// automatic detector: run it on every level's image pair and compare with the real positions
+const detector = await js(`(async () => { const { detect, judge } = await import("./detect.js"); const L = await (await fetch("levels.json")).json();
+  const load = (src) => new Promise((ok) => { const im = new Image(); im.onload = () => ok(im); im.src = src; }); const out = [];
+  for (const l of L) { const [a, b] = await Promise.all(l.frames.map((f) => load(f.img))); const r = detect(a, b, l.size), j = judge(r, l.frames);
+    out.push(l.id + ": " + (j.found ? "FOUND" : j.listed ? "listed, not top" : "missed") + " (movers " + r.movers.length + ", single " + r.singles.length + ", changed " + r.changed.length + (j.top ? ", top " + j.top.confidence + "%" : "") + ")"); }
+  return out; })()`);
 const overflow = await js(`document.documentElement.scrollWidth > document.documentElement.clientWidth`);
-console.log(JSON.stringify({ results, score: await js(`document.querySelector("#scoreLine").textContent`), horizontalOverflow: overflow, has3d, measured, lab, missing: await js(`[...window.__missing]`), errors }, null, 1));
+console.log(JSON.stringify({ results, score: await js(`document.querySelector("#scoreLine").textContent`), horizontalOverflow: overflow, has3d, detector, scanTip, vs: await js(`document.querySelector('#vsLine').textContent`), measured, lab, missing: await js(`[...window.__missing]`), errors }, null, 1));
 ws.close(); proc.kill();

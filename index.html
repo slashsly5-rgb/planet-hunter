@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Planet Hunter: see the sky move in real SPHEREx images</title>
 <meta name="description" content="Watch real NASA SPHEREx images change over time. Spot the worlds that move, play back their paths, and learn how Planet X could be found.">
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=6">
 <link rel="modulepreload" href="vendor/three.module.min.js">
 </head>
 <body>
@@ -144,6 +144,7 @@
     <h2>So where is Planet X?</h2>
     <p id="planetx"></p>
     <div id="rulerX"></div>
+    <p id="vsLine" class="tip"></p>
     <div id="endChart"></div>
     <p>Telescopes like SPHEREx photograph more than a billion objects. No one person can check them all. Computers help, but the search still needs people who know what to look for. Now you do.</p>
     <div class="cta">
@@ -173,6 +174,7 @@
           <button data-exmode="blink" class="exmode">Blink first / last</button>
           <button data-exmode="diff" class="exmode">Difference</button>
           <button data-exmode="stack" class="exmode">3D time stack</button>
+          <button data-exmode="scan" class="exmode">Computer scan</button>
           <button data-exmode="pass" class="exmode" id="passBtn" hidden>Six months apart</button>
           <button id="exPause">Pause</button>
           <input id="scrub" type="range" min="0" max="1" value="0" step="1" aria-label="Choose an image by date">
@@ -247,6 +249,10 @@
   <p>The orange and purple colours are false colour: brightness shown as colour. Switch it off in Explore to see the plain greyscale images. Small specks that appear in only one image are cosmic rays hitting the detector, not objects.</p>
   <p>In the 3D Solar System, the orbits and positions are real, from NASA JPL Horizons. The small background stars there are decoration, and the pink ring marking where a Planet X might be is hypothetical.</p>
 
+  <h2>The hunt and the automatic detector</h2>
+  <p>Each hunt mission has three steps taken from real astronomy: detect the object, predict where it will be in a third real image, and classify it by how fast it moves. The last two missions are Planet X drills: a made-up planet placed into real images, always labelled as simulated.</p>
+  <p>The "Computer scan" is classic image processing, not machine learning: it subtracts one image from the other and flags what is left. On our ten real worlds its top pick is right for seven. It is fooled by cosmic rays and it misses the two faintest, most distant worlds, which is exactly where a Planet X would be.</p>
+
   <h2>What this can't do</h2>
   <ul>
     <li>It does not search for new objects. Every object here is already known, and we chose and checked each one.</li>
@@ -262,6 +268,6 @@
 </section>
 </main>
 
-<script type="module" src="app.js?v=5"></script>
+<script type="module" src="app.js?v=6"></script>
 </body>
 </html>

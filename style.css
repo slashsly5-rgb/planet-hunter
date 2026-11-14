@@ -240,3 +240,8 @@ button.slabel.world:hover, .slabel.world.on { border-color: var(--c); background
 .hunt-right .quiz, .hunt-right .tip, .hunt-right .card { max-width: none; margin-left: 0; margin-right: 0; }
 .hunt-right .prompt strong { color: var(--hud); text-transform: uppercase; letter-spacing: .08em; font-size: .9em; }
 @media (max-width: 860px) { .hunt-grid { grid-template-columns: 1fr; } }
+
+/* automatic detector overlay */
+.det { fill: none; stroke-width: 2.5; } .det.mv { stroke: #5ee6a8; } .det.one { stroke: #ffb547; stroke-dasharray: 4 3; } .det.chg { stroke: #8fa0c8; opacity: .7; stroke-width: 1.5; }
+line.det.mv { stroke-dasharray: 5 5; }
+.dett { fill: #5ee6a8; font: 700 15px ui-monospace, Consolas, monospace; paint-order: stroke; stroke: #000; stroke-width: 3px; }
