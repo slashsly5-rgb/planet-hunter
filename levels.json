@@ -211,6 +211,139 @@
   }
  },
  {
+  "id": "neptune",
+  "name": "Neptune",
+  "kind": "ice giant planet",
+  "blurb": "The farthest known planet. In 1846 it was found where mathematics predicted it, from its pull on Uranus.",
+  "size": 484,
+  "arcsec_per_px": 1.5375,
+  "distance_au": 29.89,
+  "mag": 7.746,
+  "moved_arcsec": 133,
+  "days_between": 7.47,
+  "jpl_checked": true,
+  "frames": [
+   {
+    "img": "img/neptune_a.png",
+    "date": "2025-12-15T02:21:20",
+    "band": "D1",
+    "source": "dr1/level2/2025W51_1A/l2b-v27-2026-210/1/level2_2025W51_1A_0022_1D1_spx_l2b-v27-2026-210.fits",
+    "x": 263.0,
+    "y": 252.3,
+    "snr": 5552.8
+   },
+   {
+    "img": "img/neptune_b.png",
+    "date": "2025-12-22T13:37:49",
+    "band": "D1",
+    "source": "dr1/level2/2025W52_1A/l2b-v27-2026-211/1/level2_2025W52_1A_0110_2D1_spx_l2b-v27-2026-211.fits",
+    "x": 189.0,
+    "y": 207.7,
+    "snr": 11085.2
+   }
+  ],
+  "track": [
+   {
+    "img": "img/neptune_t0.png",
+    "date": "2025-12-08T18:47:26",
+    "band": "D3",
+    "source": "dr1/level2/2025W50_1A/l2b-v27-2026-209/3/level2_2025W50_1A_0182_1D3_spx_l2b-v27-2026-209.fits",
+    "ra": 359.6266,
+    "dec": -1.63079,
+    "x": 271.3,
+    "y": 266.4,
+    "snr": 476.3
+   },
+   {
+    "img": "img/neptune_t1.png",
+    "date": "2025-12-11T00:34:14",
+    "band": "D2",
+    "source": "dr1/level2/2025W50_1A/l2b-v27-2026-209/2/level2_2025W50_1A_0692_1D2_spx_l2b-v27-2026-209.fits",
+    "ra": 359.62543,
+    "dec": -1.62971,
+    "x": 274.0,
+    "y": 263.9,
+    "snr": 685.3
+   },
+   {
+    "img": "img/neptune_t2.png",
+    "date": "2025-12-13T14:30:39",
+    "band": "D2",
+    "source": "dr1/level2/2025W50_2A/l2b-v27-2026-210/2/level2_2025W50_2A_0562_1D2_spx_l2b-v27-2026-210.fits",
+    "ra": 359.62737,
+    "dec": -1.62703,
+    "x": 269.5,
+    "y": 257.6,
+    "snr": 4113.6
+   },
+   {
+    "img": "img/neptune_t3.png",
+    "date": "2025-12-15T02:21:20",
+    "band": "D1",
+    "source": "dr1/level2/2025W51_1A/l2b-v27-2026-210/1/level2_2025W51_1A_0022_1D1_spx_l2b-v27-2026-210.fits",
+    "ra": 359.63012,
+    "dec": -1.62477,
+    "x": 263.0,
+    "y": 252.3,
+    "snr": 5552.8
+   },
+   {
+    "img": "img/neptune_t4.png",
+    "date": "2025-12-15T23:32:27",
+    "band": "D3",
+    "source": "dr1/level2/2025W51_1A/l2b-v27-2026-210/3/level2_2025W51_1A_0219_1D3_spx_l2b-v27-2026-210.fits",
+    "ra": 359.6323,
+    "dec": -1.62319,
+    "x": 257.9,
+    "y": 248.6,
+    "snr": 191.9
+   },
+   {
+    "img": "img/neptune_t5.png",
+    "date": "2025-12-17T06:29:51",
+    "band": "D2",
+    "source": "dr1/level2/2025W51_1A/l2b-v27-2026-210/2/level2_2025W51_1A_0485_1D2_spx_l2b-v27-2026-210.fits",
+    "ra": 359.63625,
+    "dec": -1.62056,
+    "x": 248.7,
+    "y": 242.5,
+    "snr": 3732.7
+   },
+   {
+    "img": "img/neptune_t6.png",
+    "date": "2025-12-20T01:20:10",
+    "band": "D2",
+    "source": "dr1/level2/2025W51_2A/l2b-v27-2026-211/2/level2_2025W51_2A_0317_1D2_spx_l2b-v27-2026-211.fits",
+    "ra": 359.6478,
+    "dec": -1.61355,
+    "x": 221.7,
+    "y": 226.1,
+    "snr": 591.9
+   },
+   {
+    "img": "img/neptune_t7.png",
+    "date": "2025-12-22T13:37:49",
+    "band": "D1",
+    "source": "dr1/level2/2025W52_1A/l2b-v27-2026-211/1/level2_2025W52_1A_0110_2D1_spx_l2b-v27-2026-211.fits",
+    "ra": 359.66177,
+    "dec": -1.60569,
+    "x": 189.0,
+    "y": 207.7,
+    "snr": 11085.2
+   }
+  ],
+  "center": {
+   "ra": 359.63911,
+   "dec": -1.62035
+  },
+  "other_pass": {
+   "img": "img/neptune_pass.png",
+   "date": "2026-06-23T07:08:12",
+   "band": "D3",
+   "source": "qr3/level2/2026W26_1A/l2b-v27-2026-273/3/level2_2026W26_1A_0287_1D3_spx_l2b-v27-2026-273.fits"
+  }
+ },
+ {
   "id": "ceres",
   "name": "Ceres",
   "kind": "dwarf planet in the asteroid belt",
@@ -652,6 +785,128 @@
    "date": "2026-04-27T16:16:45",
    "band": "D3",
    "source": "dr1/level2/2026W18_1A/l2b-v27-2026-244/3/level2_2026W18_1A_0157_1D3_spx_l2b-v27-2026-244.fits"
+  }
+ },
+ {
+  "id": "makemake",
+  "name": "Makemake",
+  "kind": "dwarf planet",
+  "blurb": "A bright, icy dwarf planet beyond Neptune, discovered in 2005.",
+  "size": 484,
+  "arcsec_per_px": 1.5375,
+  "distance_au": 52.71,
+  "mag": 17.112,
+  "moved_arcsec": 135,
+  "days_between": 4.01,
+  "jpl_checked": true,
+  "frames": [
+   {
+    "img": "img/makemake_a.png",
+    "date": "2025-06-08T09:19:16",
+    "band": "D1",
+    "source": "dr1/level2/2025W23_2B/l2b-v27-2026-201/1/level2_2025W23_2B_0620_1D1_spx_l2b-v27-2026-201.fits",
+    "x": 175.8,
+    "y": 282.3,
+    "snr": 17.8
+   },
+   {
+    "img": "img/makemake_b.png",
+    "date": "2025-06-12T09:29:35",
+    "band": "D1",
+    "source": "dr1/level2/2025W24_1A/l2b-v27-2026-201/1/level2_2025W24_1A_0660_1D1_spx_l2b-v27-2026-201.fits",
+    "x": 244.1,
+    "y": 337.7,
+    "snr": 14.4
+   }
+  ],
+  "track": [
+   {
+    "img": "img/makemake_t0.png",
+    "date": "2025-06-02T16:21:59",
+    "band": "D3",
+    "source": "dr1/level2/2025W23_1C/l2b-v27-2026-200/3/level2_2025W23_1C_0121_1D3_spx_l2b-v27-2026-200.fits",
+    "ra": 199.99314,
+    "dec": 21.51673,
+    "x": 62.8,
+    "y": 214.5,
+    "snr": 17.0
+   },
+   {
+    "img": "img/makemake_t1.png",
+    "date": "2025-06-02T22:52:00",
+    "band": "D2",
+    "source": "dr1/level2/2025W23_1C/l2b-v27-2026-200/2/level2_2025W23_1C_0169_1D2_spx_l2b-v27-2026-200.fits",
+    "ra": 199.99049,
+    "dec": 21.51548,
+    "x": 68.5,
+    "y": 217.4,
+    "snr": 13.0
+   },
+   {
+    "img": "img/makemake_t2.png",
+    "date": "2025-06-08T09:19:16",
+    "band": "D1",
+    "source": "dr1/level2/2025W23_2B/l2b-v27-2026-201/1/level2_2025W23_2B_0620_1D1_spx_l2b-v27-2026-201.fits",
+    "ra": 199.94122,
+    "dec": 21.48777,
+    "x": 175.8,
+    "y": 282.3,
+    "snr": 17.8
+   },
+   {
+    "img": "img/makemake_t3.png",
+    "date": "2025-06-08T23:59:50",
+    "band": "D2",
+    "source": "dr1/level2/2025W23_2B/l2b-v27-2026-201/2/level2_2025W23_2B_0738_1D2_spx_l2b-v27-2026-201.fits",
+    "ra": 199.93616,
+    "dec": 21.48434,
+    "x": 186.9,
+    "y": 290.4,
+    "snr": 8.2
+   },
+   {
+    "img": "img/makemake_t4.png",
+    "date": "2025-06-09T11:23:41",
+    "band": "D1",
+    "source": "dr1/level2/2025W24_1A/l2b-v27-2026-201/1/level2_2025W24_1A_0111_1D1_spx_l2b-v27-2026-201.fits",
+    "ra": 199.9323,
+    "dec": 21.48163,
+    "x": 195.3,
+    "y": 296.7,
+    "snr": 18.3
+   },
+   {
+    "img": "img/makemake_t5.png",
+    "date": "2025-06-11T10:42:07",
+    "band": "D1",
+    "source": "dr1/level2/2025W24_1A/l2b-v27-2026-201/1/level2_2025W24_1A_0485_1D1_spx_l2b-v27-2026-201.fits",
+    "ra": 199.91691,
+    "dec": 21.46998,
+    "x": 228.8,
+    "y": 324.0,
+    "snr": 13.9
+   },
+   {
+    "img": "img/makemake_t6.png",
+    "date": "2025-06-12T09:29:35",
+    "band": "D1",
+    "source": "dr1/level2/2025W24_1A/l2b-v27-2026-201/1/level2_2025W24_1A_0660_1D1_spx_l2b-v27-2026-201.fits",
+    "ra": 199.90987,
+    "dec": 21.46414,
+    "x": 244.1,
+    "y": 337.7,
+    "snr": 14.4
+   }
+  ],
+  "center": {
+   "ra": 199.91086,
+   "dec": 21.505
+  },
+  "other_pass": {
+   "img": "img/makemake_pass.png",
+   "date": "2025-12-31T03:58:23",
+   "band": "D3",
+   "source": "dr1/level2/2026W01_1A/l2b-v27-2026-211/3/level2_2026W01_1A_0455_1D3_spx_l2b-v27-2026-211.fits"
   }
  }
 ]
