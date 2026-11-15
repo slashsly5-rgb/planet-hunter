@@ -53,6 +53,7 @@ for (let i = 0; i < 40; i++) {                       // each mission: detect, (p
   if (await js(`!document.querySelector("#huntEnd").hidden`)) break;
   for (let w = 0; w < 30 && (await hs()).step !== "detect"; w++) await sleep(300);
   let st = await hs(); const good = i % 2 === 0, far = (f) => ({ x: (f.x + st.size / 2) % st.size, y: (f.y + st.size / 2) % st.size });
+  if (process.env.PH_SECOND && good) await tapHunt(far(st.frames[0]), st.size);   // optional: miss once, then find it on the second try
   await tapHunt(good ? st.frames[0] : far(st.frames[0]), st.size);
   if (!good) await tapHunt(far(st.frames[0]), st.size);          // second try, also wrong
   if (i < 2) await shot(`3-detect-${i}.png`);

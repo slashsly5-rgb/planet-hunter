@@ -1,17 +1,20 @@
-import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js";
-import { speedChart } from "./lab.js";
-import { t, tr } from "./i18n.js";
-import { initSpace } from "./space.js";
-import { showStack, hideStack } from "./stack3d.js";
-import { initHunt } from "./hunt.js";
-import { detect, judge, overlay } from "./detect.js";
-import { composite, colourMarks } from "./colour.js";
+import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=9";
+import { speedChart } from "./lab.js?v=9";
+import { t, tr } from "./i18n.js?v=9";
+import { initSpace } from "./space.js?v=9";
+import { showStack, hideStack } from "./stack3d.js?v=9";
+import { initHunt } from "./hunt.js?v=9";
+import { detect, judge, overlay } from "./detect.js?v=9";
+import { composite, colourMarks } from "./colour.js?v=9";
 
 // ---------- state ----------
 let levels = [], hunt = null;
 const ex = new Viewer($("exView"));
 
 function fail(msg) { $("error").textContent = msg; $("error").hidden = false; }
+// if anything breaks, say so on the page instead of silently doing nothing
+window.addEventListener("error", (e) => fail("Something went wrong: " + e.message + ". Press Ctrl + F5 to reload."));
+window.addEventListener("unhandledrejection", (e) => fail("Something went wrong: " + (e.reason?.message || e.reason) + ". Press Ctrl + F5 to reload."));
 const guard = (p) => p.catch(() => fail(tr("An image did not load. Check your connection and refresh the page.")));
 
 function go(view) {
