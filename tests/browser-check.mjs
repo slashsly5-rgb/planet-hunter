@@ -63,7 +63,7 @@ await sleep(1200);
 await shot("2-level.png");
 
 const results = [], blocked = []; let gates = 0;
-const tapHunt = async (pt, size) => { const r = await js(`(() => { const r = document.querySelector("#huntView").getBoundingClientRect(); return [r.left, r.top, r.width]; })()`); await click(r[0] + pt.x * r[2] / size, r[1] + pt.y * r[2] / size); await sleep(600); };
+const tapHunt = async (pt, size) => { await js(`(() => { const v = document.querySelector("#huntView"), r = v.getBoundingClientRect(), y = r.top + ${pt.y} * r.width / ${size}; if (y < 70 || y > innerHeight - 20) scrollBy(0, y - innerHeight / 2); })()`); await sleep(300); const r = await js(`(() => { const r = document.querySelector("#huntView").getBoundingClientRect(); return [r.left, r.top, r.width]; })()`); await click(r[0] + pt.x * r[2] / size, r[1] + pt.y * r[2] / size); await sleep(600); };
 const hs = () => js(`window.__hunt.state()`);
 for (let i = 0; i < 40; i++) {                       // each mission: detect, (predict), classify. Odd missions get wrong answers on purpose.
   if (await js(`!document.querySelector("#huntEnd").hidden`)) break;

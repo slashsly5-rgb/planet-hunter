@@ -32,7 +32,7 @@ await cdp("Page.navigate", { url: (process.env.PH_URL || "http://localhost:8765"
 await sleep(+process.env.PH_WAIT || 14000);
 const before = await js(`window.__music.paused`);
 const click = async (x, y) => { for (const type of ["mousePressed", "mouseReleased"]) await cdp("Input.dispatchMouseEvent", { type, x, y, button: "left", clickCount: 1 }); };
-await click(40, +H - 40); await sleep(2500);
+const br = await js(`(() => { const r = document.querySelector(".brand").getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`); await click(br[0], br[1]); await sleep(2500);
 const afterClick = await js(`[window.__music.paused, Math.round(window.__music.volume * 100) / 100, window.__music.currentTime > 0.5]`);
 let meteor = false;
 for (let i = 0; i < 24 && !meteor; i++) { await sleep(500); meteor = await js(`(() => { const c = document.querySelector(".space .meteors"), d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; for (let i = 3; i < d.length; i += 4) if (d[i] > 40) return true; return false; })()`); }
