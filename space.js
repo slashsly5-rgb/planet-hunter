@@ -1,10 +1,10 @@
 // 3D Solar System: real positions from NASA JPL Horizons (orbits.json). Each world SPHEREx photographed is a place to fly to.
 import * as THREE from "./vendor/three.module.min.js";
 import { OrbitControls } from "./vendor/OrbitControls.js";
-import { $, Viewer, fmtDate } from "./viewer.js?v=41";
-import { t, tr } from "./i18n.js?v=41";
-import { irTexture } from "./irtex.js?v=41";
-import { composite } from "./colour.js?v=41";
+import { $, Viewer, fmtDate } from "./viewer.js?v=43";
+import { t, tr } from "./i18n.js?v=43";
+import { irTexture } from "./irtex.js?v=43";
+import { composite } from "./colour.js?v=43";
 import { EffectComposer } from "./vendor/postprocessing/EffectComposer.js";
 import { RenderPass } from "./vendor/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "./vendor/postprocessing/UnrealBloomPass.js";

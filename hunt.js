@@ -3,11 +3,11 @@
 //   2 Predict   from its two positions, say where it will be in a third real image
 //   3 Classify  from how fast it moves, say where it orbits
 // The last missions are simulated Planet X candidates (made-up objects on real images, labelled as simulated).
-import { isHit } from "./score.js?v=41";
-import { $, Viewer, fmtDate, fmtTime, span, ring, ruler } from "./viewer.js?v=41";
-import { speedChart, simFrames } from "./lab.js?v=41";
-import { t, tr } from "./i18n.js?v=41";
-import { detect, judge } from "./detect.js?v=41";
+import { isHit } from "./score.js?v=43";
+import { $, Viewer, fmtDate, fmtTime, span, ring, ruler } from "./viewer.js?v=43";
+import { speedChart, simFrames } from "./lab.js?v=43";
+import { t, tr } from "./i18n.js?v=43";
+import { detect, judge } from "./detect.js?v=43";
 
 const FOUND_RADIUS = 20;          // image pixels: how close a tap must be to count as a detection
 const TRIES = 2;
@@ -44,6 +44,23 @@ export function initHunt(levels, go) {
   const prompt = (html) => ($("prompt").innerHTML = html);
   const note = (html) => { $("stepNote").innerHTML = html; $("stepNote").hidden = !html; };
 
+  const NAMES = { detect: "Detect", predict: "Predict", classify: "Classify" };
+  const stepsOf = () => (m?.target ? ["detect", "predict", "classify"] : ["detect", "classify"]);
+  function head(which) {      // "STEP 2 OF 3 · PREDICT" above the instructions
+    const all = stepsOf(), i = all.indexOf(which);
+    $("stepHead").textContent = i < 0 ? "" : t`Step ${i + 1} of ${all.length}`.toUpperCase() + "  ·  " + tr(NAMES[which]).toUpperCase();
+  }
+  // Between steps: a card over the picture says what just happened and what comes next, and waits for the player.
+  function gate(done, good, next, text, then) {
+    const all = stepsOf(), i = all.indexOf(next);
+    step = "gate"; bar(); view.root.classList.remove("askclick", "askright");
+    $("stepHead").textContent = t`Next: step ${i + 1} of ${all.length}`.toUpperCase() + "  ·  " + tr(NAMES[next]).toUpperCase(); prompt(tr("Read the card on the picture, then press its button."));
+    $("stepDone").textContent = done; $("stepDone").classList.toggle("bad", !good);
+    $("stepNext").textContent = t`Next: step ${i + 1} of ${all.length}`; $("stepTitle").textContent = tr(NAMES[next]); $("stepText").innerHTML = text;
+    $("stepGo").textContent = t`Start step ${i + 1}`; $("stepCard").hidden = false; $("stepGo").focus({ preventScroll: true });
+    $("stepGo").onclick = () => { $("stepCard").hidden = true; then(); };
+  }
+
   function mode(name) {
     document.querySelectorAll(".mode").forEach((b) => b.classList.toggle("on", b.dataset.mode === name));
     $("slider").hidden = name !== "slide"; $("pauseBtn").hidden = name !== "blink";
@@ -65,11 +82,12 @@ export function initHunt(levels, go) {
       li.hidden = li.dataset.step === "predict" && !m?.target;
     });
     $("skipRow").hidden = !(step === "detect" || step === "predict");
+    if (step === "detect" || step === "predict" || step === "classify") head(step); else if (step === "done") $("stepHead").textContent = tr("Mission complete").toUpperCase();
   }
 
   async function startMission() {
     m = missions[n]; pts = {}; tries = 0; usedDiff = false; step = "";
-    $("card").hidden = true; $("quiz").hidden = true; $("nextRow").hidden = true; note(""); $("huntControls").hidden = false;
+    $("card").hidden = true; $("quiz").hidden = true; $("nextRow").hidden = true; $("stepCard").hidden = true; note(""); $("huntControls").hidden = false;
     prompt(tr("Loading…")); window.scrollTo(0, 0);
     if (m.boss && !m.L) {
       const made = await simFrames(base, m.boss, BOSS_KM);
@@ -97,16 +115,24 @@ export function initHunt(levels, go) {
     view.stop(); view.canvas.hidden = true; view.show(1); marks();   // freeze on the second image with both positions ringed
     m.human = pts.detect > 0;
     m.machine = judge(detect(view.els[0], view.els[1], m.L.size), m.L.frames);   // the same pair, given to the automatic detector
-    if (!m.target) return toClassify();
-    step = "predict"; bar(); view.root.classList.add("askclick");
+    const done = pts.detect > 0 ? t`✔ Step 1 done: you found it. +${pts.detect} points` : tr("Step 1 over: you missed it. The rings show where it was.");
+    if (!m.target) return gate(done, pts.detect > 0, "classify", tr("Last step: decide <strong>where this object orbits</strong>, from how fast it moved. Three answers will appear on the right."), toClassify);
     const [a, b] = m.L.frames, f = m.target.frame;
-    prompt(m.target.forward
-      ? t`<strong>Predict.</strong> Now click on the picture where you think it will be next. It was at the dashed ring on ${when(a.date)}, then at the solid ring on ${when(b.date)}. Where will it be on <strong>${when(f.date)}</strong>? Follow the line onward.`
-      : t`<strong>Predict.</strong> Now click on the picture where you think it was before. It was at the dashed ring on ${when(a.date)}, then at the solid ring on ${when(b.date)}. Where was it earlier, on <strong>${when(f.date)}</strong>? Follow the line backward, past the dashed ring.`);
+    gate(done, pts.detect > 0, "predict", m.target.forward
+      ? t`Now predict the future. The object moved from the dashed ring to the solid ring. <strong>Click on the picture where it will be on ${when(f.date)}.</strong> Then we show you the real image from that moment.`
+      : t`Now work backwards. The object moved from the dashed ring to the solid ring. <strong>Click on the picture where it was earlier, on ${when(f.date)}.</strong> Then we show you the real image from that moment.`, () => {
+      step = "predict"; bar(); view.root.classList.add("askclick");
+      // a moving arrow shows which way to look: onward from the solid ring, or back past the dashed one
+      const from = m.target.forward ? b : a, to = m.target.forward ? a : b, len = Math.hypot(from.x - to.x, from.y - to.y) || 1, ux = (from.x - to.x) / len, uy = (from.y - to.y) / len;
+      marks(`<line class="guide" x1="${from.x + ux * 24}" y1="${from.y + uy * 24}" x2="${from.x + ux * 120}" y2="${from.y + uy * 120}"/><text class="guideq" x="${from.x + ux * 140}" y="${from.y + uy * 140 + 9}" text-anchor="middle">?</text>`);
+      prompt(m.target.forward
+        ? t`<strong>Predict.</strong> Click on the picture where you think it will be on <strong>${when(f.date)}</strong>. It was at the dashed ring on ${when(a.date)}, then at the solid ring on ${when(b.date)}. Follow the arrow onward: how far will it have gone?`
+        : t`<strong>Predict.</strong> Click on the picture where you think it was on <strong>${when(f.date)}</strong>. It was at the dashed ring on ${when(a.date)}, then at the solid ring on ${when(b.date)}. Follow the arrow back past the dashed ring: how far?`);
+    });
   }
 
   function toClassify() {
-    step = "classify"; bar(); view.root.classList.remove("askclick");
+    step = "classify"; bar(); view.root.classList.remove("askclick"); view.root.classList.add("askright");
     window.scrollTo({ top: 0, behavior: "smooth" });      // the three answers are at the top of the right-hand column
     const L = m.L, rate = L.moved_arcsec / L.days_between;
     prompt(t`<strong>Classify.</strong> It moved ${L.moved_arcsec} arcseconds in ${span(L.days_between)}: about ${rate < 10 ? rate.toFixed(1) : Math.round(rate)} arcseconds a day. Where does it orbit?`);
@@ -141,7 +167,7 @@ export function initHunt(levels, go) {
     $("ruler").innerHTML = ruler(L.name, L.distance_au);
     $("badge").textContent = L.sim ? tr("⚠ Simulated object on real SPHEREx images") : tr("✔ Checked against NASA JPL Horizons");
     $("nextBtn").textContent = n + 1 < missions.length ? tr("Next mission") : tr("See your result");
-    $("card").hidden = false; $("quiz").hidden = true; $("nextRow").hidden = false; view.root.classList.remove("askclick");
+    $("card").hidden = false; $("quiz").hidden = true; $("nextRow").hidden = false; view.root.classList.remove("askclick", "askright");
     window.scrollTo({ top: 0, behavior: "smooth" });      // the Next button sits at the top, under the result line
     $("nextBtn").focus({ preventScroll: true });
   }
@@ -202,7 +228,7 @@ export function initHunt(levels, go) {
   });
   $("skipBtn").onclick = () => {            // never leave a player stuck: give up on this step and carry on
     if (step === "detect") { pts.detect = 0; note(tr("<strong>Skipped.</strong> The rings show where it was on each date.")); afterDetect(); bar(); }
-    else if (step === "predict") { pts.predict = 0; const f = m.target.frame; view.show(2); view.mark(ring(f) + ring(f, "pulse")); note(t`<strong>Skipped.</strong> This is the real image from ${when(f.date)}. The ring shows where it really was.`); toClassify(); }
+    else if (step === "predict") { pts.predict = 0; view.root.classList.remove("askclick"); const f = m.target.frame; view.show(2); view.mark(ring(f) + ring(f, "pulse")); note(t`<strong>Skipped.</strong> This is the real image from ${when(f.date)}. The ring shows where it really was.`); toClassify(); }
   };
   $("startBtn").onclick = start;
   $("againBtn").onclick = start;

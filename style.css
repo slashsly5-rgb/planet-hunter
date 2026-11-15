@@ -357,3 +357,21 @@ button.slabel.dim:hover, button.slabel.earth:hover, button.slabel.scan:hover, bu
 #introTop { font-size: clamp(2rem, 5vw, 4rem); font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
 #introSub { font-size: 1.15rem; color: #d5dbee; margin-top: .3em; }
 .space.galaxy .space-time, .space.galaxy .space-title .lead, .space.galaxy .space-title .note { display: none; }
+
+/* hunt: the steps are spelled out */
+.hunt-stage { position: relative; }
+.step-head { margin: 0 0 6px; font: 800 1.35rem/1.2 ui-monospace, Consolas, monospace; letter-spacing: .08em; color: var(--hud); text-shadow: 0 0 16px #6fe3ff66; }
+.step-card { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(88%, 430px); z-index: 4; text-align: center; padding: 18px 20px; border-radius: 16px;
+  background: #070d1cf2; border: 2px solid var(--hud); box-shadow: 0 0 0 9999px #0008, 0 0 50px #6fe3ff55; animation: rise .35s ease-out; }
+.step-card .step-done { margin: 0 0 10px; font-weight: 700; color: var(--good); } .step-card .step-done.bad { color: var(--accent2); }
+.step-card .step-next { margin: 0; font: 700 12px/1 ui-monospace, Consolas, monospace; letter-spacing: .2em; text-transform: uppercase; color: var(--hud); }
+.step-card h3 { font-size: 2rem; margin: .15em 0 .3em; text-transform: uppercase; letter-spacing: .06em; }
+.step-card p { margin: .4em 0; } .step-card .primary { margin-top: 8px; font-size: 1.1rem; padding: 13px 26px; animation: nudge 1.6s ease-in-out infinite; }
+.hunt-stage { overflow: hidden; border-radius: 10px; }
+.guide { stroke: #ffd35c; stroke-width: 4; stroke-dasharray: 10 8; stroke-linecap: round; animation: march .7s linear infinite; }
+@keyframes march { to { stroke-dashoffset: -18; } }
+.guideq { fill: #ffd35c; font: 800 30px system-ui, sans-serif; paint-order: stroke; stroke: #000; stroke-width: 5px; animation: breathe 1.2s ease-in-out infinite; }
+.viewer.askright::after { content: "STEP 3: CHOOSE AN ANSWER ON THE RIGHT  \2192"; position: absolute; left: 50%; top: 10px; transform: translateX(-50%); padding: 6px 12px; border-radius: 999px; white-space: nowrap;
+  background: #000a; border: 1px solid #ffd35c; color: #ffd35c; font: 700 11px/1 ui-monospace, Consolas, monospace; letter-spacing: .14em; pointer-events: none; animation: breathe 1.4s ease-in-out infinite; }
+.quiz:not([hidden]) { padding: 10px; border: 2px solid #ffd35c; border-radius: 14px; box-shadow: 0 0 30px #ffb54744; animation: rise .35s ease-out; }
+.quiz .zone:not(:disabled) { border-color: #5a6a9c; }

@@ -62,7 +62,7 @@ await click(...(await centre("#startBtn")));
 await sleep(1200);
 await shot("2-level.png");
 
-const results = [], blocked = [];
+const results = [], blocked = []; let gates = 0;
 const tapHunt = async (pt, size) => { const r = await js(`(() => { const r = document.querySelector("#huntView").getBoundingClientRect(); return [r.left, r.top, r.width]; })()`); await click(r[0] + pt.x * r[2] / size, r[1] + pt.y * r[2] / size); await sleep(600); };
 const hs = () => js(`window.__hunt.state()`);
 for (let i = 0; i < 40; i++) {                       // each mission: detect, (predict), classify. Odd missions get wrong answers on purpose.
@@ -79,6 +79,7 @@ for (let i = 0; i < 40; i++) {                       // each mission: detect, (p
   await tapHunt(good ? st.frames[0] : far(st.frames[0]), st.size);
   if (!good) await tapHunt(far(st.frames[0]), st.size);          // second try, also wrong
   if (i < 2) await shot(`3-detect-${i}.png`);
+  if ((await hs()).step === "gate") { gates++; if (i < 2) await shot(`3-card-${i}.png`); await press("#stepGo"); await sleep(500); if (i < 2) await shot(`3-gate-${i}.png`); }
   st = await hs();
   if (st.step === "predict" && process.env.PH_SKIP) { await press("#skipBtn"); await sleep(500); }
   else if (st.step === "predict") { await tapHunt(good ? st.target : far(st.target), st.size); if (i < 2) await shot(`3-predict-${i}.png`); }
@@ -133,5 +134,5 @@ const detector = await js(`(async () => { const { detect, judge } = await import
 const colours = await js(`(async () => { const { composite } = await import("./colour.js"); const L = await (await fetch("levels.json")).json(); const out = [];
   for (const l of L) { const r = await composite(l); out.push(l.id + ": " + (r ? r.channels.map((c) => c.name[0] + "=" + c.frame.band).join(" ") + ", " + r.bands + " band(s)" : "none")); } return out; })()`);
 const overflow = await js(`document.documentElement.scrollWidth > document.documentElement.clientWidth`);
-console.log(JSON.stringify({ results, score: await js(`document.querySelector("#scoreLine").textContent`), horizontalOverflow: overflow, has3d, space3d, blocked, colours, detector, scanTip, vs: await js(`document.querySelector('#vsLine').textContent`), measured, lab, missing: await js(`[...window.__missing]`), errors }, null, 1));
+console.log(JSON.stringify({ results, score: await js(`document.querySelector("#scoreLine").textContent`), horizontalOverflow: overflow, has3d, space3d, gates, blocked, colours, detector, scanTip, vs: await js(`document.querySelector('#vsLine').textContent`), measured, lab, missing: await js(`[...window.__missing]`), errors }, null, 1));
 ws.close(); proc.kill();

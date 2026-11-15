@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Planet Hunter: see the sky move in real SPHEREx images</title>
 <meta name="description" content="Watch real NASA SPHEREx images change over time. Spot the worlds that move, play back their paths, and learn how Planet X could be found.">
-<link rel="stylesheet" href="style.css?v=41">
+<link rel="stylesheet" href="style.css?v=43">
 <link rel="modulepreload" href="vendor/three.module.min.js">
 </head>
 <body>
@@ -122,7 +122,15 @@
     </ol>
     <div class="hunt-grid">
       <div class="hunt-left">
-        <div class="stagewrap"><div id="huntView"></div></div>
+        <div class="stagewrap hunt-stage"><div id="huntView"></div>
+          <div id="stepCard" class="step-card" hidden>
+            <p id="stepDone" class="step-done"></p>
+            <p id="stepNext" class="step-next"></p>
+            <h3 id="stepTitle"></h3>
+            <p id="stepText"></p>
+            <button id="stepGo" class="primary"></button>
+          </div>
+        </div>
         <div class="controls" id="huntControls">
           <button data-mode="blink" class="mode on">Blink</button>
           <button data-mode="slide" class="mode">Slide</button>
@@ -133,6 +141,7 @@
         <p id="modeTip" class="note"></p>
       </div>
       <div class="hunt-right">
+        <p id="stepHead" class="step-head"></p>
         <p id="prompt" class="prompt"></p>
         <div id="skipRow" class="next-row" hidden>
           <button id="skipBtn" class="ghost">Skip this step</button>
@@ -364,6 +373,6 @@
 </section>
 </main>
 
-<script type="module" src="app.js?v=41"></script>
+<script type="module" src="app.js?v=43"></script>
 </body>
 </html>
