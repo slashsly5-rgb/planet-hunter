@@ -317,3 +317,13 @@ main:has(#voyage:not([hidden])) { max-width: none; padding: 0; }
 .vy-grades { list-style: none; padding: 0; margin: 12px auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 14px; text-align: left; }
 .vy-grades li { display: flex; justify-content: space-between; align-items: center; background: #0d1830; border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px 4px 10px; font-size: .9rem; }
 .vy-grades .vy-grade { width: 26px; height: 26px; font-size: 15px; margin: 0; }
+
+/* hunt: never leave the player wondering what to do next */
+.next-row { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; }
+.next-row .primary { font-size: 1.1rem; padding: 14px 28px; animation: nudge 1.6s ease-in-out infinite; }
+@keyframes nudge { 50% { box-shadow: 0 0 34px #ffb547cc, 0 6px 24px #ff934744; transform: translateY(-1px); } }
+.viewer.askclick::after { content: "CLICK ON THE PICTURE"; position: absolute; left: 50%; top: 10px; transform: translateX(-50%); padding: 5px 12px; border-radius: 999px;
+  background: #000a; border: 1px solid var(--hud); color: var(--hud); font: 700 11px/1 ui-monospace, Consolas, monospace; letter-spacing: .18em; pointer-events: none; animation: breathe 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .next-row .primary, .viewer.askclick::after { animation: none; } }
+@media (max-height: 760px) { .hunt-grid { grid-template-columns: minmax(0, 58vh) minmax(0, 1fr); } .card { padding: 12px 14px; } .card h2 { font-size: 1.25rem; } }
+.viewer.askclick::after { white-space: nowrap; }

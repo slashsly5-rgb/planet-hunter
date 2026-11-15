@@ -46,7 +46,7 @@ await click(...(await centre("#startBtn")));
 await sleep(1200);
 await shot("2-level.png");
 
-const results = [];
+const results = [], blocked = [];
 const tapHunt = async (pt, size) => { const r = await js(`(() => { const r = document.querySelector("#huntView").getBoundingClientRect(); return [r.left, r.top, r.width]; })()`); await click(r[0] + pt.x * r[2] / size, r[1] + pt.y * r[2] / size); await sleep(600); };
 const hs = () => js(`window.__hunt.state()`);
 for (let i = 0; i < 40; i++) {                       // each mission: detect, (predict), classify. Odd missions get wrong answers on purpose.
@@ -60,10 +60,17 @@ for (let i = 0; i < 40; i++) {                       // each mission: detect, (p
   st = await hs();
   if (st.step === "predict") { await tapHunt(good ? st.target : far(st.target), st.size); if (i < 2) await shot(`3-predict-${i}.png`); }
   st = await hs();
-  await js(`document.querySelector('.zone[data-z="${good ? st.zone : (st.zone === "belt" ? "outer" : "belt")}"]').click()`); await sleep(500);
+  const zsel = `.zone[data-z="${good ? st.zone : (st.zone === "belt" ? "outer" : "belt")}"]`;
+  // PH_REAL=1: press buttons with a real mouse click at their position, as a person would, instead of calling click() on them
+  const press = async (sel) => { if (!process.env.PH_REAL) return js(`document.querySelector(${JSON.stringify(sel)}).click()`);
+    await js(`document.querySelector(${JSON.stringify(sel)}).scrollIntoView({ block: "center" })`); await sleep(350);
+    const hit = await js(`(() => { const b = document.querySelector(${JSON.stringify(sel)}), r = b.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2, top = document.elementFromPoint(x, y); return [x, y, top === b || b.contains(top), top ? (top.id || top.className || top.tagName) : "nothing"]; })()`);
+    if (!hit[2]) blocked.push(`${sel} is covered by: ${hit[3]}`);
+    await click(hit[0], hit[1]); };
+  await press(zsel); await sleep(500);
   if (i < 2) await shot(`3-reveal-${i}.png`);
   results.push({ mission: i + 1, played: good ? "well" : "badly", result: await js(`document.querySelector("#prompt").textContent`) });
-  await js(`document.querySelector("#nextBtn").click()`);
+  await press("#nextBtn");
   await sleep(900);
 }
 await shot("4-end.png");
@@ -109,5 +116,5 @@ const detector = await js(`(async () => { const { detect, judge } = await import
 const colours = await js(`(async () => { const { composite } = await import("./colour.js"); const L = await (await fetch("levels.json")).json(); const out = [];
   for (const l of L) { const r = await composite(l); out.push(l.id + ": " + (r ? r.channels.map((c) => c.name[0] + "=" + c.frame.band).join(" ") + ", " + r.bands + " band(s)" : "none")); } return out; })()`);
 const overflow = await js(`document.documentElement.scrollWidth > document.documentElement.clientWidth`);
-console.log(JSON.stringify({ results, score: await js(`document.querySelector("#scoreLine").textContent`), horizontalOverflow: overflow, has3d, colours, detector, scanTip, vs: await js(`document.querySelector('#vsLine').textContent`), measured, lab, missing: await js(`[...window.__missing]`), errors }, null, 1));
+console.log(JSON.stringify({ results, score: await js(`document.querySelector("#scoreLine").textContent`), horizontalOverflow: overflow, has3d, blocked, colours, detector, scanTip, vs: await js(`document.querySelector('#vsLine').textContent`), measured, lab, missing: await js(`[...window.__missing]`), errors }, null, 1));
 ws.close(); proc.kill();

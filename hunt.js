@@ -3,11 +3,11 @@
 //   2 Predict   from its two positions, say where it will be in a third real image
 //   3 Classify  from how fast it moves, say where it orbits
 // The last missions are simulated Planet X candidates (made-up objects on real images, labelled as simulated).
-import { isHit } from "./score.js?v=22";
-import { $, Viewer, fmtDate, fmtTime, span, ring, ruler } from "./viewer.js?v=22";
-import { speedChart, simFrames } from "./lab.js?v=22";
-import { t, tr } from "./i18n.js?v=22";
-import { detect, judge } from "./detect.js?v=22";
+import { isHit } from "./score.js?v=24";
+import { $, Viewer, fmtDate, fmtTime, span, ring, ruler } from "./viewer.js?v=24";
+import { speedChart, simFrames } from "./lab.js?v=24";
+import { t, tr } from "./i18n.js?v=24";
+import { detect, judge } from "./detect.js?v=24";
 
 const FOUND_RADIUS = 20;          // image pixels: how close a tap must be to count as a detection
 const TRIES = 2;
@@ -68,7 +68,7 @@ export function initHunt(levels, go) {
 
   async function startMission() {
     m = missions[n]; pts = {}; tries = 0; usedDiff = false; step = "";
-    $("card").hidden = true; $("quiz").hidden = true; note(""); $("huntControls").hidden = false;
+    $("card").hidden = true; $("quiz").hidden = true; $("nextRow").hidden = true; note(""); $("huntControls").hidden = false;
     prompt(tr("Loading…")); window.scrollTo(0, 0);
     if (m.boss && !m.L) {
       const made = await simFrames(base, m.boss, BOSS_KM);
@@ -80,7 +80,7 @@ export function initHunt(levels, go) {
     if (m.target === undefined) m.target = targetOf(m.L);
     const frames = [...m.L.frames, ...(m.target ? [m.target.frame] : [])];
     await view.load(frames, m.L.size).catch(() => prompt(tr("An image did not load. Check your connection and refresh the page.")));
-    view.pair = [0, 1]; step = "detect"; t0 = performance.now(); mode("blink");
+    view.pair = [0, 1]; step = "detect"; t0 = performance.now(); mode("blink"); view.root.classList.add("askclick");
     prompt(m.boss ? t`<strong>Detect.</strong> Planet X drill: a simulated planet is hidden in these two real images. It is faint and barely moves. Tap it.`
       : tr("<strong>Detect.</strong> One object moves between these two real images. Tap it. You have two tries."));
     bar();
@@ -97,7 +97,7 @@ export function initHunt(levels, go) {
     m.human = pts.detect > 0;
     m.machine = judge(detect(view.els[0], view.els[1], m.L.size), m.L.frames);   // the same pair, given to the automatic detector
     if (!m.target) return toClassify();
-    step = "predict"; bar();
+    step = "predict"; bar(); view.root.classList.add("askclick");
     const [a, b] = m.L.frames, f = m.target.frame;
     prompt(m.target.forward
       ? t`<strong>Predict.</strong> It was at the dashed ring on ${when(a.date)} and at the solid ring on ${when(b.date)}. Tap where it will be on <strong>${when(f.date)}</strong>.`
@@ -105,7 +105,8 @@ export function initHunt(levels, go) {
   }
 
   function toClassify() {
-    step = "classify"; bar();
+    step = "classify"; bar(); view.root.classList.remove("askclick");
+    window.scrollTo({ top: 0, behavior: "smooth" });      // the three answers are at the top of the right-hand column
     const L = m.L, rate = L.moved_arcsec / L.days_between;
     prompt(t`<strong>Classify.</strong> It moved ${L.moved_arcsec} arcseconds in ${span(L.days_between)}: about ${rate < 10 ? rate.toFixed(1) : Math.round(rate)} arcseconds a day. Where does it orbit?`);
     $("quiz").innerHTML = ZONES.map((z) => `<button class="zone" data-z="${z.id}">${tr(z.label)}</button>`).join("");
@@ -139,8 +140,9 @@ export function initHunt(levels, go) {
     $("ruler").innerHTML = ruler(L.name, L.distance_au);
     $("badge").textContent = L.sim ? tr("⚠ Simulated object on real SPHEREx images") : tr("✔ Checked against NASA JPL Horizons");
     $("nextBtn").textContent = n + 1 < missions.length ? tr("Next mission") : tr("See your result");
-    $("card").hidden = false;
-    $("card").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    $("card").hidden = false; $("quiz").hidden = true; $("nextRow").hidden = false; view.root.classList.remove("askclick");
+    window.scrollTo({ top: 0, behavior: "smooth" });      // the Next button sits at the top, under the result line
+    $("nextBtn").focus({ preventScroll: true });
   }
 
   view.onTap = (tap) => {
@@ -194,6 +196,9 @@ export function initHunt(levels, go) {
     $("huntPlay").hidden = false; $("huntEnd").hidden = true; go("hunt"); startMission();
   }
   $("nextBtn").onclick = () => { if (step !== "done") return; if (++n < missions.length) startMission(); else finish(); };
+  addEventListener("keydown", (e) => {                     // Enter moves on once a mission is complete
+    if (e.key === "Enter" && step === "done" && !$("hunt").hidden && !$("huntPlay").hidden) { e.preventDefault(); $("nextBtn").click(); }
+  });
   $("startBtn").onclick = start;
   $("againBtn").onclick = start;
   document.querySelector('.top [data-view="hunt"]').onclick = () => { if (m) go("hunt"); else start(); };
