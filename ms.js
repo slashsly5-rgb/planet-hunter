@@ -525,5 +525,22 @@ export const MS = {
   "Our neighbourhood": "Kejiranan kita",
   "the Orion Arm, between the Sagittarius and Perseus arms": "Lengan Orion, antara lengan Sagittarius dan Perseus",
   "or press Enter": "atau tekan Enter",
-  "Stuck? Skipping scores 0 for the step and moves on.": "Tersekat? Melangkau memberi 0 mata untuk langkah itu dan terus ke langkah seterusnya."
+  "Stuck? Skipping scores 0 for the step and moves on.": "Tersekat? Melangkau memberi 0 mata untuk langkah itu dan terus ke langkah seterusnya.",
+  "♪": "♪",
+  "Music on: click to mute": "Muzik dihidupkan: klik untuk senyap",
+  "Music off: click to play": "Muzik dimatikan: klik untuk main",
+  "Share my result": "Kongsi keputusan saya",
+  "Save the picture": "Simpan gambar",
+  "Your result card": "Kad keputusan anda",
+  "I found {0} of {1}": "Saya menemui {0} daripada {1}",
+  "hidden worlds": "dunia tersembunyi",
+  "Score {0} of {1} · Rank: {2}": "Markah {0} daripada {1} · Pangkat: {2}",
+  "Discoverer": "Penemu",
+  "Astronomer": "Ahli astronomi",
+  "Observer": "Pemerhati",
+  "Cadet": "Kadet",
+  "in real images from NASA's SPHEREx space telescope": "dalam imej sebenar daripada teleskop angkasa SPHEREx NASA",
+  "Can you beat me?": "Boleh kalahkan saya?",
+  "I hunted moving worlds in real NASA SPHEREx images. Can you beat me?": "Saya memburu dunia yang bergerak dalam imej sebenar SPHEREx NASA. Boleh kalahkan saya?",
+  "The shooting stars and coloured haze on the front page, and the music, are decoration.": "Tahi bintang dan kabus berwarna di halaman utama, serta muziknya, hanyalah hiasan."
 };

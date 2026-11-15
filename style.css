@@ -145,6 +145,8 @@ body.grey .thumb { filter: none; }
 #lab .detail { margin-top: 10px; }
 @media (max-width: 760px) { .top .brand { font-size: .95rem; gap: 6px; } .top button { padding: 10px 6px; font-size: .9rem; } }
 .top .lang { border: 1px solid var(--line); color: var(--accent); font-weight: 700; margin-left: 4px; }
+.top .music { min-width: 40px; font-size: 18px; line-height: 1; }
+.top .music.off { color: var(--muted, #8a93ad); text-decoration: line-through; opacity: 0.7; }
 @media (max-width: 520px) { .top .brand { font-size: 0; gap: 0; padding-right: 0; } .top { gap: 2px; } }
 
 /* 3D Solar System (home) */
@@ -487,3 +489,17 @@ abbr.term:focus-visible { outline: 2px solid var(--hud); outline-offset: 2px; bo
   .tour { bottom: 8px; padding: 10px 12px; } .tour #tourText { font-size: .95rem; }
 }
 .view { scroll-margin-top: 80px; }
+
+/* front page decoration: a faint drifting coloured haze and the odd shooting star (both stated as decoration on the About page) */
+.space .nebula, .space .meteors { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+.space .nebula { inset: -15%; width: 130%; height: 130%; mix-blend-mode: screen; opacity: 0.2;
+  background: radial-gradient(40% 32% at 22% 30%, #6b3fa0aa, transparent 70%), radial-gradient(36% 30% at 78% 66%, #1f6f9caa, transparent 70%), radial-gradient(28% 22% at 60% 20%, #a0406a77, transparent 70%);
+  animation: nebulaDrift 70s ease-in-out infinite alternate; }
+@keyframes nebulaDrift { from { transform: translate(-3%, -2%) rotate(0deg) scale(1); } to { transform: translate(3%, 2%) rotate(8deg) scale(1.08); } }
+@media (prefers-reduced-motion: reduce) { .space .nebula { animation: none; } }
+
+/* hunt result card */
+.share-card { margin: 18px 0 8px; max-width: 640px; }
+.share-card img { display: block; width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--line); box-shadow: 0 10px 40px #0008, 0 0 60px #5b3fa033; }
+.share-card .cta { margin-top: 12px; }
+

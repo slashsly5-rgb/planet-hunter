@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Planet Hunter: see the sky move in real SPHEREx images</title>
 <meta name="description" content="Watch real NASA SPHEREx images change over time. Spot the worlds that move, play back their paths, and learn how Planet X could be found.">
-<link rel="stylesheet" href="style.css?v=58">
+<link rel="stylesheet" href="style.css?v=60">
 <link rel="modulepreload" href="vendor/three.module.min.js">
 </head>
 <body>
@@ -30,6 +30,7 @@
     <button data-view="lab">Planet X</button>
     <button data-view="about">About</button>
     <button data-view="judges">Judges</button>
+    <button id="musicBtn" class="lang music" aria-pressed="true" aria-label="Music">♪</button>
     <button id="langBtn" class="lang" aria-label="Language / Bahasa"></button>
   </nav>
 </header>
@@ -40,6 +41,8 @@
 <section id="home" class="view">
   <div id="space" class="space">
     <div class="space-canvas"></div>
+    <div class="nebula" aria-hidden="true"></div>
+    <canvas class="meteors" aria-hidden="true"></canvas>
     <div class="labels"></div>
     <p class="space-loading">Loading the 3D Solar System…</p>
     <div class="frame-hud" aria-hidden="true"><i class="hb tl"></i><i class="hb tr"></i><i class="hb bl"></i><i class="hb br"></i></div>
@@ -170,6 +173,7 @@
     <p class="eyebrow">Hunt complete</p>
     <h1 id="scoreLine"></h1>
     <p id="rank" class="lead"></p>
+    <figure class="share-card"><img id="shareImg" alt="Your result card"><figcaption class="cta"><button id="shareBtn" class="primary">Share my result</button><button id="saveBtn" class="ghost">Save the picture</button></figcaption></figure>
     <h2>So where is Planet X?</h2>
     <p id="planetx"></p>
     <div id="rulerX"></div>
@@ -453,6 +457,7 @@
     <li>The Planet X simulator scales brightness and motion simply from Pluto (brightness falls with the fourth power of distance, motion with distance).</li>
     <li>Classifying a world by its speed is a first clue only: speed across the sky also depends on where Earth is in its orbit.</li>
     <li>Picture brightness is stretched separately in each image so faint things show. It is not a measurement.</li>
+      <li>The shooting stars and coloured haze on the front page, and the music, are decoration.</li>
   </ul>
 
   <h2 id="limits">What this can't do</h2>
@@ -479,6 +484,6 @@
   <div class="tour-btns"><button id="tourBack" class="ghost small">Back</button><button id="tourNext" class="primary small">Next</button><button id="tourEnd" class="ghost small">End tour</button></div>
 </div>
 <div id="glossPop" class="gloss-pop" role="tooltip" hidden></div>
-<script type="module" src="app.js?v=58"></script>
+<script type="module" src="app.js?v=60"></script>
 </body>
 </html>

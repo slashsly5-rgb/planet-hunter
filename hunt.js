@@ -3,11 +3,11 @@
 //   2 Predict   from its two positions, say where it will be in a third real image
 //   3 Classify  from how fast it moves, say where it orbits
 // The last missions are simulated Planet X candidates (made-up objects on real images, labelled as simulated).
-import { isHit } from "./score.js?v=58";
-import { $, Viewer, fmtDate, fmtTime, span, ring, ruler } from "./viewer.js?v=58";
-import { speedChart, simFrames } from "./lab.js?v=58";
-import { t, tr } from "./i18n.js?v=58";
-import { detect, judge } from "./detect.js?v=58";
+import { isHit } from "./score.js?v=60";
+import { $, Viewer, fmtDate, fmtTime, span, ring, ruler } from "./viewer.js?v=60";
+import { speedChart, simFrames } from "./lab.js?v=60";
+import { t, tr } from "./i18n.js?v=60";
+import { detect, judge } from "./detect.js?v=60";
 
 const FOUND_RADIUS = 20;          // image pixels: how close a tap must be to count as a detection
 const TRIES = 2;
@@ -215,8 +215,45 @@ export function initHunt(levels, go) {
     const done = missions.filter((x) => x.machine);
     $("vsLine").innerHTML = t`<strong>You against the machine.</strong> You detected ${done.filter((x) => x.human).length} of ${done.length}. The automatic detector's top pick was right ${done.filter((x) => x.machine.found).length} times. Software is fast, but it is fooled by cosmic rays and misses faint objects, so people still check.`;
     $("endChart").innerHTML = speedChart(levels);
+    shareCard(done.filter((x) => x.human).length, done.length, got, max, f >= 0.85 ? 0 : f >= 0.65 ? 1 : f >= 0.4 ? 2 : 3);
     window.scrollTo(0, 0);
   }
+
+  // ---------- a picture of the result to share: score, rank, and a world seen three times in red, green and blue ----------
+  let cardFile;
+  const siteUrl = () => location.href.split("#")[0].replace(/index\.html$/, "");
+  function shareCard(found, of, got, max, r) {
+    const c = document.createElement("canvas"); c.width = 1200; c.height = 630; const x = c.getContext("2d");
+    const bg = x.createRadialGradient(900, 260, 40, 700, 315, 950); bg.addColorStop(0, "#2a1d5c"); bg.addColorStop(0.45, "#0b1030"); bg.addColorStop(1, "#02030a");
+    x.fillStyle = bg; x.fillRect(0, 0, 1200, 630);
+    for (const [cx, cy, rad, col] of [[1000, 150, 330, "rgba(120,70,190,0.35)"], [1060, 540, 260, "rgba(30,120,170,0.3)"], [140, 600, 280, "rgba(160,60,110,0.18)"]]) {
+      const g = x.createRadialGradient(cx, cy, 0, cx, cy, rad); g.addColorStop(0, col); g.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = g; x.fillRect(0, 0, 1200, 630);
+    }
+    for (let i = 0; i < 450; i++) { x.fillStyle = `rgba(255,255,255,${0.25 + Math.random() * 0.75})`; x.beginPath(); x.arc(Math.random() * 1200, Math.random() * 630, Math.random() ** 3 * 1.6 + 0.4, 0, 7); x.fill(); }
+    // the moving world, once per colour, ringed, along its path
+    x.setLineDash([6, 8]); x.strokeStyle = "rgba(255,255,255,0.35)"; x.lineWidth = 2; x.beginPath(); x.moveTo(800, 470); x.lineTo(1100, 170); x.stroke(); x.setLineDash([]);
+    [[840, 430, "#ff5a5a"], [950, 320, "#5aff8c"], [1060, 210, "#5aa8ff"]].forEach(([px, py, col]) => {
+      const g = x.createRadialGradient(px, py, 0, px, py, 26); g.addColorStop(0, "#fff"); g.addColorStop(0.25, col); g.addColorStop(1, "rgba(0,0,0,0)");
+      x.fillStyle = g; x.beginPath(); x.arc(px, py, 26, 0, 7); x.fill();
+      x.strokeStyle = col; x.lineWidth = 3; x.beginPath(); x.arc(px, py, 40, 0, 7); x.stroke();
+    });
+    const fit = (text, w, size, weight = 700) => { do x.font = `${weight} ${size}px "Segoe UI", system-ui, sans-serif`; while (x.measureText(text).width > w && --size > 14); };
+    x.textBaseline = "alphabetic"; x.fillStyle = "#ffb547"; x.font = '700 26px "Segoe UI", system-ui, sans-serif'; x.letterSpacing = "8px"; x.fillText("PLANET HUNTER", 70, 105); x.letterSpacing = "0px";
+    x.fillStyle = "#ffffff"; const big = t`I found ${found} of ${of}`; fit(big, 680, 92, 800); x.fillText(big, 70, 225);
+    x.fillStyle = "#cfd8f0"; const sub = tr("hidden worlds"); fit(sub, 680, 52, 600); x.fillText(sub, 70, 292);
+    x.fillStyle = "#7dffcf"; const line = t`Score ${got} of ${max} · Rank: ${tr(["Discoverer", "Astronomer", "Observer", "Cadet"][r])}`; fit(line, 680, 36); x.fillText(line, 70, 365);
+    x.fillStyle = "#aab4d4"; const src = tr("in real images from NASA's SPHEREx space telescope"); fit(src, 680, 28, 500); x.fillText(src, 70, 412);
+    x.fillStyle = "#ffffff"; const dare = tr("Can you beat me?"); fit(dare, 680, 40); x.fillText(dare, 70, 520);
+    x.fillStyle = "#ffb547"; const u = siteUrl().replace(/^https?:\/\//, "").replace(/\/$/, ""); fit(u, 680, 28, 600); x.fillText(u, 70, 568);
+    c.toBlob((b) => { cardFile = new File([b], "planet-hunter-result.png", { type: "image/png" }); $("shareImg").src = URL.createObjectURL(b); });
+  }
+  const saveCard = () => { if (!cardFile) return; const a = document.createElement("a"); a.href = $("shareImg").src; a.download = cardFile.name; a.click(); };
+  $("saveBtn").onclick = saveCard;
+  $("shareBtn").onclick = async () => {
+    if (!cardFile) return;
+    const data = { files: [cardFile], title: "Planet Hunter", text: tr("I hunted moving worlds in real NASA SPHEREx images. Can you beat me?") + " " + siteUrl() };
+    if (navigator.canShare?.({ files: [cardFile] })) { try { await navigator.share(data); } catch {} } else saveCard();
+  };
 
   function start() {
     n = 0; scores = []; missions.forEach((x) => { delete x.machine; delete x.human; if (x.boss) { delete x.L; delete x.target; } });   // new hiding places each run

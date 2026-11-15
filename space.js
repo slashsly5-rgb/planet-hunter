@@ -1,10 +1,10 @@
 // 3D Solar System: real positions from NASA JPL Horizons (orbits.json). Each world SPHEREx photographed is a place to fly to.
 import * as THREE from "./vendor/three.module.min.js";
 import { OrbitControls } from "./vendor/OrbitControls.js";
-import { $, Viewer, fmtDate } from "./viewer.js?v=58";
-import { t, tr } from "./i18n.js?v=58";
-import { irTexture } from "./irtex.js?v=58";
-import { composite } from "./colour.js?v=58";
+import { $, Viewer, fmtDate } from "./viewer.js?v=60";
+import { t, tr } from "./i18n.js?v=60";
+import { irTexture } from "./irtex.js?v=60";
+import { composite } from "./colour.js?v=60";
 import { EffectComposer } from "./vendor/postprocessing/EffectComposer.js";
 import { RenderPass } from "./vendor/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "./vendor/postprocessing/UnrealBloomPass.js";
@@ -128,6 +128,7 @@ export async function initSpace(levels, actions) {
   let focusG = null, focusSun = false;
   function showInfo(key, g) {
     const d = INFO[key]; if (!d) return;
+    actions.chime?.();
     clear(); $("infoPanel").hidden = false; stage.classList.add("picked");
     $("infoName").textContent = tr(d.name); $("infoKind").textContent = tr(d.kind); $("infoText").textContent = tr(d.text);
     $("infoFacts").innerHTML = d.facts.map(([k, v]) => `<dt>${tr(k)}</dt><dd>${tr(v)}</dd>`).join("");
@@ -287,6 +288,7 @@ export async function initSpace(levels, actions) {
   const view = new Viewer($("worldView"));
   view.onFrame = (i) => { if (sel && !sel.rgb) { win.material.map = tex(sel.frames[i].img); win.material.needsUpdate = true; } };
   function select(w) {
+    actions.chime?.();
     $("infoPanel").hidden = true; focusSun = false; focusG = w.g;
     sel = w; const L = w.L;
     tt = Math.min(N - 1, Math.max(0, w.when)); setPlaying(false);

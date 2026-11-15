@@ -1,12 +1,12 @@
-import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=58";
-import { speedChart } from "./lab.js?v=58";
-import { t, tr } from "./i18n.js?v=58";
-import { initSpace } from "./space.js?v=58";
-import { showStack, hideStack } from "./stack3d.js?v=58";
-import { initHunt } from "./hunt.js?v=58";
-import { initVoyage } from "./voyage.js?v=58";
-import { detect, judge, overlay } from "./detect.js?v=58";
-import { composite, colourMarks } from "./colour.js?v=58";
+import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=60";
+import { speedChart } from "./lab.js?v=60";
+import { t, tr } from "./i18n.js?v=60";
+import { initSpace } from "./space.js?v=60";
+import { showStack, hideStack } from "./stack3d.js?v=60";
+import { initHunt } from "./hunt.js?v=60";
+import { initVoyage } from "./voyage.js?v=60";
+import { detect, judge, overlay } from "./detect.js?v=60";
+import { composite, colourMarks } from "./colour.js?v=60";
 
 // ---------- state ----------
 let levels = [], hunt = null;
@@ -176,7 +176,7 @@ fetch("levels.json")
     else if (want && want !== "home" && document.getElementById(want)?.classList.contains("view")) go(want);
     $("startBtn").textContent = tr("Start the hunt"); $("startBtn").disabled = false;
     drawGrid();
-    return initSpace(levels, { explore: (L) => openObject(L), stack: (L) => openObject(L, "stack") });
+    return initSpace(levels, { explore: (L) => openObject(L), stack: (L) => openObject(L, "stack"), chime: () => chime() });
   })
   .catch((e) => { console.error(String((e && e.stack) || e)); fail(tr("The game data did not load. Check your connection and refresh the page.")); });
 
@@ -280,3 +280,76 @@ document.addEventListener("focusin", (e) => { const a = e.target.closest("abbr.t
 document.addEventListener("focusout", (e) => { if (e.target.closest("abbr.term")) $("glossPop").hidden = true; });
 addEventListener("scroll", () => ($("glossPop").hidden = true), { passive: true });
 window.__tour = { go: tourGo, at: () => tourAt };
+
+// ---------- background music: the trailer's space music as a quiet loop. Browsers block sound until the visitor taps or clicks, so it starts then; the ♪ button turns it off, and that choice is remembered ----------
+const music = new Audio("music.m4a"), musicBtn = $("musicBtn");
+music.loop = true; music.preload = "none"; music.volume = 0;
+let musicOn = localStorage.getItem("music") !== "off", musicStarted = false, musicFade = 0;
+function setMusic(on) {
+  musicOn = on; localStorage.setItem("music", on ? "on" : "off");
+  musicBtn.classList.toggle("off", !on); musicBtn.setAttribute("aria-pressed", String(on));
+  musicBtn.title = tr(on ? "Music on: click to mute" : "Music off: click to play");
+  if (musicStarted) playMusic(on);
+}
+function playMusic(on) {
+  clearInterval(musicFade);
+  if (on) music.play().catch(() => {});
+  musicFade = setInterval(() => {
+    const v = Math.min(1, Math.max(0, music.volume + (on ? 0.012 : -0.05)));
+    music.volume = v;
+    if (v === (on ? 1 : 0)) { clearInterval(musicFade); if (!on) music.pause(); }
+  }, 60);
+}
+setMusic(musicOn);
+window.__music = music;
+musicBtn.addEventListener("click", (e) => { e.stopPropagation(); musicStarted = true; setMusic(!musicOn); });
+const firstTouch = (e) => {
+  if (musicStarted || e.target.closest("#musicBtn")) return;
+  musicStarted = true; if (musicOn) playMusic(true);
+};
+addEventListener("pointerdown", firstTouch, true); addEventListener("keydown", firstTouch, true);
+document.addEventListener("play", (e) => { if (e.target !== music) playMusic(false); }, true);
+document.addEventListener("pause", (e) => { if (e.target !== music && musicOn && musicStarted) playMusic(true); }, true);
+document.addEventListener("ended", (e) => { if (e.target !== music && musicOn && musicStarted) playMusic(true); }, true);
+
+// ---------- a soft bell when something in the 3D view is picked (silent when the ♪ button is off) ----------
+let chimeCtx;
+function chime() {
+  if (!musicOn || !musicStarted) return;
+  const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+  chimeCtx ||= new C(); const t0 = chimeCtx.currentTime;
+  for (const [f, v] of [[1318.5, 0.05], [1975.5, 0.025], [2637, 0.012]]) {
+    const o = chimeCtx.createOscillator(), g = chimeCtx.createGain();
+    o.frequency.value = f; g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(v, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.6);
+    o.connect(g); g.connect(chimeCtx.destination); o.start(t0); o.stop(t0 + 1.7);
+  }
+}
+
+// ---------- shooting stars over the front page, every few seconds, only while it is on screen ----------
+{
+  const cv = document.querySelector(".space .meteors"), cx = cv.getContext("2d"), home = $("home");
+  let streaks = [], next = performance.now() + 2500;
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function tick(now) {
+    requestAnimationFrame(tick);
+    if (still || home.hidden || document.hidden) return;
+    const w = cv.clientWidth, h = cv.clientHeight;
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    if (now > next) {
+      next = now + 3500 + Math.random() * 6000;
+      const a = (20 + Math.random() * 25) * Math.PI / 180 * (Math.random() < 0.5 ? 1 : -1) + (Math.random() < 0.5 ? 0 : Math.PI);
+      streaks.push({ x: Math.random() * w, y: Math.random() * h * 0.6, dx: Math.cos(a), dy: Math.abs(Math.sin(a)), v: 0.6 + Math.random() * 0.5, len: 90 + Math.random() * 120, t0: now, life: 900 + Math.random() * 500 });
+    }
+    cx.clearRect(0, 0, w, h);
+    streaks = streaks.filter((s) => now - s.t0 < s.life);
+    for (const s of streaks) {
+      const p = (now - s.t0) / s.life, d = (now - s.t0) * s.v, hx = s.x + s.dx * d, hy = s.y + s.dy * d;
+      const fade = Math.sin(Math.PI * p), g = cx.createLinearGradient(hx, hy, hx - s.dx * s.len, hy - s.dy * s.len);
+      g.addColorStop(0, `rgba(255,255,255,${0.9 * fade})`); g.addColorStop(0.25, `rgba(190,215,255,${0.45 * fade})`); g.addColorStop(1, "rgba(150,180,255,0)");
+      cx.strokeStyle = g; cx.lineWidth = 1.6; cx.lineCap = "round";
+      cx.beginPath(); cx.moveTo(hx, hy); cx.lineTo(hx - s.dx * s.len, hy - s.dy * s.len); cx.stroke();
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
