@@ -1,0 +1,31 @@
+# Every Monday: has NASA published SPHEREx data the site does not use yet? If so, open an issue (GitHub emails the owner).
+# Updating the site itself is one command on a computer: see UPDATING.md.
+name: Check for new SPHEREx data
+on:
+  schedule:
+    - cron: "0 1 * * 1"        # Monday 01:00 UTC = 09:00 in Malaysia
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - id: check
+        run: python prep/update.py --check
+      - if: steps.check.outputs.new != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NEW: ${{ steps.check.outputs.new }}
+        run: |
+          title="New SPHEREx data: $NEW"
+          if [ "$(gh issue list --state open --search "in:title \"$title\"" --json number --jq length)" != "0" ]; then exit 0; fi
+          gh issue create --title "$title" --body "NASA has published SPHEREx data that Planet Hunter does not use yet: **$NEW**.
+
+          To update the website, on your computer run \`python prep/update.py\`, check the site, then commit and push. Full steps: [UPDATING.md](../blob/main/UPDATING.md)."
