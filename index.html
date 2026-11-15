@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Planet Hunter: see the sky move in real SPHEREx images</title>
 <meta name="description" content="Watch real NASA SPHEREx images change over time. Spot the worlds that move, play back their paths, and learn how Planet X could be found.">
-<link rel="stylesheet" href="style.css?v=72">
+<link rel="stylesheet" href="style.css?v=74">
 <link rel="modulepreload" href="vendor/three.module.min.js">
 </head>
 <body>
@@ -283,6 +283,7 @@
     <div class="vy-chip"><span>MISSILES</span><b id="vyMissiles" class="vy-ammo"></b></div>
     <div class="vy-chip"><span>SUNLIGHT</span><b id="vySun"></b></div>
     <div class="vy-chip"><span>DATA</span><b id="vyData">0</b> <b id="vyCombo" class="vy-combo"></b></div>
+    <button id="vyPause" class="vy-pause" aria-label="Pause">❚❚</button>
   </div>
 
   <p id="vyBuff" class="vy-buff"></p>
@@ -293,6 +294,17 @@
     <button id="vyTouchMissile" type="button">MISSILE</button>
   </div>
 
+  <div id="vyCount" class="vy-count" hidden aria-live="assertive"></div>
+  <div id="vyMenu" class="vy-menu" hidden role="dialog" aria-label="Paused">
+    <div class="vy-menu-card">
+      <h2>Paused</h2>
+      <button id="vyResume" class="primary">Resume</button>
+      <button id="vyRestart" class="ghost">Restart this chapter</button>
+      <button id="vyStartOver" class="ghost">Start over from the beginning</button>
+      <button id="vyQuit" class="ghost">Quit to the start screen</button>
+      <p class="note">The Esc key also pauses and resumes.</p>
+    </div>
+  </div>
   <div id="vyComm" class="vy-comm" hidden><b id="vyWho"></b><p id="vySay"></p></div>
 
   <div id="vyCard" class="vy-card" hidden><p id="vyKicker"></p><h1 id="vyTitle"></h1><p id="vySub"></p></div>
@@ -581,6 +593,6 @@
   </div>
 </div>
 <div id="glossPop" class="gloss-pop" role="tooltip" hidden></div>
-<script type="module" src="app.js?v=72"></script>
+<script type="module" src="app.js?v=74"></script>
 </body>
 </html>

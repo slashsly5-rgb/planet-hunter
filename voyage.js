@@ -6,8 +6,8 @@
 // The ship, debris, lasers, radio chatter, sounds and the look of each world are game fiction.
 // The scanner pictures, positions, distances and sunlight levels are real.
 import * as THREE from "./vendor/three.module.min.js";
-import { $, Viewer, span } from "./viewer.js?v=72";
-import { makeStackGame } from "./stackgame.js?v=72";
+import { $, Viewer, span } from "./viewer.js?v=74";
+import { makeStackGame } from "./stackgame.js?v=74";
 import { EffectComposer } from "./vendor/postprocessing/EffectComposer.js";
 import { RenderPass } from "./vendor/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "./vendor/postprocessing/UnrealBloomPass.js";
@@ -169,32 +169,74 @@ export function initVoyage(levels) {
     g.globalAlpha = 1; const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(3, 1); t.colorSpace = THREE.SRGBColorSpace; return t;
   })();
   const ship = new THREE.Group();
-  const plate = new THREE.MeshStandardMaterial({ map: hullTex, bumpMap: hullTex, bumpScale: 1.6, metalness: 0.55, roughness: 0.55 });
-  const dark = new THREE.MeshStandardMaterial({ color: 0x3d4148, metalness: 0.7, roughness: 0.5 });
-  const engineGlow = new THREE.MeshBasicMaterial({ color: 0x6fb6f5, fog: false });      // kept below white so the glow does not hide the hull
+  // something for the metal to reflect: a soft studio of warm and cool light, made once in code
+  const envTex = (() => {
+    const pm = new THREE.PMREMGenerator(renderer), es = new THREE.Scene(), geo = new THREE.SphereGeometry(10, 32, 16), pos = geo.attributes.position, col = [];
+    for (let k = 0; k < pos.count; k++) {
+      const y = pos.getY(k) / 10, x = pos.getX(k) / 10;
+      col.push(0.16 + 0.6 * Math.max(0, y) + 0.12 * Math.max(0, -x), 0.18 + 0.55 * Math.max(0, y), 0.26 + 0.5 * Math.max(0, y) + 0.2 * Math.max(0, x));
+    }
+    geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+    es.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide })));
+    for (const [x, y, z, w, c] of [[-6, 6, 5, 4, 0xfff1d8], [7, 1, -5, 2.5, 0x8fb8ff], [0, -7, 3, 3, 0x2a3550]]) {
+      const b = new THREE.Mesh(new THREE.BoxGeometry(w, w * 0.4, w), new THREE.MeshBasicMaterial({ color: c })); b.position.set(x, y, z); es.add(b);
+    }
+    const tex = pm.fromScene(es, 0.03).texture; pm.dispose(); return tex;
+  })();
+  const plate = new THREE.MeshStandardMaterial({ map: hullTex, bumpMap: hullTex, bumpScale: 1.2, metalness: 0.4, roughness: 0.48, envMap: envTex, envMapIntensity: 1.1 });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x474c55, metalness: 0.55, roughness: 0.42, envMap: envTex, envMapIntensity: 0.9 });
+  const trim = new THREE.MeshStandardMaterial({ color: 0xa3a9b2, metalness: 0.7, roughness: 0.3, envMap: envTex, envMapIntensity: 1.3 });
+  const engineGlow = new THREE.MeshStandardMaterial({ color: 0x0b1c2e, emissive: 0x76bdf7, emissiveIntensity: 1.5 });
   const part = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); ship.add(m); return m; };
-  // main disc (plating mapped flat from above, so panels are not smeared towards the centre)
-  const disc = part(new THREE.LatheGeometry([[0, 0.44], [1.2, 0.42], [2.25, 0.24], [2.75, 0.07], [2.75, -0.07], [2.25, -0.22], [1.2, -0.36], [0, -0.38]].map(([x, y]) => new THREE.Vector2(x, y)), 64), plate, 0, 0, 0);
-  { const p = disc.geometry.attributes.position, uv = disc.geometry.attributes.uv; for (let i = 0; i < p.count; i++) uv.setXY(i, p.getX(i) * 0.06 + 0.5, p.getZ(i) * 0.18 + 0.5); }
-  part(new THREE.CylinderGeometry(0.95, 1.05, 0.2, 32), plate, 0, 0.5, 0);                              // raised centre
-  part(new THREE.CylinderGeometry(0.42, 0.42, 0.14, 20), dark, 0, 0.64, 0);                              // top turret ring
-  for (const s2 of [-1, 1]) {
-    part(new THREE.BoxGeometry(0.82, 0.34, 2.7), plate, s2 * 0.66, 0, -3.25);                            // forward prongs
-    part(new THREE.BoxGeometry(0.5, 0.2, 0.9), dark, s2 * 0.66, 0.02, -4.75);                            // prong tips
-    const nav = glow(s2 < 0 ? 0xff3344 : 0x33ff88, 0.5); nav.position.set(s2 * 2.75, 0.02, 0); nav.userData.nav = true; ship.add(nav);
+  // main hull: a thick, rounded saucer, domed above and below (plating mapped flat from above)
+  const PROFILE = [[0, 0.62], [0.9, 0.6], [1.6, 0.48], [2.2, 0.3], [2.6, 0.14], [2.78, 0.04], [2.8, -0.04], [2.62, -0.14], [2.2, -0.28], [1.6, -0.42], [0.9, -0.5], [0, -0.52]];
+  const disc = part(new THREE.LatheGeometry(PROFILE.map(([x, y]) => new THREE.Vector2(x, y)), 96), plate, 0, 0, 0);
+  { const q = disc.geometry.attributes.position, uv = disc.geometry.attributes.uv; for (let k = 0; k < q.count; k++) uv.setXY(k, q.getX(k) * 0.06 + 0.5, q.getZ(k) * 0.18 + 0.5); }
+  const topY = (r) => { for (let k = 0; k < 5; k++) { const [r0, y0] = PROFILE[k], [r1, y1] = PROFILE[k + 1]; if (r <= r1) return y0 + ((r - r0) / (r1 - r0)) * (y1 - y0); } return 0.04; };
+  part(new THREE.TorusGeometry(2.76, 0.07, 10, 96), trim, 0, 0, 0).rotation.x = Math.PI / 2;               // bright edge rim
+  part(new THREE.CylinderGeometry(1.0, 1.12, 0.2, 48), plate, 0, 0.7, 0);                                   // raised centre
+  part(new THREE.TorusGeometry(1.06, 0.05, 8, 48), trim, 0, 0.8, 0).rotation.x = Math.PI / 2;
+  const dome = part(new THREE.SphereGeometry(0.7, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), dark, 0, 0.78, 0); dome.scale.y = 0.38;
+  part(new THREE.CylinderGeometry(0.28, 0.32, 0.16, 20), trim, 0, 1.0, 0);                                   // top turret
+  for (const sx of [-1, 1]) { const gun = part(new THREE.CylinderGeometry(0.04, 0.04, 0.7, 8), dark, sx * 0.12, 1.06, -0.35); gun.rotation.x = Math.PI / 2; }
+  // radial ribs and small machinery that follow the curve of the hull: they give it relief in the light
+  for (let k = 0; k < 14; k++) {
+    const a = (k / 14) * Math.PI * 2 + 0.11, r0 = 1.25, r1 = 2.45, mid = (r0 + r1) / 2, slope = Math.atan2(topY(r0) - topY(r1), r1 - r0);
+    const rib = part(new THREE.BoxGeometry(r1 - r0, 0.07, 0.12), k % 2 ? dark : trim, Math.cos(a) * mid, topY(mid) + 0.035, Math.sin(a) * mid);
+    rib.rotation.order = "YZX"; rib.rotation.y = -a; rib.rotation.z = -slope;
   }
-  part(new THREE.BoxGeometry(0.5, 0.26, 2.2), dark, 0, 0, -3.1);                                         // docking gap between the prongs
-  // offset cockpit on an arm
-  part(new THREE.BoxGeometry(1.3, 0.3, 0.7), plate, 2.2, 0.06, -1.5).rotation.y = -0.5;
-  const pod = part(new THREE.CylinderGeometry(0.34, 0.34, 1.5, 16), plate, 2.65, 0.1, -2.3); pod.rotation.x = Math.PI / 2;
-  const glass = part(new THREE.ConeGeometry(0.34, 0.7, 16), new THREE.MeshStandardMaterial({ color: 0x9fd8ff, emissive: 0x2a6a9a, emissiveIntensity: 0.6, metalness: 1, roughness: 0.08 }), 2.65, 0.1, -3.4); glass.rotation.x = -Math.PI / 2;
-  // sensor dish and vents
-  part(new THREE.CylinderGeometry(0.06, 0.06, 0.5, 8), dark, -1.25, 0.6, -0.9);
-  const dish = part(new THREE.SphereGeometry(0.5, 20, 10, 0, Math.PI * 2, 0, 1.0), plate, -1.25, 0.72, -0.9); dish.rotation.x = Math.PI * 0.85; dish.scale.y = 0.45;
-  for (let i = 0; i < 6; i++) { const a2 = 0.62 * Math.PI + (i / 5) * 0.76 * Math.PI; part(new THREE.CylinderGeometry(0.2, 0.2, 0.08, 16), dark, Math.cos(a2) * 1.75, 0.34, Math.sin(a2) * 1.75 * -1 * -1); }
-  // engine: one wide glowing band across the back
-  const band = part(new THREE.TorusGeometry(2.62, 0.13, 10, 48, Math.PI * 0.8), engineGlow, 0, 0, 0); band.rotation.set(Math.PI / 2, 0, Math.PI * 0.1);
-  const flames = [-1.5, -0.5, 0.5, 1.5].map((x) => { const f = glow(0x6fb8ff, 0.8, 0.4); f.position.set(x, 0, 2.5 + (Math.abs(x) < 1 ? 0.3 : 0)); ship.add(f); return f; });
+  for (let k = 0; k < 46; k++) {
+    const a = rand(0, Math.PI * 2), r = rand(1.3, 2.35), w = rand(0.1, 0.32), h = rand(0.05, 0.16);
+    const g = part(new THREE.BoxGeometry(w, h, rand(0.1, 0.3)), pick([dark, plate, trim]), Math.cos(a) * r, topY(r) + h / 2, Math.sin(a) * r);
+    g.rotation.y = -a;
+  }
+  for (let k = 0; k < 4; k++) {                                                                                // recessed vents: a rim around a dark hole, not a flat black disc
+    const a = 0.7 * Math.PI + k * 0.2 * Math.PI, r = 1.85, x = Math.cos(a) * r, z = -Math.sin(a) * r;
+    const ring = part(new THREE.TorusGeometry(0.17, 0.035, 8, 20), trim, x, topY(r) + 0.02, z); ring.rotation.x = Math.PI / 2;
+    part(new THREE.CylinderGeometry(0.15, 0.15, 0.03, 16), new THREE.MeshStandardMaterial({ color: 0x0c0e12, roughness: 1 }), x, topY(r) + 0.005, z);
+  }
+  for (const s2 of [-1, 1]) {
+    const prong = part(new THREE.BoxGeometry(0.82, 0.36, 2.7, 1, 1, 1), plate, s2 * 0.66, 0, -3.25);          // forward prongs
+    part(new THREE.BoxGeometry(0.86, 0.06, 2.6), trim, s2 * 0.66, 0.2, -3.25);                                // their top plating
+    part(new THREE.BoxGeometry(0.5, 0.22, 0.9), dark, s2 * 0.66, 0.02, -4.75);                                // prong tips
+    for (let k = 0; k < 3; k++) part(new THREE.BoxGeometry(0.2, 0.08, 0.3), dark, s2 * (0.66 + rand(-0.2, 0.2)), 0.26, -2.4 - k * 0.7);
+    const nav = glow(s2 < 0 ? 0xff3344 : 0x33ff88, 0.5); nav.position.set(s2 * 2.8, 0.02, 0); nav.userData.nav = true; ship.add(nav);
+    void prong;
+  }
+  part(new THREE.BoxGeometry(0.5, 0.26, 2.2), dark, 0, 0, -3.1);                                             // docking gap between the prongs
+  // offset cockpit on an arm, with a glass nose
+  part(new THREE.BoxGeometry(1.3, 0.3, 0.7), plate, 2.2, 0.08, -1.5).rotation.y = -0.5;
+  const pod = part(new THREE.CylinderGeometry(0.36, 0.36, 1.5, 24), plate, 2.65, 0.12, -2.3); pod.rotation.x = Math.PI / 2;
+  const podRing = part(new THREE.TorusGeometry(0.37, 0.04, 8, 24), trim, 2.65, 0.12, -1.6); void podRing;
+  const glass = part(new THREE.SphereGeometry(0.36, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x9fd8ff, emissive: 0x2a6a9a, emissiveIntensity: 0.6, metalness: 1, roughness: 0.05, envMap: envTex, envMapIntensity: 1.6 }), 2.65, 0.12, -3.05);
+  glass.rotation.x = -Math.PI / 2; glass.scale.y = 1.5;
+  // sensor dish on a mast
+  part(new THREE.CylinderGeometry(0.06, 0.06, 0.5, 8), dark, -1.25, topY(1.25) + 0.25, -0.9);
+  const dish = part(new THREE.SphereGeometry(0.5, 24, 10, 0, Math.PI * 2, 0, 1.0), trim, -1.25, topY(1.25) + 0.52, -0.9); dish.rotation.x = Math.PI * 0.85; dish.scale.y = 0.45;
+  // engine: a glowing slot set into the back of the hull, framed by dark housing
+  const band = part(new THREE.TorusGeometry(2.6, 0.065, 8, 64, Math.PI * 0.7), engineGlow, 0, 0, 0); band.rotation.set(Math.PI / 2, 0, Math.PI * 0.15);
+  for (const y of [0.09, -0.09]) { const h = part(new THREE.TorusGeometry(2.63, 0.06, 8, 64, Math.PI * 0.74), dark, 0, y, 0); h.rotation.set(Math.PI / 2, 0, Math.PI * 0.13); }
+  const flames = [-1.5, -0.5, 0.5, 1.5].map((x) => { const f = glow(0x6fb8ff, 0.6, 0.35); f.position.set(x, 0, 2.55 + (Math.abs(x) < 1 ? 0.15 : 0)); ship.add(f); return f; });
   // shield: a soft bubble, brighter at its edge
   const shield = new THREE.Mesh(new THREE.SphereGeometry(4.6, 48, 32), new THREE.MeshBasicMaterial({ color: 0x6fd8ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.BackSide })); shield.scale.set(1, 0.42, 1.15); ship.add(shield);
   ship.scale.setScalar(1.25);
@@ -279,10 +321,21 @@ export function initVoyage(levels) {
     clearInterval(say.t); let i = 0;
     say.t = setInterval(() => { body.textContent = text.slice(0, ++i); if (i % 2) sound.blip(); if (i >= text.length) clearInterval(say.t); }, 20);
   }
+  let run = 0, paused = false;
+  const wait = (ms) => { const my = run; return new Promise((ok) => setTimeout(() => { if (my === run) ok(); }, ms)); };
   function card(kicker, title, sub, ms = 2600) {
     $("vyKicker").textContent = kicker; $("vyTitle").textContent = title; $("vySub").textContent = sub;
     root.classList.add("cine"); $("vyCard").hidden = false;
-    return new Promise((ok) => setTimeout(() => { $("vyCard").hidden = true; root.classList.remove("cine"); ok(); }, ms));
+    return wait(ms).then(() => { $("vyCard").hidden = true; root.classList.remove("cine"); });
+  }
+  async function countdown() {
+    const el = $("vyCount");
+    for (const t of ["3", "2", "1", "GO"]) {
+      el.textContent = t; el.hidden = false; el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
+      sound.tone(t === "GO" ? 880 : 520, t === "GO" ? 0.35 : 0.12, "sine", 0.22);
+      await wait(t === "GO" ? 450 : 700);
+    }
+    el.hidden = true;
   }
   function bars() {
     $("vyHull").style.width = Math.max(0, Math.min(100, hull)) + "%"; $("vyHull").classList.toggle("low", hull <= 40);
@@ -294,6 +347,7 @@ export function initVoyage(levels) {
 
   // ---------- FLY ----------
   async function startFly() {
+    const my = run;
     phase = "card"; travelled = 0; goal = 2100 + n * 170; speed = BASE_SPEED + n * 5; spawnR = spawnS = spawnF = 0; spawnP = rand(5, 9); combo = 0; kills = 0; hullAtStart = hull;
     clearField(false); missiles.forEach((ms) => { ms.live = false; ms.m.visible = false; });
     zone = ZONES[zoneOf(L())];
@@ -311,6 +365,7 @@ export function initVoyage(levels) {
         : PHONE ? "Commander, SPHEREx picked up something moving out here. Punch through the debris and get us a scanner lock. Drag your finger to steer. The lasers fire by themselves. Use the buttons for missiles and boost."
         : "Commander, SPHEREx picked up something moving out here. Punch through the debris and get us a scanner lock. Steer with the mouse. The lasers fire by themselves. Right click for a missile, Space to boost.")
       : pick([`Next signal: ${L().name}, ${L().distance_au} au out. The field is thicker here. Watch your hull.`, `${L().name} ahead. Sunlight is down to ${$("vySun").textContent} of what Earth gets. Stay sharp.`, `Signal bearing confirmed: ${L().name}. Clear a path, Commander.`]));
+    await countdown(); if (my !== run) return;
     phase = "fly";
   }
   function spawnRock(solid) {
@@ -421,7 +476,7 @@ export function initVoyage(levels) {
     target = targetOf(L()); scanType = SCAN_TYPES[n % 3]; if (scanType === "probe" && !target) scanType = "lock";
     $("vyView").hidden = false; $("vyStackBox").hidden = true; reticle.hidden = false;
     $("vyLock").style.width = "0%"; reticle.classList.remove("on");
-    await view.load([...L().frames, ...(target ? [target.frame] : [])], L().size); view.pair = [0, 1]; view.blinkMs = Math.max(430, 700 - n * 30); view.mark("");   // the flip gets faster each chapter
+    const my = run; await view.load([...L().frames, ...(target ? [target.frame] : [])], L().size); if (my !== run) return; view.pair = [0, 1]; view.blinkMs = Math.max(430, 700 - n * 30); view.mark("");   // the flip gets faster each chapter
     $("vyScan").hidden = false; $("vyScan").classList.remove("done"); $("vyResult").hidden = true; $("vyLockRow").hidden = false;
     hud("vyMode", { lock: "TRACKING LOCK", probe: "TRACKING LOCK + PROBE", ghost: "SUBTRACTION SCAN" }[scanType]);
     if (scanType === "ghost") {
@@ -502,7 +557,7 @@ export function initVoyage(levels) {
     phase = "card"; sound.setEngine(0.2, false);
     $("vyScan").hidden = false; $("vyScan").classList.remove("done"); $("vyResult").hidden = true; $("vyLockRow").hidden = true;
     $("vyView").hidden = true; $("vyStackBox").hidden = false; reticle.hidden = true; hud("vyMode", "DEEP SCAN  ·  SHIFT AND STACK  ·  SIMULATED TARGET");
-    stack = await makeStackGame(base, $("vyStack"));
+    const my = run; stack = await makeStackGame(base, $("vyStack")); if (my !== run) return;
     for (const id of ["vyVx", "vyVy"]) { $(id).min = -stack.max; $(id).max = stack.max; $(id).step = 0.05; $(id).value = 0; }
     stackLeft = 110; stack.snr = stack.render(0, 0); stack.found = false; $("vyStackMark").innerHTML = "";
     hud("vyStackInfo", `${stack.count} real SPHEREx images of one patch of sky, taken over ${Math.round(stack.days)} days, with a simulated planet hidden in each.`);
@@ -544,7 +599,7 @@ export function initVoyage(levels) {
     phase = "card"; data += assisted ? 300 : 800; grades.push(assisted ? "A" : "S"); sound.locked(); bars();
     $("vyStackMark").innerHTML = `<circle class="ring" cx="${stack.spot.x * 100}" cy="${stack.spot.y * 100}" r="5" style="stroke-width:1"/><circle class="ring pulse" cx="${stack.spot.x * 100}" cy="${stack.spot.y * 100}" r="5" style="stroke-width:1"/>`;
     say("CONTROL", "Lock confirmed. A planet nobody could see in a single picture. Commander, that is how the real search for Planet X is done.");
-    await new Promise((ok) => setTimeout(ok, 4200));
+    await wait(4200);
     await card("SIMULATED DISCOVERY", "PLANET X", "In this game. The real one, if it exists, is still out there.", 4600);
     ending();
   }
@@ -569,7 +624,7 @@ export function initVoyage(levels) {
     phase = "warp"; $("vyScan").hidden = true; sound.warp(); sound.setEngine(1, true);
     const au = Math.abs(L().distance_au - from.distance_au), mins = L().distance_au * 8.317;
     say("ASTRA", L().finale ? `Long jump: ${Math.round(au)} au, past everything we know. Out there sunlight takes ${(mins / 60).toFixed(0)} hours to arrive.` : `Jumping ${au.toFixed(1)} au outward. At ${L().distance_au} au, sunlight takes ${mins < 90 ? Math.round(mins) + " minutes" : (mins / 60).toFixed(1) + " hours"} to arrive.`);
-    setTimeout(() => { if (phase === "warp") startFly(); }, 2600);
+    wait(2600).then(() => { if (phase === "warp") startFly(); });
   }
   function ending() {
     phase = "idle"; $("vyScan").hidden = true; $("vyHud").hidden = true; $("vyComm").hidden = true; sound.setEngine(0, false);
@@ -581,6 +636,7 @@ export function initVoyage(levels) {
   }
   // opening: Earth orbit, the mission, then the first jump
   async function opening() {
+    const my = run;
     phase = "card"; n = 0; hull = 100; data = 0; grades.length = 0;
     zone = ZONES.giants; scene.fog.color.set(0x030a14); scene.background.set(0x000000); nebulae.forEach((nb, i) => nb.material.color.set(ZONES.giants.glow[i]));
     if (world) scene.remove(world);
@@ -588,17 +644,19 @@ export function initVoyage(levels) {
     $("vyHud").hidden = true; sound.setEngine(0.4, false);
     await card("EARTH ORBIT  ·  2026", "PLANET HUNTER", "A voyage to the edge of the Solar System", 3400);
     say("CONTROL", "Commander. NASA's SPHEREx telescope has mapped the whole sky, again and again. In its pictures, ten points of light refuse to stay still. Go and find out what they are.");
-    await new Promise((ok) => setTimeout(ok, 6200));
+    await wait(6200);
     say("ASTRA", "And there is an eleventh signal, far past the rest. Too faint to be sure. Course laid in. Jumping to the asteroid belt.");
-    await new Promise((ok) => setTimeout(ok, 4600));
+    await wait(4600);
     phase = "warp"; sound.warp(); sound.setEngine(1, true);
-    setTimeout(() => { if (phase === "warp") startFly(); }, 2400);
+    wait(2400).then(() => { if (phase === "warp") startFly(); });
   }
   $("vyNext").onclick = startWarp;
 
   // ---------- input ----------
   addEventListener("keydown", (e) => {
     if (root.hidden) return;
+    if (e.key === "Escape") { if (phase !== "idle") pause(!paused); return; }
+    if (paused) return;
     keys.add(e.key.length === 1 ? e.key.toLowerCase() : e.key);
     if (e.key === " ") { e.preventDefault(); if (phase === "result") startWarp(); }
     if (e.key.toLowerCase() === "x" && !e.repeat) launchMissile();
@@ -636,6 +694,21 @@ export function initVoyage(levels) {
   root.addEventListener("contextmenu", (e) => e.preventDefault());      // right click launches a missile instead of opening the browser menu
   $("vyStart").onclick = () => { sound.start(); enableTilt(); $("vyStartBox").hidden = true; opening(); };
   $("vyAgain").onclick = () => { enableTilt(); $("vyEnd").hidden = true; opening(); };
+  // pause menu: resume, restart this chapter, start over, or quit to the start screen
+  function pause(on) {
+    if (phase === "idle" && on) return;
+    paused = on; $("vyMenu").hidden = !on; firing = false; keys.clear(); sound.setEngine(on ? 0 : 0.6, false);
+  }
+  function reset() {
+    run++; paused = false; $("vyMenu").hidden = true; $("vyCard").hidden = true; root.classList.remove("cine"); $("vyCount").hidden = true;
+    $("vyScan").hidden = true; $("vyComm").hidden = true; $("vyEnd").hidden = true; clearInterval(say.t);
+    clearField(false); missiles.forEach((ms) => { ms.live = false; ms.m.visible = false; }); shieldT = magnetT = rapidT = 0;
+  }
+  $("vyPause").onclick = () => pause(true);
+  $("vyResume").onclick = () => pause(false);
+  $("vyRestart").onclick = () => { const k = n; reset(); n = k; hull = 100; grades.length = Math.min(grades.length, n); startFly(); };
+  $("vyStartOver").onclick = () => { reset(); opening(); };
+  $("vyQuit").onclick = () => { reset(); phase = "idle"; $("vyHud").hidden = true; sound.setEngine(0, false); $("vyStartBox").hidden = false; };
 
   // ---------- draw ----------
   function resize() { const w = holder.clientWidth, h = holder.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); composer?.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
@@ -644,6 +717,7 @@ export function initVoyage(levels) {
   function frame(now) {
     requestAnimationFrame(frame);
     if (root.offsetParent === null) { last = now; sound.setEngine(0, false); return; }
+    if (paused) { last = now; return; }
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
     if (phase === "fly") fly(dt); else if (phase === "arrive") arrive(dt); else if (phase === "scan") scan(dt);
     else if (phase === "ghost") ghostTick(dt); else if (phase === "probe") probeTick(dt); else if (phase === "stack") stackTick(dt);
@@ -651,7 +725,7 @@ export function initVoyage(levels) {
     for (let i = 0; i < NS; i++) { const s = stars[i]; s.z += flow * dt; if (s.z > 20) { s.z = -470; s.x = rand(-110, 110); s.y = rand(-70, 70); } sp.set([s.x, s.y, s.z, s.x, s.y, s.z - len], i * 6); }
     starGeo.attributes.position.needsUpdate = true;
     // engine trail, then move every particle
-    if (phase !== "idle") for (const s of [-1.4, -0.45, 0.45, 1.4]) spark(ship.position.x + s, ship.position.y, 2.9, boost && moving ? 0x9fd0ff : 0x2f6fb0, [0, 0, 40 + flow * 0.4], boost && moving ? 0.22 : 0.12, 0.6);
+    if (phase !== "idle") for (const s of [-1.4, -0.45, 0.45, 1.4]) spark(ship.position.x + s, ship.position.y, 2.9, boost && moving ? 0x7fb8ef : 0x1f4f8a, [0, 0, 40 + flow * 0.4], boost && moving ? 0.07 : 0.05, 0.4);
     for (let i = 0; i < NP; i++) {
       const p = parts[i];
       if (p.life > 0) { p.life -= dt; pPos[i * 3] += p.v.x * dt; pPos[i * 3 + 1] += p.v.y * dt; pPos[i * 3 + 2] += p.v.z * dt; const f = Math.max(0, p.life / p.max); pCol.set([p.c.r * f, p.c.g * f, p.c.b * f], i * 3); }
@@ -665,7 +739,7 @@ export function initVoyage(levels) {
     camera.position.set(ship.position.x * 0.5 + rand(-1, 1) * shake, (tall ? 4.2 : 2.6) + ship.position.y * 0.5 + rand(-1, 1) * shake, tall ? 19 : 10.5);
     camera.lookAt(ship.position.x * 0.62, ship.position.y * 0.62, -30); sky.position.copy(camera.position);
     const flick = 0.8 + Math.random() * 0.2 + (boost && moving ? 0.7 : 0) + (phase === "warp" ? 1.4 : 0);
-    flames.forEach((f) => f.scale.setScalar(flick));
+    flames.forEach((f) => f.scale.setScalar(flick * 0.55));
     ship.children.forEach((c) => { if (c.userData.nav) c.material.opacity = (now % 1000) < 500 ? 1 : 0.15; });
     shield.material.opacity = shieldT > 0 ? 0.16 + 0.05 * Math.sin(now / 120) : 0;
     if (world) world.userData.body.rotation.y += dt * 0.12;

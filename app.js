@@ -1,12 +1,12 @@
-import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=72";
-import { speedChart } from "./lab.js?v=72";
-import { t, tr } from "./i18n.js?v=72";
-import { initSpace } from "./space.js?v=72";
-import { showStack, hideStack } from "./stack3d.js?v=72";
-import { initHunt } from "./hunt.js?v=72";
-import { initVoyage } from "./voyage.js?v=72";
-import { detect, judge, overlay } from "./detect.js?v=72";
-import { composite, colourMarks } from "./colour.js?v=72";
+import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=74";
+import { speedChart } from "./lab.js?v=74";
+import { t, tr } from "./i18n.js?v=74";
+import { initSpace } from "./space.js?v=74";
+import { showStack, hideStack } from "./stack3d.js?v=74";
+import { initHunt } from "./hunt.js?v=74";
+import { initVoyage } from "./voyage.js?v=74";
+import { detect, judge, overlay } from "./detect.js?v=74";
+import { composite, colourMarks } from "./colour.js?v=74";
 
 // ---------- state ----------
 let levels = [], hunt = null;
@@ -313,7 +313,7 @@ document.body.append(musicHint);
 if (musicOn) music.play().then(() => { musicStarted = true; playMusic(true); }).catch(() => { if (!musicStarted) musicHint.hidden = false; });
 musicBtn.addEventListener("click", (e) => { e.stopPropagation(); musicStarted = true; musicHint.hidden = true; setMusic(!musicOn); });
 const firstTouch = (e) => {
-  if (musicStarted || e.target.closest("#musicBtn")) return;
+  if (musicStarted || e.target.closest?.("#musicBtn")) return;
   musicStarted = true; musicHint.hidden = true; if (musicOn) playMusic(true);
 };
 addEventListener("pointerdown", firstTouch, true); addEventListener("keydown", firstTouch, true);
