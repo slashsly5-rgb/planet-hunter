@@ -1,5 +1,5 @@
 """Builds the trailer's sound: the spoken lines over a synthesised space-ambient music bed that drops in level while someone is speaking.
-usage: python make-audio.py <dir with vo0.wav .. vo7.wav> out.wav      (needs numpy; no music files are used)"""
+usage: python make-audio.py <dir with vo0.wav ...> out.wav [timing.json]      (needs numpy; no music files are used)"""
 import sys, wave
 import numpy as np
 
@@ -8,6 +8,9 @@ SCENES = [0, 83, 149, 253, 348, 433, 475, 604]      # frame where each spoken li
 STARTS = [f / 24 for f in SCENES]
 FLIGHT = (475 / 24, (475 + 60) / 24)                # the game's flying shot
 TITLE = (604 + 26 + 22 + 22) / 24                   # the final title card
+if len(sys.argv) > 3:                                # a timing.json from req_voice.py replaces the scene times above
+    import json
+    T = json.load(open(sys.argv[3])); STARTS, FLIGHT, TITLE = T["starts"], tuple(T["flight"]), T["title"]
 t = np.arange(int(SR * DUR)) / SR
 rng = np.random.default_rng(11)
 A2 = 110.0
