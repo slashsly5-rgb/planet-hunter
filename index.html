@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Planet Hunter: see the sky move in real SPHEREx images</title>
 <meta name="description" content="Watch real NASA SPHEREx images change over time. Spot the worlds that move, play back their paths, and learn how Planet X could be found.">
-<link rel="stylesheet" href="style.css?v=9">
+<link rel="stylesheet" href="style.css?v=12">
 <link rel="modulepreload" href="vendor/three.module.min.js">
 </head>
 <body>
@@ -24,6 +24,7 @@
 <header class="top">
   <button class="brand" data-view="home"><span class="logo" aria-hidden="true"></span>Planet Hunter</button>
   <nav>
+    <button data-view="voyage">Voyage</button>
     <button data-view="hunt">Hunt</button>
     <button data-view="explore">Explore</button>
     <button data-view="lab">Planet X</button>
@@ -48,7 +49,8 @@
       <h1>The stars stay still.<br><span class="hl">Worlds move.</span></h1>
       <p class="lead">This is our Solar System, with every world where NASA says it really is. Pick one to fly there and see the real pictures SPHEREx took of it.</p>
       <div class="cta">
-        <button id="startBtn" class="primary" disabled>Loading…</button>
+        <button class="primary" data-view="voyage">Play the Voyage</button>
+        <button id="startBtn" class="ghost" disabled>Loading…</button>
         <button id="exploreBtn" class="ghost" data-view="explore">Explore the sky</button>
       </div>
       <p class="note">Every object here is already known. We have not found Planet X.</p>
@@ -232,6 +234,50 @@
   </div>
 </section>
 
+<section id="voyage" class="view voyage" hidden>
+  <div id="vyCanvas" class="vy-canvas"></div>
+  <div class="vy-bar top"></div><div class="vy-bar bottom"></div>
+
+  <div id="vyHud" class="vy-hud" hidden>
+    <div class="vy-chip"><span>CHAPTER</span><b id="vyChapter"></b></div>
+    <div class="vy-chip wide"><span>DISTANCE TO SIGNAL</span><div class="vy-meter"><i id="vyProg"></i></div></div>
+    <div class="vy-chip wide"><span>HULL</span><div class="vy-meter hull"><i id="vyHull"></i></div></div>
+    <div class="vy-chip"><span>DATA</span><b id="vyData">0</b></div>
+  </div>
+
+  <div id="vyComm" class="vy-comm" hidden><b id="vyWho"></b><p id="vySay"></p></div>
+
+  <div id="vyCard" class="vy-card" hidden><p id="vyKicker"></p><h1 id="vyTitle"></h1><p id="vySub"></p></div>
+
+  <div id="vyScan" class="vy-scan" hidden>
+    <p class="vy-scan-head">SCANNER · REAL SPHEREx IMAGES</p>
+    <div class="vy-viewwrap"><div id="vyView"></div><div id="vyReticle" class="vy-reticle"></div></div>
+    <div id="vyLockRow" class="vy-lockrow"><span>LOCK</span><div class="vy-meter lock"><i id="vyLock"></i></div><b id="vyTime"></b></div>
+    <div id="vyResult" class="vy-result" hidden>
+      <p class="vy-ok">LOCK CONFIRMED</p>
+      <h2 id="vyRName"></h2>
+      <p id="vyRKind" class="note"></p>
+      <p id="vyRBlurb"></p>
+      <p id="vyRFact"></p>
+      <p class="badge">✔ Checked against NASA JPL Horizons</p>
+      <button id="vyNext" class="primary"></button>
+    </div>
+  </div>
+
+  <div id="vyStartBox" class="vy-start">
+    <p class="eyebrow">A Planet Hunter adventure</p>
+    <h1>Voyage to <span class="hl">Planet X</span></h1>
+    <p id="vyStartMsg" class="lead">Pilot your ship from the asteroid belt to the edge of the Solar System. Dodge the debris, then use your scanner, fed with real SPHEREx images, to lock onto each hidden world.</p>
+    <ul class="vy-keys">
+      <li><b>Mouse</b> or <b>arrow keys</b>: steer</li>
+      <li><b>Space</b>: boost</li>
+      <li><b>Scanner</b>: keep the reticle on the dot that jumps</li>
+    </ul>
+    <button id="vyStart" class="primary">Launch</button>
+    <p class="note">The ship, debris and radio voices are game fiction. The scanner pictures, positions and distances are real.</p>
+  </div>
+</section>
+
 <section id="about" class="view" hidden>
   <p class="eyebrow">About</p>
   <h1>What you are looking at</h1>
@@ -272,6 +318,6 @@
 </section>
 </main>
 
-<script type="module" src="app.js?v=9"></script>
+<script type="module" src="app.js?v=12"></script>
 </body>
 </html>

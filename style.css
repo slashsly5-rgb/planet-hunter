@@ -251,3 +251,46 @@ line.det.mv { stroke-dasharray: 5 5; }
 .thumb.rgb { filter: none; }
 .world-panel .viewer .tag { display: none; }
 #error { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 20; max-width: 90vw; margin: 0; }
+
+/* ---------- Voyage to Planet X ---------- */
+main:has(#voyage:not([hidden])) { max-width: none; padding: 0; }
+.voyage { position: relative; height: calc(100vh - 61px); min-height: 600px; overflow: hidden; background: #04060f; }
+.vy-canvas { position: absolute; inset: 0; } .vy-canvas canvas { width: 100%; height: 100%; display: block; }
+.voyage.hurt::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle, transparent 40%, #ff2a2a88); pointer-events: none; }
+.vy-bar { position: absolute; left: 0; right: 0; height: 0; background: #000; transition: height .5s ease; z-index: 2; pointer-events: none; }
+.vy-bar.top { top: 0; } .vy-bar.bottom { bottom: 0; } .voyage.cine .vy-bar { height: 11%; }
+.vy-hud { position: absolute; left: 18px; right: 18px; top: 14px; display: flex; gap: 12px; align-items: stretch; z-index: 3; pointer-events: none; }
+.vy-chip { background: #06121fcc; border: 1px solid #2b6f8a; border-radius: 10px; padding: 8px 12px; min-width: 150px; box-shadow: 0 0 22px #0b3a5266; }
+.vy-chip.wide { flex: 1; }
+.vy-chip span, .vy-lockrow span, .vy-scan-head { display: block; font: 600 10px/1.2 ui-monospace, Consolas, monospace; letter-spacing: .18em; color: var(--hud); margin-bottom: 5px; }
+.vy-chip b { font: 700 1.05rem/1.2 ui-monospace, Consolas, monospace; color: #fff; text-shadow: 0 0 10px var(--hud); }
+.vy-meter { height: 12px; border-radius: 6px; background: #0d2233; overflow: hidden; border: 1px solid #1d4a60; }
+.vy-meter i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #2fb7e0, #6fe3ff); box-shadow: 0 0 12px var(--hud); transition: width .12s linear; }
+.vy-meter.hull i { background: linear-gradient(90deg, #36d39a, #7dffcf); width: 100%; } .vy-meter.hull i.low { background: linear-gradient(90deg, #ff4a5a, #ff8a6a); }
+.vy-meter.lock i { background: linear-gradient(90deg, #ffb547, #fff2a8); }
+.vy-comm { position: absolute; left: 18px; bottom: 18px; width: min(460px, 44vw); background: #06121fdd; border: 1px solid #2b6f8a; border-left: 4px solid var(--hud); border-radius: 10px; padding: 10px 14px; z-index: 3; pointer-events: none; }
+.vy-comm b { font: 700 11px/1 ui-monospace, Consolas, monospace; letter-spacing: .2em; color: var(--hud); }
+.vy-comm p { margin: .35em 0 0; font-size: .98rem; min-height: 3em; }
+.vy-card { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; z-index: 4; pointer-events: none; animation: vyin .6s ease-out; }
+.vy-card p { margin: 0; font: 600 13px/1.4 ui-monospace, Consolas, monospace; letter-spacing: .4em; color: var(--hud); text-shadow: 0 0 12px var(--hud); }
+.vy-card h1 { font-size: clamp(2.6rem, 8vw, 6rem); margin: .1em 0; letter-spacing: .08em; text-shadow: 0 0 40px #6fe3ff66, 0 4px 30px #000; }
+.vy-card #vySub { letter-spacing: .12em; color: #d5dbee; font-family: inherit; font-size: 1rem; }
+@keyframes vyin { from { opacity: 0; transform: scale(1.08); } }
+.vy-scan { position: absolute; right: 22px; top: 86px; bottom: 22px; width: min(46vw, 70vh); display: flex; flex-direction: column; gap: 8px; z-index: 3; background: #06101ce6; border: 1px solid #2b6f8a; border-radius: 14px; padding: 12px 14px; box-shadow: 0 0 50px #0b3a5299; animation: vyin .4s ease-out; overflow: auto; }
+.vy-scan-head { margin: 0; }
+.vy-viewwrap { position: relative; cursor: none; }
+.vy-viewwrap .viewer { box-shadow: none; }
+.vy-reticle { position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border: 2px solid var(--hud); border-radius: 50%; pointer-events: none; box-shadow: 0 0 14px var(--hud), inset 0 0 14px #6fe3ff55; }
+.vy-reticle::before, .vy-reticle::after { content: ""; position: absolute; background: var(--hud); }
+.vy-reticle::before { left: 50%; top: -10px; bottom: -10px; width: 1px; } .vy-reticle::after { top: 50%; left: -10px; right: -10px; height: 1px; }
+.vy-reticle.on { border-color: #ffd35c; box-shadow: 0 0 22px #ffd35c, inset 0 0 18px #ffd35c88; transform: scale(.9); }
+.vy-lockrow { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; } .vy-lockrow span { margin: 0; }
+.vy-lockrow b { font: 700 1.1rem ui-monospace, Consolas, monospace; min-width: 2ch; text-align: right; }
+.vy-result h2 { margin: .1em 0; font-size: 1.6rem; } .vy-result p { margin: .35em 0; font-size: .95rem; }
+.vy-ok { font: 700 12px/1 ui-monospace, Consolas, monospace; letter-spacing: .3em; color: var(--good); text-shadow: 0 0 12px var(--good); }
+.vy-start { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(620px, 92vw); background: #070b18e6; border: 1px solid #2b6f8a; border-radius: 16px; padding: 22px 26px; z-index: 5; box-shadow: 0 0 60px #0b3a5299; text-align: center; }
+.vy-start h1 { font-size: clamp(2.2rem, 5vw, 3.6rem); } .vy-start .lead { margin: 0 auto; }
+.vy-keys { list-style: none; padding: 0; margin: 14px 0; display: grid; gap: 4px; color: #cfd6ea; } .vy-keys b { color: var(--hud); }
+.voyage.cine .vy-hud, .voyage.cine .vy-comm { opacity: 0; } .vy-hud, .vy-comm { transition: opacity .4s; }
+.vy-card { place-content: start center; padding-top: 20vh; }
+.vy-scan.done .vy-viewwrap { width: 52%; margin: 0 auto; }
