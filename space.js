@@ -1,10 +1,10 @@
 // 3D Solar System: real positions from NASA JPL Horizons (orbits.json). Each world SPHEREx photographed is a place to fly to.
 import * as THREE from "./vendor/three.module.min.js";
 import { OrbitControls } from "./vendor/OrbitControls.js";
-import { $, Viewer, fmtDate } from "./viewer.js?v=37";
-import { t, tr } from "./i18n.js?v=37";
-import { irTexture } from "./irtex.js?v=37";
-import { composite } from "./colour.js?v=37";
+import { $, Viewer, fmtDate } from "./viewer.js?v=38";
+import { t, tr } from "./i18n.js?v=38";
+import { irTexture } from "./irtex.js?v=38";
+import { composite } from "./colour.js?v=38";
 import { EffectComposer } from "./vendor/postprocessing/EffectComposer.js";
 import { RenderPass } from "./vendor/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "./vendor/postprocessing/UnrealBloomPass.js";
@@ -13,7 +13,7 @@ import { OutputPass } from "./vendor/postprocessing/OutputPass.js";
 const v3 = ([x, y, z]) => new THREE.Vector3(x, z, -y);   // ecliptic x,y,z (au) → scene, with y up
 const COLORS = ["#8ab4ff", "#ffb547", "#6fe3ff", "#f7e26b", "#ff9a5c", "#c79bff", "#b6ff8a", "#ff6f91", "#7dffcf", "#ffd1dc"];
 const TRAIL = 30, TRAIL_STEP = 1.2;   // trail: 30 points, 1.2 timeline steps (6 days) apart
-const DAY = 864e5, HOME = { cam: [1.5, 5.6, 9.4], look: [0, -0.4, 0] }, WIDE = { cam: [0, 30, 82], look: [0, 0, 0] };
+const DAY = 864e5, HOME = { cam: [0.9, 3.5, 5.6], look: [0, -0.35, 0] }, WIDE = { cam: [0, 30, 82], look: [0, 0, 0] };
 // surface map for each world's globe (see the About page for which are real maps)
 const SKIN = { uranus: { tex: "uranus", f: 1.25, ring: true, air: 0x9fe3e6 }, neptune: { tex: "neptune", f: 1.25, air: 0x4a7fff }, pluto: { tex: "pluto", solid: true }, ceres: { tex: "ceres", solid: true }, haumea: { tex: "haumea", stretch: [1.6, 0.85, 1], solid: true }, makemake: { tex: "makemake", solid: true },
   vesta: { tex: "rock", tint: 0xd8d2c8, solid: true, stretch: [1.12, 0.9, 1] }, pallas: { tex: "rock", tint: 0xb9bcc6, solid: true, stretch: [1.08, 0.94, 0.98] }, juno: { tex: "rock", tint: 0xd9c7ae, solid: true, stretch: [1.18, 0.88, 0.95] }, hygiea: { tex: "rock", tint: 0x8f8a86, solid: true } };
