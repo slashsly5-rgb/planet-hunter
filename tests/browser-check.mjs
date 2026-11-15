@@ -29,6 +29,7 @@ const click = async (x, y) => { for (const type of ["mousePressed", "mouseReleas
 const centre = (sel) => js(`(() => { const r = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`);
 
 await cdp("Runtime.enable"); await cdp("Page.enable");
+await cdp("Page.addScriptToEvaluateOnNewDocument", { source: `localStorage.setItem("welcomed", "1")` });   // skip the first-visit welcome card (extras-check tests it)
 await cdp("Emulation.setDeviceMetricsOverride", { width: +W, height: +H, deviceScaleFactor: 1, mobile: +W < 600 });
 await cdp("Page.navigate", { url: (process.env.PH_URL || "http://localhost:8765") + "/index.html" + (process.env.PH_HASH || "") });
 await sleep(+process.env.PH_WAIT || 1500);   // a slow connection needs longer for the 3D library

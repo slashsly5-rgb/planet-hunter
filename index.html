@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Planet Hunter: see the sky move in real SPHEREx images</title>
 <meta name="description" content="Watch real NASA SPHEREx images change over time. Spot the worlds that move, play back their paths, and learn how Planet X could be found.">
-<link rel="stylesheet" href="style.css?v=62">
+<link rel="stylesheet" href="style.css?v=66">
 <link rel="modulepreload" href="vendor/three.module.min.js">
 </head>
 <body>
@@ -29,6 +29,7 @@
     <button data-view="explore">Explore</button>
     <button data-view="lab">Planet X</button>
     <button data-view="about">About</button>
+    <button data-view="help">Help</button>
     <button data-view="judges">Judges</button>
   </nav>
   <div class="top-tools">
@@ -59,6 +60,7 @@
         <button id="startBtn" class="ghost" disabled>Loading…</button>
         <button id="exploreBtn" class="ghost" data-view="explore">Explore the sky</button>
         <button class="ghost tour-btn" data-tour>Take the 60-second tour</button>
+        <button class="ghost" data-view="help">How to use</button>
       </div>
       <p class="note">Every object here is already known. We have not found Planet X.</p>
     </div>
@@ -347,6 +349,78 @@
   </div>
 </section>
 
+<section id="help" class="view" hidden>
+  <p class="eyebrow">How to use</p>
+  <h1>How to use Planet Hunter</h1>
+  <p class="lead">Planet Hunter shows real pictures of the sky from NASA's SPHEREx telescope. In them the stars stay still and the worlds of our Solar System move. Here is what each part does and how to use it.</p>
+  <div class="cta"><button class="primary" data-tour>Take the 60-second tour</button></div>
+  <div class="criteria help">
+    <article class="crit">
+    <h3>1. The front page: our Solar System in 3D</h3>
+    <ul>
+      <li><b>Look around:</b> drag to turn the view. Scroll, or pinch on a phone, to zoom in and out.</li>
+      <li><b>Learn:</b> click any planet, the Sun, Saturn's rings, the asteroid belt or SPHEREx to open its info card.</li>
+      <li><b>Fly to a world:</b> pick one from the list of worlds. The camera flies there and shows the real SPHEREx pictures of it.</li>
+      <li><b>Go bigger:</b> the buttons under the list zoom out to where a Planet X might be, and to the whole Milky Way.</li>
+      <li><b>Time:</b> the bar at the bottom moves the date, so you can watch the planets travel along their orbits.</li>
+    </ul>
+    <div class="cta"><button class="small" data-proof="home">Show me</button></div>
+    </article>
+    <article class="crit">
+    <h3>2. Explore: watch the sky change</h3>
+    <ul>
+      <li>Choose one of the ten worlds. Then pick a view from the buttons above the picture:</li>
+      <li><b>Three-colour:</b> three real pictures in red, green and blue. The moving world shows up three times, once in each colour.</li>
+      <li><b>Time-lapse:</b> plays the real pictures one after another, like a short film.</li>
+      <li><b>Blink:</b> flips between the first and last picture. Look for the dot that jumps.</li>
+      <li><b>Difference:</b> subtracts one picture from the other. Stars disappear; what moved is left.</li>
+      <li><b>3D time stack:</b> each picture becomes a sheet in a pile. Stars make straight pillars; the world makes a slanted line. Drag to turn it.</li>
+      <li><b>Computer scan:</b> see what an automatic detector finds, and when it gets it wrong.</li>
+      <li><b>Six months apart:</b> the same patch of sky half a year later, for worlds SPHEREx saw twice.</li>
+      <li><b>Measure it yourself:</b> click the world in two pictures and compare your answer with NASA's.</li>
+    </ul>
+    <div class="cta"><button class="small" data-proof="explore:pluto:blink">Show me</button></div>
+    </article>
+    <article class="crit">
+    <h3>3. Hunt: find moving worlds like an astronomer</h3>
+    <ul>
+      <li>There are 12 missions. Each has up to three steps. A card on the picture tells you what to do: read it, then press its button to begin.</li>
+      <li><b>Detect:</b> two real pictures take turns. Tap the dot that jumps while the stars stay still. You have two tries.</li>
+      <li><b>Predict:</b> click on the picture where you think the world will be (or was) on another date. Then you see the real picture from that date.</li>
+      <li><b>Classify:</b> from how fast it moved, choose where it orbits.</li>
+      <li>Press <b>Next</b>, or the Enter key, to move on. Stuck? Press <b>Skip this step</b>. At the end you get a rank and a result card to share.</li>
+    </ul>
+    <div class="cta"><button class="small" data-proof="hunt">Show me</button></div>
+    </article>
+    <article class="crit">
+    <h3>4. Planet X lab: why a far planet is so hard to find</h3>
+    <ul>
+      <li>The chart shows the real worlds: the farther from the Sun, the slower they move across the sky.</li>
+      <li>Move the slider to push a made-up planet farther away, and pick its size. Watch it become fainter and slower in two real pictures.</li>
+    </ul>
+    <div class="cta"><button class="small" data-proof="lab">Show me</button></div>
+    </article>
+    <article class="crit">
+    <h3>5. Voyage: the space game</h3>
+    <ul>
+      <li><b>On a computer:</b> steer with the mouse or the arrow keys. Lasers fire by themselves. Right click or X launches a missile; Space boosts.</li>
+      <li><b>On a phone:</b> tilt the phone to steer (allow motion access if asked). Use the MISSILE and BOOST buttons, and LEVEL to reset the tilt.</li>
+      <li>At each world, your ship's scanner uses real SPHEREx pictures. Follow the ship computer's instructions to lock on.</li>
+    </ul>
+    <div class="cta"><button class="small" data-proof="voyage">Show me</button></div>
+    </article>
+    <article class="crit">
+    <h3>6. Handy extras</h3>
+    <ul>
+      <li><b>Words with a dotted line</b>, such as au or arcsecond: tap them for a plain explanation.</li>
+      <li><b>BM</b> (top right) switches the whole site to Bahasa Malaysia. <b>♪</b> turns the music on or off.</li>
+      <li><b>About</b> explains where the pictures come from and what is real. Teachers will find a printable classroom sheet on the front page, below the 3D view.</li>
+    </ul>
+    </article>
+  </div>
+  <div class="cta"><button class="primary" data-view="home">Start exploring</button></div>
+</section>
+
 <section id="judges" class="view" hidden>
   <p class="eyebrow">For judges</p>
   <h1>Planet Hunter, criterion by criterion</h1>
@@ -404,6 +478,7 @@
       <ul>
         <li><span>A 60-second guided tour of the whole site.</span><button class="small" data-tour>Take the tour</button></li>
         <li><span>Step-by-step cards in the hunt, and plain-word explanations: tap any word with a dotted line, such as au or arcsecond.</span></li>
+        <li><span>A Help page that explains every part, and a welcome card for first-time visitors.</span><button class="small" data-proof="help">Open Help</button></li>
         <li><span>Info cards on everything in the 3D view.</span><button class="small" data-proof="home:rings">Saturn's rings</button></li>
         <li><span>Two 30-second videos, above.</span></li>
       </ul>
@@ -485,7 +560,20 @@
   <p id="tourText"></p>
   <div class="tour-btns"><button id="tourBack" class="ghost small">Back</button><button id="tourNext" class="primary small">Next</button><button id="tourEnd" class="ghost small">End tour</button></div>
 </div>
+<div id="welcome" class="welcome" hidden role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+  <div class="welcome-card">
+    <button class="welcome-x" aria-label="Close">×</button>
+    <h2 id="welcomeTitle">Welcome to Planet Hunter</h2>
+    <p>See the sky change in real pictures from NASA's SPHEREx telescope, and hunt for moving worlds like an astronomer.</p>
+    <ol>
+      <li><b>Drag</b> the 3D Solar System to look around. <b>Click</b> anything to learn about it.</li>
+      <li><b>Pick a world</b> from the list to see its real pictures: the stars stay still, the world moves.</li>
+      <li>Then try the <b>Hunt</b>, or play the <b>Voyage</b> game.</li>
+    </ol>
+    <div class="cta"><button class="primary" data-tour>Take the 60-second tour</button><button class="ghost" data-view="help">How to use</button><button class="ghost">Start exploring</button></div>
+  </div>
+</div>
 <div id="glossPop" class="gloss-pop" role="tooltip" hidden></div>
-<script type="module" src="app.js?v=62"></script>
+<script type="module" src="app.js?v=66"></script>
 </body>
 </html>

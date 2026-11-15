@@ -1,12 +1,12 @@
-import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=62";
-import { speedChart } from "./lab.js?v=62";
-import { t, tr } from "./i18n.js?v=62";
-import { initSpace } from "./space.js?v=62";
-import { showStack, hideStack } from "./stack3d.js?v=62";
-import { initHunt } from "./hunt.js?v=62";
-import { initVoyage } from "./voyage.js?v=62";
-import { detect, judge, overlay } from "./detect.js?v=62";
-import { composite, colourMarks } from "./colour.js?v=62";
+import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=66";
+import { speedChart } from "./lab.js?v=66";
+import { t, tr } from "./i18n.js?v=66";
+import { initSpace } from "./space.js?v=66";
+import { showStack, hideStack } from "./stack3d.js?v=66";
+import { initHunt } from "./hunt.js?v=66";
+import { initVoyage } from "./voyage.js?v=66";
+import { detect, judge, overlay } from "./detect.js?v=66";
+import { composite, colourMarks } from "./colour.js?v=66";
 
 // ---------- state ----------
 let levels = [], hunt = null;
@@ -351,5 +351,21 @@ function chime() {
     }
   }
   requestAnimationFrame(tick);
+}
+
+// ---------- welcome card: shown once, to people who arrive on the front page ----------
+{
+  const w = $("welcome");
+  // after the opening dive into the Solar System, not on top of it (or after 30 s if there is no 3D)
+  if (!localStorage.getItem("welcomed") && !location.hash.slice(1)) {
+    let n = 0; const sp = $("space");
+    const wait = setInterval(() => {
+      if (!((sp.classList.contains("ready") && !sp.classList.contains("intro")) || sp.classList.contains("no3d") || ++n > 60)) return;
+      clearInterval(wait); if (!$("home").hidden && $("tour").hidden && !localStorage.getItem("welcomed")) w.hidden = false;
+    }, 500);
+  }
+  const close = () => { w.hidden = true; localStorage.setItem("welcomed", "1"); };
+  w.addEventListener("click", (e) => { if (e.target === w || e.target.closest("button")) close(); });
+  addEventListener("keydown", (e) => { if (e.key === "Escape" && !w.hidden) close(); });
 }
 

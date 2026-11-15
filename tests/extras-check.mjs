@@ -31,15 +31,18 @@ await cdp("Emulation.setDeviceMetricsOverride", { width: +W, height: +H, deviceS
 await cdp("Page.navigate", { url: (process.env.PH_URL || "http://localhost:8765") + "/index.html" });
 await sleep(+process.env.PH_WAIT || 14000);
 const before = await js(`window.__music.paused`);
+let welcomeShown = false; for (let i = 0; i < 40 && !welcomeShown; i++) { welcomeShown = await js(`!document.querySelector("#welcome").hidden`); if (!welcomeShown) await sleep(500); }
+await shot("x0-welcome.png");
 const click = async (x, y) => { for (const type of ["mousePressed", "mouseReleased"]) await cdp("Input.dispatchMouseEvent", { type, x, y, button: "left", clickCount: 1 }); };
 const br = await js(`(() => { const r = document.querySelector(".brand").getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`); await click(br[0], br[1]); await sleep(2500);
 const afterClick = await js(`[window.__music.paused, Math.round(window.__music.volume * 100) / 100, window.__music.currentTime > 0.5]`);
 let meteor = false;
 for (let i = 0; i < 24 && !meteor; i++) { await sleep(500); meteor = await js(`(() => { const c = document.querySelector(".space .meteors"), d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; for (let i = 3; i < d.length; i += 4) if (d[i] > 40) return true; return false; })()`); }
 await shot("x1-home.png");
-const haze = await js(`getComputedStyle(document.querySelector(".space .nebula")).animationName`);
+const welcomeClosed = await js(`document.querySelector("#welcome").hidden && localStorage.getItem("welcomed") === "1"`);
+const haze = await js(`getComputedStyle(document.querySelector(".space .nebula"), "::before").animationName`);
 const mb = await js(`(() => { const r = document.querySelector("#musicBtn").getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2, r.width > 0]; })()`);
 await click(mb[0], mb[1]); await sleep(2000);
 const muted = await js(`[window.__music.paused, document.querySelector("#musicBtn").className, localStorage.getItem("music")]`);
-console.log(JSON.stringify({ before, afterClick, meteor, haze, musicBtnVisible: mb[2], muted, errors }, null, 1));
+console.log(JSON.stringify({ welcomeShown, welcomeClosed, before, afterClick, meteor, haze, musicBtnVisible: mb[2], muted, errors }, null, 1));
 ws.close(); proc.kill();

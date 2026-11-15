@@ -32,6 +32,7 @@ const rect = (sel) => js(`(() => { const r = document.querySelector("${sel}").ge
 const at = async (pt, size) => { const r = await rect("#vyView"); return [r[0] + pt.x * r[2] / size, r[1] + pt.y * r[2] / size]; };
 
 await cdp("Runtime.enable"); await cdp("Page.enable");
+await cdp("Page.addScriptToEvaluateOnNewDocument", { source: `localStorage.setItem("welcomed", "1")` });   // skip the first-visit welcome card (extras-check tests it)
 await cdp("Emulation.setDeviceMetricsOverride", { width: +W, height: +H, deviceScaleFactor: 1, mobile: false });
 await cdp("Page.navigate", { url: (process.env.PH_URL || "http://localhost:8765") + "/index.html#voyage" });
 await sleep(+process.env.PH_WAIT || 5000);

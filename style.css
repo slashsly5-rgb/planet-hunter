@@ -496,14 +496,25 @@ abbr.term:focus-visible { outline: 2px solid var(--hud); outline-offset: 2px; bo
 
 /* front page decoration: a faint drifting coloured haze and the odd shooting star (both stated as decoration on the About page) */
 .space .nebula, .space .meteors { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
-.space .nebula { inset: -15%; width: 130%; height: 130%; mix-blend-mode: screen; opacity: 0.2;
+.space .nebula { overflow: hidden; mix-blend-mode: screen; opacity: 0.2; }   /* clipped, so the drifting haze never widens the page */
+.space .nebula::before { content: ""; position: absolute; inset: -15%;
   background: radial-gradient(40% 32% at 22% 30%, #6b3fa0aa, transparent 70%), radial-gradient(36% 30% at 78% 66%, #1f6f9caa, transparent 70%), radial-gradient(28% 22% at 60% 20%, #a0406a77, transparent 70%);
   animation: nebulaDrift 70s ease-in-out infinite alternate; }
 @keyframes nebulaDrift { from { transform: translate(-3%, -2%) rotate(0deg) scale(1); } to { transform: translate(3%, 2%) rotate(8deg) scale(1.08); } }
-@media (prefers-reduced-motion: reduce) { .space .nebula { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .space .nebula::before { animation: none; } }
 
 /* hunt result card */
 .share-card { margin: 18px 0 8px; max-width: 640px; }
 .share-card img { display: block; width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--line); box-shadow: 0 10px 40px #0008, 0 0 60px #5b3fa033; }
 .share-card .cta { margin-top: 12px; }
+
+/* first-visit welcome card */
+.welcome { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 16px; background: #02030acc; backdrop-filter: blur(3px); }
+.welcome[hidden] { display: none; }
+.welcome-card { position: relative; box-sizing: border-box; width: min(560px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 24px 26px 20px; box-shadow: 0 20px 60px #000a, 0 0 80px #5b3fa033; }
+.welcome-card h2 { margin: 0 0 8px; }
+.welcome-card ol { padding-left: 22px; line-height: 1.55; } .welcome-card li { margin: 6px 0; }
+.welcome-x { position: absolute; top: 8px; right: 10px; background: none; border: 0; color: var(--dim); font-size: 26px; line-height: 1; padding: 8px; cursor: pointer; }
+.help li { display: block; margin: 0; line-height: 1.55; }   /* plain text lines, not the judges page's claim-and-button rows */
+.help .cta { margin-top: 12px; }
 
