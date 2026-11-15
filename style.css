@@ -375,3 +375,76 @@ button.slabel.dim:hover, button.slabel.earth:hover, button.slabel.scan:hover, bu
   background: #000a; border: 1px solid #ffd35c; color: #ffd35c; font: 700 11px/1 ui-monospace, Consolas, monospace; letter-spacing: .14em; pointer-events: none; animation: breathe 1.4s ease-in-out infinite; }
 .quiz:not([hidden]) { padding: 10px; border: 2px solid #ffd35c; border-radius: 14px; box-shadow: 0 0 30px #ffb54744; animation: rise .35s ease-out; }
 .quiz .zone:not(:disabled) { border-color: #5a6a9c; }
+
+/* ================= phones ================= */
+.vy-touch { display: none; }
+.vy-canvas, #vyView, .vy-stackview { touch-action: none; }
+@media (pointer: coarse) { .vy-touch { display: flex; } }
+@media (max-width: 760px) {
+  body { font-size: 16px; }
+  main { padding: 10px 12px 48px; }
+  .top { padding: 4px 6px; gap: 2px; }
+  .top nav { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex: 1; justify-content: flex-end; }
+  .top nav::-webkit-scrollbar { display: none; }
+  .top button { padding: 10px 7px; font-size: .88rem; white-space: nowrap; }
+  h1 { font-size: 1.7rem; }
+
+  /* front page: the 3D view on top, everything else flows underneath; details slide up from the bottom */
+  .space { height: auto; min-height: 0; margin: 0 -12px 16px; padding-top: 58vh; overflow: visible; border-bottom: 0; }
+  .space-canvas, .space .labels, .space::before, .space::after, .frame-hud { inset: 0 0 auto 0; height: 58vh; }
+  .space .labels { overflow: hidden; }
+  .hud-strip, .frame-hud, .space-help { display: none; }
+  .space-title, .space-worlds, .space-time { position: static; width: auto; margin: 10px 12px 0; backdrop-filter: none; }
+  .space.intro .space-title, .space.intro .space-worlds, .space.intro .space-time { opacity: 1; transform: none; pointer-events: auto; }
+  .space-title { padding: 12px 14px; } .space-title h1 { font-size: 1.6rem; }
+  .space .cta .primary, .space .cta .ghost { flex: 1 1 auto; }
+  #worldList { grid-template-columns: 1fr 1fr; }
+  .space-worlds { flex-direction: column; }
+  .space.picked .space-worlds { display: flex; }
+  .space-time { flex-wrap: wrap; gap: 8px; } .space-time input { flex: 1 1 100%; order: 3; }
+  .world-panel, .info-panel { position: fixed; left: 0; right: 0; bottom: 0; top: auto; width: auto; max-height: 52vh; overflow: auto; z-index: 30; border-radius: 16px 16px 0 0; padding: 12px 14px 18px; box-shadow: 0 -10px 40px #000c; background: #070b18f7; }
+  .world-panel .viewer { max-width: 190px; float: right; margin: 0 0 8px 10px; }
+  .intro-cap { top: 34vh; bottom: auto; } #introTop { font-size: 1.8rem; } #introSub { font-size: .95rem; padding: 0 12px; }
+  .slabel { font-size: 12px; } .slabel.gal.big { font-size: 15px; }
+  #home > :not(.space) { padding: 0 2px; }
+
+  /* hunt */
+  .steps3 { gap: 4px; flex-wrap: wrap; } .steps3 li { padding: 4px 9px 4px 4px; font-size: 10px; }
+  .step-head { font-size: 1.05rem; } .step-card { width: 94%; padding: 14px; } .step-card h3 { font-size: 1.5rem; }
+  .hud { font-size: .82rem; gap: 6px; } .dots { gap: 4px; } .dots i { width: 8px; height: 8px; }
+  .controls button { flex: 1 1 auto; }
+  .next-row { flex-wrap: wrap; } .next-row .primary { flex: 1 1 100%; }
+  .hunt-right { margin-top: 10px; }
+  .viewer.askclick::after, .viewer.askright::after { font-size: 9px; letter-spacing: .08em; max-width: 92%; overflow: hidden; text-overflow: ellipsis; }
+
+  /* explore, lab */
+  .grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .info { grid-template-columns: 1fr; gap: 0 0; } .info dt { margin-top: 8px; font-size: .8rem; }
+  .controls { gap: 6px; } .controls button { padding: 9px 10px; font-size: .92rem; }
+  .vy-slider { grid-template-columns: 1fr; gap: 2px; }
+
+  /* voyage */
+  .voyage { height: calc(100dvh - 53px); min-height: 480px; }
+  .vy-hud { left: 6px; right: 6px; top: 6px; gap: 5px; flex-wrap: wrap; }
+  .vy-chip { min-width: 0; padding: 5px 8px; flex: 1 1 28%; } .vy-chip.wide { flex: 1 1 44%; } .vy-chip span { font-size: 8px; margin-bottom: 3px; } .vy-chip b { font-size: .8rem; }
+  .vy-buff { top: 132px; font-size: 11px; }
+  .vy-comm { left: 6px; right: 6px; bottom: 6px; width: auto; padding: 7px 10px; } .vy-comm p { font-size: .84rem; min-height: 2.4em; }
+  .vy-scan { left: 6px; right: 6px; top: 128px; bottom: 6px; width: auto; padding: 8px 10px; }
+  .vy-scan:not([hidden]) ~ .vy-comm, .voyage:has(.vy-scan:not([hidden])) .vy-comm { display: none; }
+  .vy-scan.done .vy-viewwrap { width: 46%; }
+  .vy-start { padding: 16px 16px; max-height: 92%; overflow: auto; } .vy-start h1 { font-size: 1.9rem; } .vy-keys { font-size: .9rem; text-align: left; }
+  .vy-card h1 { font-size: 2.4rem; } .vy-card { padding-top: 26vh; }
+  .vy-touch { position: absolute; right: 8px; bottom: 96px; z-index: 3; flex-direction: column; gap: 10px; }
+  .voyage:has(.vy-scan:not([hidden])) .vy-touch, .voyage:has(.vy-start:not([hidden])) .vy-touch { display: none; }
+}
+.vy-touch button { width: 78px; height: 78px; border-radius: 50%; font: 800 12px/1 ui-monospace, Consolas, monospace; letter-spacing: .08em; background: #0b1a2cd9; border: 2px solid var(--hud); color: var(--hud); touch-action: none; user-select: none; }
+#vyTouchMissile { border-color: #ffb547; color: #ffb547; }
+.vy-touch button:active { background: #16324e; transform: scale(.95); }
+@media (max-width: 760px) { .hunt-right { order: -1; margin: 0 0 8px; } .hunt-grid { margin-top: 4px; } #skipRow .note { display: none; } }
+@media (max-width: 760px) {
+  .vy-touch { display: flex; }
+  .vy-hud .vy-chip:nth-child(4), .vy-hud .vy-chip:nth-child(5) { display: none; }      /* missiles and sunlight: not needed on a small screen */
+  .vy-hud .vy-chip:nth-child(1) { flex: 1 1 40%; } .vy-hud .vy-chip:nth-child(6) { flex: 0 1 26%; }
+  .vy-scan { top: 122px; } .vy-buff { top: 122px; }
+}
+@media (max-width: 760px) { .vy-touch { bottom: 150px; } .vy-touch button { width: 70px; height: 70px; } }

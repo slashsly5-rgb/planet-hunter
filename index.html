@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Planet Hunter: see the sky move in real SPHEREx images</title>
 <meta name="description" content="Watch real NASA SPHEREx images change over time. Spot the worlds that move, play back their paths, and learn how Planet X could be found.">
-<link rel="stylesheet" href="style.css?v=43">
+<link rel="stylesheet" href="style.css?v=47">
 <link rel="modulepreload" href="vendor/three.module.min.js">
 </head>
 <body>
@@ -274,6 +274,11 @@
 
   <p id="vyBuff" class="vy-buff"></p>
 
+  <div class="vy-touch">
+    <button id="vyTouchBoost" type="button">BOOST</button>
+    <button id="vyTouchMissile" type="button">MISSILE</button>
+  </div>
+
   <div id="vyComm" class="vy-comm" hidden><b id="vyWho"></b><p id="vySay"></p></div>
 
   <div id="vyCard" class="vy-card" hidden><p id="vyKicker"></p><h1 id="vyTitle"></h1><p id="vySub"></p></div>
@@ -323,6 +328,7 @@
       <li><b>Right click</b> or <b>X</b>: launch a homing missile (unlimited)</li>
       <li><b>Space</b>: boost</li>
       <li><b>Rings</b>: shield, magnet, rapid fire</li>
+      <li><b>On a phone</b>: drag a finger to steer and fire; use the on-screen buttons for missiles and boost</li>
       <li><b>Scanner</b>: a different challenge at each world. Your ship's computer explains each one</li>
     </ul>
     <button id="vyStart" class="primary">Launch</button>
@@ -373,6 +379,6 @@
 </section>
 </main>
 
-<script type="module" src="app.js?v=43"></script>
+<script type="module" src="app.js?v=47"></script>
 </body>
 </html>

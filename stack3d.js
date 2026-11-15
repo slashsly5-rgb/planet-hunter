@@ -2,8 +2,8 @@
 // Stars do not move, so they line up into straight pillars. The object moves, so it cuts a slanted line.
 import * as THREE from "./vendor/three.module.min.js";
 import { OrbitControls } from "./vendor/OrbitControls.js";
-import { fmtDate, fmtTime } from "./viewer.js?v=43";
-import { irTexture } from "./irtex.js?v=43";
+import { fmtDate, fmtTime } from "./viewer.js?v=47";
+import { irTexture } from "./irtex.js?v=47";
 
 const S = 10;   // width of each plate in scene units
 let renderer, camera, controls, scene, holder, labelLayer, labels = [], running = false;

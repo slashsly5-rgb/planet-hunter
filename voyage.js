@@ -6,8 +6,8 @@
 // The ship, debris, lasers, radio chatter, sounds and the look of each world are game fiction.
 // The scanner pictures, positions, distances and sunlight levels are real.
 import * as THREE from "./vendor/three.module.min.js";
-import { $, Viewer, span } from "./viewer.js?v=43";
-import { makeStackGame } from "./stackgame.js?v=43";
+import { $, Viewer, span } from "./viewer.js?v=47";
+import { makeStackGame } from "./stackgame.js?v=47";
 import { EffectComposer } from "./vendor/postprocessing/EffectComposer.js";
 import { RenderPass } from "./vendor/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "./vendor/postprocessing/UnrealBloomPass.js";
@@ -126,11 +126,13 @@ function makeWorld(id) {
   return grp;
 }
 
+const PHONE = matchMedia("(max-width: 760px), (pointer: coarse)").matches;
+
 export function initVoyage(levels) {
   const root = $("voyage"), holder = $("vyCanvas");
   let renderer;
   try { renderer = new THREE.WebGLRenderer({ antialias: true }); } catch { $("vyStartMsg").textContent = "This browser cannot show 3D, so the voyage is unavailable. Use Hunt instead."; $("vyStart").disabled = true; return; }
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); holder.append(renderer.domElement);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, PHONE ? 1.5 : 2)); holder.append(renderer.domElement);
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.25;      // film-style response: bright things roll off instead of clipping
   const sound = new Sound();
   const chapters = [...levels].sort((a, b) => a.distance_au - b.distance_au);   // travel outward from the Sun
@@ -146,6 +148,7 @@ export function initVoyage(levels) {
   // glow around anything bright (engines, lasers, explosions, sunlit edges). Falls back to plain rendering if it cannot start.
   let composer = null;
   try {
+    if (PHONE) throw new Error("no glow on phones: too slow");
     composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
     composer.addPass(new UnrealBloomPass(new THREE.Vector2(256, 256), 0.85, 0.7, 0.78));
@@ -304,7 +307,8 @@ export function initVoyage(levels) {
     rocks.filter((r) => r.live).forEach((r) => (r.m.position.z = rand(-460, -130)));
     $("vyScan").hidden = true; $("vyHud").hidden = false; bars(); sound.setEngine(1, false);
     await card(L().finale ? "FINAL CHAPTER  ·  BEYOND THE KUIPER BELT" : `CHAPTER ${n + 1}  ·  ${zone.name}`, L().finale ? "THE DARK" : L().name.toUpperCase(), L().finale ? "300 au from the Sun  ·  no known world" : `${L().kind}  ·  ${L().distance_au} au from the Sun`);
-    say("CONTROL", L().finale ? "Commander, there is something else out here. Fainter than anything we have locked. Nothing is charted at this distance. Get us there in one piece." : n === 0 ? "Commander, SPHEREx picked up something moving out here. Punch through the debris and get us a scanner lock. Steer with the mouse, hold the left button for lasers, right click for a missile, Space to boost."
+    say("CONTROL", L().finale ? "Commander, there is something else out here. Fainter than anything we have locked. Nothing is charted at this distance. Get us there in one piece." : n === 0 ? (PHONE ? "Commander, SPHEREx picked up something moving out here. Punch through the debris and get us a scanner lock. Drag your finger to steer and fire. Use the buttons for missiles and boost."
+        : "Commander, SPHEREx picked up something moving out here. Punch through the debris and get us a scanner lock. Steer with the mouse, hold the left button for lasers, right click for a missile, Space to boost.")
       : pick([`Next signal: ${L().name}, ${L().distance_au} au out. The field is thicker here. Watch your hull.`, `${L().name} ahead. Sunlight is down to ${$("vySun").textContent} of what Earth gets. Stay sharp.`, `Signal bearing confirmed: ${L().name}. Clear a path, Commander.`]));
     phase = "fly";
   }
@@ -334,7 +338,7 @@ export function initVoyage(levels) {
     boost = keys.has(" ") || keys.has("Shift");
     const v = speed * (boost ? BOOST : 1), kx = (keys.has("ArrowRight") || keys.has("d") ? 1 : 0) - (keys.has("ArrowLeft") || keys.has("a") ? 1 : 0), ky = (keys.has("ArrowUp") || keys.has("w") ? 1 : 0) - (keys.has("ArrowDown") || keys.has("s") ? 1 : 0);
     if (kx || ky) { mouse.used = false; aim.x = THREE.MathUtils.clamp(aim.x + kx * dt * 2, -1, 1); aim.y = THREE.MathUtils.clamp(aim.y + ky * dt * 2, -1, 1); } else if (mouse.used) aim.set(mouse.x, mouse.y);
-    const tx = aim.x * 13, ty = aim.y * 7.5, px = ship.position.x;
+    const tx = aim.x * 13 * Math.min(1, camera.aspect * 1.15), ty = aim.y * 7.5, px = ship.position.x;      // a tall phone screen sees a narrower strip
     ship.position.x += (tx - ship.position.x) * Math.min(1, dt * 6); ship.position.y += (ty - ship.position.y) * Math.min(1, dt * 6);
     ship.rotation.z = THREE.MathUtils.lerp(ship.rotation.z, THREE.MathUtils.clamp(-(ship.position.x - px) / Math.max(dt, 0.001) * 0.04, -1.1, 1.1), 0.18);
     ship.rotation.x = THREE.MathUtils.lerp(ship.rotation.x, (ty - ship.position.y) * 0.06, 0.2);
@@ -598,8 +602,17 @@ export function initVoyage(levels) {
   });
   addEventListener("keyup", (e) => keys.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key));
   holder.addEventListener("pointermove", (e) => { const r = holder.getBoundingClientRect(); mouse.x = ((e.clientX - r.left) / r.width) * 2 - 1; mouse.y = -(((e.clientY - r.top) / r.height) * 2 - 1); mouse.used = true; });
-  holder.addEventListener("pointerdown", (e) => { if (e.button === 2) launchMissile(); else if (e.button === 0) firing = true; });
-  addEventListener("pointerup", (e) => { if (e.button === 0) firing = false; });
+  // mouse: left button fires, right button launches. Touch: a finger on the screen steers and fires; on-screen buttons launch and boost.
+  let steerId = null;
+  const steerTo = (e) => { const r = holder.getBoundingClientRect(); mouse.x = ((e.clientX - r.left) / r.width) * 2 - 1; mouse.y = -(((e.clientY - r.top) / r.height) * 2 - 1); mouse.used = true; };
+  holder.addEventListener("pointerdown", (e) => { if (e.button === 2) return launchMissile(); if (e.button === 0) { firing = true; steerId = e.pointerId; steerTo(e); } });
+  addEventListener("pointerup", (e) => { if (e.pointerId === steerId) { firing = false; steerId = null; } });
+  addEventListener("pointercancel", (e) => { if (e.pointerId === steerId) { firing = false; steerId = null; } });
+  $("vyTouchMissile").addEventListener("pointerdown", (e) => { e.preventDefault(); launchMissile(); });
+  const hold = (on) => (e) => { e.preventDefault(); if (on) keys.add(" "); else keys.delete(" "); };
+  $("vyTouchBoost").addEventListener("pointerdown", hold(true)); for (const ev of ["pointerup", "pointercancel", "pointerleave"]) $("vyTouchBoost").addEventListener(ev, hold(false));
+  // touch has no hover: a finger on the scanner moves the reticle
+  $("vyView").addEventListener("pointerdown", (e) => $("vyView").dispatchEvent(new PointerEvent("pointermove", e)));
   root.addEventListener("contextmenu", (e) => e.preventDefault());      // right click launches a missile instead of opening the browser menu
   $("vyStart").onclick = () => { sound.start(); $("vyStartBox").hidden = true; opening(); };
   $("vyAgain").onclick = () => { $("vyEnd").hidden = true; opening(); };
@@ -628,7 +641,8 @@ export function initVoyage(levels) {
     const targetFov = phase === "warp" ? 106 : boost && moving ? 82 : 70;
     camera.fov += (targetFov - camera.fov) * Math.min(1, dt * 4); camera.updateProjectionMatrix();
     shake = Math.max(0, shake - dt * 1.7);
-    camera.position.set(ship.position.x * 0.5 + rand(-1, 1) * shake, 2.6 + ship.position.y * 0.5 + rand(-1, 1) * shake, 10.5);
+    const tall = camera.aspect < 1;      // on a tall phone screen, pull back so the ship does not fill the view
+    camera.position.set(ship.position.x * 0.5 + rand(-1, 1) * shake, (tall ? 4.2 : 2.6) + ship.position.y * 0.5 + rand(-1, 1) * shake, tall ? 19 : 10.5);
     camera.lookAt(ship.position.x * 0.62, ship.position.y * 0.62, -30); sky.position.copy(camera.position);
     const flick = 0.8 + Math.random() * 0.2 + (boost && moving ? 0.7 : 0) + (phase === "warp" ? 1.4 : 0);
     flames.forEach((f) => f.scale.setScalar(flick));

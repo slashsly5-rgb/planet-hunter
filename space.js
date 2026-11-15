@@ -1,10 +1,10 @@
 // 3D Solar System: real positions from NASA JPL Horizons (orbits.json). Each world SPHEREx photographed is a place to fly to.
 import * as THREE from "./vendor/three.module.min.js";
 import { OrbitControls } from "./vendor/OrbitControls.js";
-import { $, Viewer, fmtDate } from "./viewer.js?v=43";
-import { t, tr } from "./i18n.js?v=43";
-import { irTexture } from "./irtex.js?v=43";
-import { composite } from "./colour.js?v=43";
+import { $, Viewer, fmtDate } from "./viewer.js?v=47";
+import { t, tr } from "./i18n.js?v=47";
+import { irTexture } from "./irtex.js?v=47";
+import { composite } from "./colour.js?v=47";
 import { EffectComposer } from "./vendor/postprocessing/EffectComposer.js";
 import { RenderPass } from "./vendor/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "./vendor/postprocessing/UnrealBloomPass.js";
@@ -29,13 +29,15 @@ function dotTexture(color) {
 const dot = (color, size) => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTexture(color), sizeAttenuation: false, depthTest: false })); s.scale.setScalar(size); return s; };
 const line = (pts, color, opacity = 1) => new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color, transparent: opacity < 1, opacity }));
 
+const PHONE = matchMedia("(max-width: 760px), (pointer: coarse)").matches;      // lighter graphics and touch layout
+
 export async function initSpace(levels, actions) {
   const stage = $("space"), holder = stage.querySelector(".space-canvas"), labelLayer = stage.querySelector(".labels");
   let renderer;
   try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true }); } catch { stage.classList.add("no3d"); return false; }
   const data = await (await fetch("orbits.json")).json();
   const startMs = Date.parse(data.start + "T00:00:00Z"), N = data.earth.track.length;
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, PHONE ? 1.5 : 2));
   holder.append(renderer.domElement);
 
   const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(45, 1, 0.01, 4e6);
@@ -46,6 +48,7 @@ export async function initSpace(levels, actions) {
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15;
   let composer = null;      // glow around bright things; plain rendering if it cannot start
   try {
+    if (PHONE) throw new Error("no glow on phones: too slow");
     composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
     composer.addPass(new UnrealBloomPass(new THREE.Vector2(256, 256), 0.7, 0.8, 0.82));
@@ -140,7 +143,7 @@ export async function initSpace(levels, actions) {
   }
 
   // ---------- the Milky Way: a model built from particles (nobody can photograph it from outside) ----------
-  const GR = 60000, galaxy = new THREE.Group(), GN = 52000, gPos = new Float32Array(GN * 3), gCol = new Float32Array(GN * 3);
+  const GR = 60000, galaxy = new THREE.Group(), GN = PHONE ? 20000 : 52000, gPos = new Float32Array(GN * 3), gCol = new Float32Array(GN * 3);
   const armAngle = (k, r) => k * Math.PI / 2 + Math.log(r / (0.1 * GR)) / Math.tan(0.23);      // four logarithmic spiral arms
   const gauss = () => (Math.random() + Math.random() + Math.random() - 1.5) / 1.5;
   for (let i = 0; i < GN; i++) {
@@ -198,7 +201,7 @@ export async function initSpace(levels, actions) {
   const earth = dot("#4d9bff", 0.022); earth.visible = false; scene.add(earth); label(tr("Earth"), () => earth.position, "earth", () => showInfo("earth", earthGlobe));
   const earthGlobe = globe("earth", 1, { tilt: 0.41, air: 0x5aa8ff }); earthGlobe.m.userData.pick = { key: "earth", g: earthGlobe };
   // the asteroid belt, where Vesta, Ceres, Pallas, Juno and Hygiea live (decoration: thousands of specks, not real asteroids)
-  const BELT = 7000, beltPos = new Float32Array(BELT * 3), beltCol = new Float32Array(BELT * 3);
+  const BELT = PHONE ? 2500 : 7000, beltPos = new Float32Array(BELT * 3), beltCol = new Float32Array(BELT * 3);
   for (let i = 0; i < BELT; i++) {
     const r = 2.1 + Math.random() ** 0.8 * 1.25, a = Math.random() * 6.2832, lum = 0.25 + Math.random() ** 3 * 0.75;
     beltPos.set([r * Math.cos(a), (Math.random() + Math.random() - 1) * 0.11 * r, r * Math.sin(a)], i * 3);
