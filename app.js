@@ -1,12 +1,12 @@
-import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=30";
-import { speedChart } from "./lab.js?v=30";
-import { t, tr } from "./i18n.js?v=30";
-import { initSpace } from "./space.js?v=30";
-import { showStack, hideStack } from "./stack3d.js?v=30";
-import { initHunt } from "./hunt.js?v=30";
-import { initVoyage } from "./voyage.js?v=30";
-import { detect, judge, overlay } from "./detect.js?v=30";
-import { composite, colourMarks } from "./colour.js?v=30";
+import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=33";
+import { speedChart } from "./lab.js?v=33";
+import { t, tr } from "./i18n.js?v=33";
+import { initSpace } from "./space.js?v=33";
+import { showStack, hideStack } from "./stack3d.js?v=33";
+import { initHunt } from "./hunt.js?v=33";
+import { initVoyage } from "./voyage.js?v=33";
+import { detect, judge, overlay } from "./detect.js?v=33";
+import { composite, colourMarks } from "./colour.js?v=33";
 
 // ---------- state ----------
 let levels = [], hunt = null;
