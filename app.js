@@ -1,12 +1,12 @@
-import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=38";
-import { speedChart } from "./lab.js?v=38";
-import { t, tr } from "./i18n.js?v=38";
-import { initSpace } from "./space.js?v=38";
-import { showStack, hideStack } from "./stack3d.js?v=38";
-import { initHunt } from "./hunt.js?v=38";
-import { initVoyage } from "./voyage.js?v=38";
-import { detect, judge, overlay } from "./detect.js?v=38";
-import { composite, colourMarks } from "./colour.js?v=38";
+import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=41";
+import { speedChart } from "./lab.js?v=41";
+import { t, tr } from "./i18n.js?v=41";
+import { initSpace } from "./space.js?v=41";
+import { showStack, hideStack } from "./stack3d.js?v=41";
+import { initHunt } from "./hunt.js?v=41";
+import { initVoyage } from "./voyage.js?v=41";
+import { detect, judge, overlay } from "./detect.js?v=41";
+import { composite, colourMarks } from "./colour.js?v=41";
 
 // ---------- state ----------
 let levels = [], hunt = null;
@@ -177,4 +177,4 @@ fetch("levels.json")
     drawGrid();
     return initSpace(levels, { explore: (L) => openObject(L), stack: (L) => openObject(L, "stack") });
   })
-  .catch(() => fail(tr("The game data did not load. Check your connection and refresh the page.")));
+  .catch((e) => { console.error(String((e && e.stack) || e)); fail(tr("The game data did not load. Check your connection and refresh the page.")); });

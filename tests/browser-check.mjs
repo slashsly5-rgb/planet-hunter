@@ -34,17 +34,28 @@ await cdp("Page.navigate", { url: (process.env.PH_URL || "http://localhost:8765"
 await sleep(+process.env.PH_WAIT || 1500);   // a slow connection needs longer for the 3D library
 if (process.env.PH_HASH) {     // check a direct link such as #hunt: report what the visitor lands on, then stop
   await sleep(2500); await shot("hash.png");
-  console.log(JSON.stringify({ hash: process.env.PH_HASH, hunt: await js(`window.__hunt?.state().step`), prompt: await js(`document.querySelector("#prompt").textContent.slice(0, 60)`), voyageStart: await js(`!document.querySelector("#voyage").hidden`), errors }));
+  console.log(JSON.stringify({ hash: process.env.PH_HASH, hunt: await js(`window.__hunt?.state().step`), prompt: await js(`document.querySelector("#prompt").textContent.slice(0, 60)`), voyageStart: await js(`!document.querySelector("#voyage").hidden`), pageError: await js(`document.querySelector("#error").textContent`), has3d: await js(`!!window.__space`), errors }));
   ws.close(); proc.kill(); process.exit(0);
 }
 if (process.env.PH_LANG) { await js(`localStorage.setItem("lang", ${JSON.stringify(process.env.PH_LANG)})`); await cdp("Page.reload"); await sleep(1500); }
 await shot("1-start.png");
 // 3D Solar System: fly to a world, then out to the Planet X zone, then back
 const has3d = await js(`!!window.__space`);
+const space3d = {};
 if (has3d) {
   await js(`window.__space.select("pluto")`); await sleep(3000); await shot("1b-world.png");
   await js(`window.__space.px()`); await sleep(2500); await shot("1c-planetx.png");
-  await js(`document.querySelector("#homeBtn").click()`); await sleep(1800);
+  await js(`document.querySelector("#worldBack").click()`); await sleep(3000);
+  // a real mouse click on the Sun, found by projecting it to the screen
+  const c0 = await js(`(() => { const r = document.querySelector(".space-canvas canvas").getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`);
+  let sunHit = "";
+  for (const dy of [-10, -25, 5, -40, 20]) { await click(c0[0], c0[1] + dy); await sleep(400); sunHit = await js(`document.querySelector("#infoPanel").hidden ? "" : document.querySelector("#infoName").textContent`); if (sunHit) break; }
+  space3d.clickNearCentre = sunHit; await sleep(2800); await shot("1d-sun.png");
+  await js(`window.__space.info("rings")`); await sleep(3200); space3d.rings = await js(`document.querySelector("#infoName").textContent`); await shot("1e-rings.png");
+  await js(`window.__space.galaxy()`); await sleep(7500); space3d.galaxyDistance = Math.round(await js(`window.__space.far()`)); await shot("1f-galaxy.png");
+  await js(`document.querySelector(".slabel.gal.here").click()`); await sleep(500); space3d.here = await js(`document.querySelector("#infoName").textContent`);
+  await js(`document.querySelector("#infoDive").click()`); await sleep(10500); space3d.afterDive = Math.round(await js(`window.__space.far()`));
+  await js(`document.querySelector("#homeBtn").click()`); await sleep(3500);
 }
 const levels = await js(`fetch("levels.json").then(r => r.json())`);
 await click(...(await centre("#startBtn")));
@@ -122,5 +133,5 @@ const detector = await js(`(async () => { const { detect, judge } = await import
 const colours = await js(`(async () => { const { composite } = await import("./colour.js"); const L = await (await fetch("levels.json")).json(); const out = [];
   for (const l of L) { const r = await composite(l); out.push(l.id + ": " + (r ? r.channels.map((c) => c.name[0] + "=" + c.frame.band).join(" ") + ", " + r.bands + " band(s)" : "none")); } return out; })()`);
 const overflow = await js(`document.documentElement.scrollWidth > document.documentElement.clientWidth`);
-console.log(JSON.stringify({ results, score: await js(`document.querySelector("#scoreLine").textContent`), horizontalOverflow: overflow, has3d, blocked, colours, detector, scanTip, vs: await js(`document.querySelector('#vsLine').textContent`), measured, lab, missing: await js(`[...window.__missing]`), errors }, null, 1));
+console.log(JSON.stringify({ results, score: await js(`document.querySelector("#scoreLine").textContent`), horizontalOverflow: overflow, has3d, space3d, blocked, colours, detector, scanTip, vs: await js(`document.querySelector('#vsLine').textContent`), measured, lab, missing: await js(`[...window.__missing]`), errors }, null, 1));
 ws.close(); proc.kill();

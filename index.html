@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Planet Hunter: see the sky move in real SPHEREx images</title>
 <meta name="description" content="Watch real NASA SPHEREx images change over time. Spot the worlds that move, play back their paths, and learn how Planet X could be found.">
-<link rel="stylesheet" href="style.css?v=38">
+<link rel="stylesheet" href="style.css?v=41">
 <link rel="modulepreload" href="vendor/three.module.min.js">
 </head>
 <body>
@@ -61,8 +61,19 @@
       <div id="worldList"></div>
       <button id="pxBtn" class="small">Zoom out to where Planet X might be</button>
       <button id="homeBtn" class="small ghost">Whole Solar System</button>
+      <button id="galaxyBtn" class="small ghost">Zoom out to the Milky Way</button>
     </div>
 
+    <div class="intro-cap" aria-hidden="true"><p id="introTop"></p><p id="introSub"></p></div>
+    <aside id="infoPanel" class="world-panel info-panel" hidden>
+      <button id="infoBack" class="ghost small">← Back</button>
+      <h2 id="infoName"></h2>
+      <p id="infoKind" class="note"></p>
+      <p id="infoText"></p>
+      <dl id="infoFacts" class="telemetry facts"></dl>
+      <p id="infoNote" class="note"></p>
+      <button id="infoDive" class="primary" hidden>Dive to the Solar System</button>
+    </aside>
     <aside id="worldPanel" class="world-panel" hidden>
       <button id="worldBack" class="ghost small">← All worlds</button>
       <h2 id="worldName"></h2>
@@ -85,7 +96,7 @@
       <button id="playBtn" class="small">Pause</button>
       <input id="timeSlider" type="range" min="0" max="1" value="0" step="1" aria-label="Date">
       <span id="timeLabel"></span>
-      <p class="space-help">Drag to rotate, scroll to zoom · positions are real, sizes are enlarged</p>
+      <p class="space-help">Drag to rotate, scroll to zoom · click anything · positions are real, sizes are enlarged</p>
     </div>
     <p class="no3d-msg">This browser cannot show the 3D view. Use Hunt and Explore above.</p>
   </div>
@@ -326,7 +337,7 @@
     <li>A level is only included if the object is detected exactly where JPL says it should be.</li>
   </ul>
   <p>The orange and purple colours are false colour: brightness shown as colour. Switch it off in Explore to see the plain greyscale images. Small specks that appear in only one image are cosmic rays hitting the detector, not objects.</p>
-  <p>In the 3D Solar System, the orbits and positions are real, from NASA JPL Horizons. The planets and worlds are drawn very much larger than life so they can be seen, and the specks of the asteroid belt are decoration. The background is a real all-sky photograph of the Milky Way. The pink ring marking where a Planet X might be is hypothetical.</p>
+  <p>In the 3D Solar System, the orbits and positions are real, from NASA JPL Horizons. The planets and worlds are drawn very much larger than life so they can be seen, and the specks of the asteroid belt are decoration. The background is a real all-sky photograph of the Milky Way. The pink ring marking where a Planet X might be is hypothetical. The Milky Way you see when you zoom far out is a model made of particles, because nobody can photograph our galaxy from outside: its arm shapes are illustrative, and the Solar System is drawn enormously too large within it.</p>
 
   <h2>Three-colour pictures</h2>
   <p>The three-colour view combines three real SPHEREx images of the same patch, taken at different times and usually at different infrared wavelengths, as red, green and blue. Longer wavelengths are shown redder. Stars are in all three images, so their colour reflects how bright they are at each wavelength. A moving world is in a different place each time, so it appears three times, once in each colour. Each image's brightness is scaled separately, so the colours are a guide, not a measurement.</p>
@@ -353,6 +364,6 @@
 </section>
 </main>
 
-<script type="module" src="app.js?v=38"></script>
+<script type="module" src="app.js?v=41"></script>
 </body>
 </html>
