@@ -3,11 +3,11 @@
 //   2 Predict   from its two positions, say where it will be in a third real image
 //   3 Classify  from how fast it moves, say where it orbits
 // The last missions are simulated Planet X candidates (made-up objects on real images, labelled as simulated).
-import { isHit } from "./score.js?v=70";
-import { $, Viewer, fmtDate, fmtTime, span, ring, ruler } from "./viewer.js?v=70";
-import { speedChart, simFrames } from "./lab.js?v=70";
-import { t, tr } from "./i18n.js?v=70";
-import { detect, judge } from "./detect.js?v=70";
+import { isHit } from "./score.js?v=71";
+import { $, Viewer, fmtDate, fmtTime, span, ring, ruler } from "./viewer.js?v=71";
+import { speedChart, simFrames } from "./lab.js?v=71";
+import { t, tr } from "./i18n.js?v=71";
+import { detect, judge } from "./detect.js?v=71";
 
 const FOUND_RADIUS = 20;          // image pixels: how close a tap must be to count as a detection
 const TRIES = 2;

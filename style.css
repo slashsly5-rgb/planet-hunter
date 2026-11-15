@@ -526,3 +526,10 @@ abbr.term:focus-visible { outline: 2px solid var(--hud); outline-offset: 2px; bo
 .data-status.new { color: #ffe2b0; border-color: #7a5a20; } .data-status.new::before { background: #ffb547; box-shadow: 0 0 8px #ffb547; }
 @keyframes livePulse { 50% { opacity: .35; } }
 
+/* "click for music" hint, shown only when the browser blocks sound before the first click */
+.music-hint { position: fixed; top: 66px; right: 14px; z-index: 6; padding: 7px 14px; border-radius: 999px; background: #0b1226ee; border: 1px solid #ffb54788;
+  color: #ffd79a; font-size: .85rem; pointer-events: none; box-shadow: 0 0 18px #ffb54733; animation: hintPulse 1.8s ease-in-out infinite; }
+.music-hint[hidden] { display: none; }
+@keyframes hintPulse { 50% { opacity: .55; } }
+@media (max-width: 760px) { .music-hint { top: 58px; right: 8px; font-size: .8rem; } }
+

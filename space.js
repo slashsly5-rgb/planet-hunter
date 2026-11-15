@@ -1,10 +1,10 @@
 // 3D Solar System: real positions from NASA JPL Horizons (orbits.json). Each world SPHEREx photographed is a place to fly to.
 import * as THREE from "./vendor/three.module.min.js";
 import { OrbitControls } from "./vendor/OrbitControls.js";
-import { $, Viewer, fmtDate } from "./viewer.js?v=70";
-import { t, tr } from "./i18n.js?v=70";
-import { irTexture } from "./irtex.js?v=70";
-import { composite } from "./colour.js?v=70";
+import { $, Viewer, fmtDate } from "./viewer.js?v=71";
+import { t, tr } from "./i18n.js?v=71";
+import { irTexture } from "./irtex.js?v=71";
+import { composite } from "./colour.js?v=71";
 import { EffectComposer } from "./vendor/postprocessing/EffectComposer.js";
 import { RenderPass } from "./vendor/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "./vendor/postprocessing/UnrealBloomPass.js";
@@ -381,7 +381,7 @@ export async function initSpace(levels, actions) {
   camera.position.set(...GAL.cam); controls.target.set(...GAL.look); controls.update();
   const cap = (a2, b2) => { $("introTop").textContent = tr(a2); $("introSub").textContent = tr(b2); };
   cap("The Milky Way", "Our galaxy: hundreds of billions of stars. One of them is the Sun.");
-  let introTimer = setTimeout(() => { cap("Diving in", "26,000 light-years from the centre, to one small star"); flyTo(HOME.cam, HOME.look, 12000); }, 3800);
+  let introTimer = setTimeout(() => { cap("Diving in", "26,000 light-years from the centre, to one small star"); flyTo(HOME.cam, HOME.look, 7000); }, 1200);
   const skip = () => {
     if (!stage.classList.contains("intro")) return;
     clearTimeout(introTimer); fly = null; stage.classList.remove("intro"); camera.position.set(...HOME.cam); controls.target.set(...HOME.look);

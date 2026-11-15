@@ -603,5 +603,6 @@ export const MS = {
   "<b>Up to date with NASA</b> · SPHEREx {0} · checked just now": "<b>Terkini dengan NASA</b> · SPHEREx {0} · baru disemak",
   "<b>Right now: up to date.</b> NASA has published {0}, and these pictures use {1} (releases left out are older copies of the same exposures). Newest image on this site: {2}.": "<b>Ketika ini: terkini.</b> NASA telah menerbitkan {0}, dan gambar ini menggunakan {1} (keluaran yang tidak digunakan ialah salinan lama rakaman yang sama). Imej terbaharu di laman ini: {2}.",
   "Data from NASA SPHEREx {0} · newest image {1}": "Data daripada SPHEREx NASA {0} · imej terbaharu {1}",
-  "<b>NASA's servers did not answer just now</b>, so this could not be checked. These pictures come from {0}. Newest image on this site: {1}.": "<b>Pelayan NASA tidak menjawab sebentar tadi</b>, jadi perkara ini tidak dapat disemak. Gambar ini daripada {0}. Imej terbaharu di laman ini: {1}."
+  "<b>NASA's servers did not answer just now</b>, so this could not be checked. These pictures come from {0}. Newest image on this site: {1}.": "<b>Pelayan NASA tidak menjawab sebentar tadi</b>, jadi perkara ini tidak dapat disemak. Gambar ini daripada {0}. Imej terbaharu di laman ini: {1}.",
+  "♪ Click anywhere to turn on the music": "♪ Klik di mana-mana untuk menghidupkan muzik"
 };

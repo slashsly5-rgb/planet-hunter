@@ -1,12 +1,12 @@
-import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=70";
-import { speedChart } from "./lab.js?v=70";
-import { t, tr } from "./i18n.js?v=70";
-import { initSpace } from "./space.js?v=70";
-import { showStack, hideStack } from "./stack3d.js?v=70";
-import { initHunt } from "./hunt.js?v=70";
-import { initVoyage } from "./voyage.js?v=70";
-import { detect, judge, overlay } from "./detect.js?v=70";
-import { composite, colourMarks } from "./colour.js?v=70";
+import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=71";
+import { speedChart } from "./lab.js?v=71";
+import { t, tr } from "./i18n.js?v=71";
+import { initSpace } from "./space.js?v=71";
+import { showStack, hideStack } from "./stack3d.js?v=71";
+import { initHunt } from "./hunt.js?v=71";
+import { initVoyage } from "./voyage.js?v=71";
+import { detect, judge, overlay } from "./detect.js?v=71";
+import { composite, colourMarks } from "./colour.js?v=71";
 
 // ---------- state ----------
 let levels = [], hunt = null;
@@ -306,10 +306,15 @@ function playMusic(on) {
 }
 setMusic(musicOn);
 window.__music = music;
-musicBtn.addEventListener("click", (e) => { e.stopPropagation(); musicStarted = true; setMusic(!musicOn); });
+// try to start at once; most browsers refuse sound before the first click, so then a hint by the ♪ button says one click turns it on
+const musicHint = document.createElement("div");
+musicHint.className = "music-hint"; musicHint.hidden = true; musicHint.textContent = tr("♪ Click anywhere to turn on the music");
+document.body.append(musicHint);
+if (musicOn) music.play().then(() => { musicStarted = true; playMusic(true); }).catch(() => { if (!musicStarted) musicHint.hidden = false; });
+musicBtn.addEventListener("click", (e) => { e.stopPropagation(); musicStarted = true; musicHint.hidden = true; setMusic(!musicOn); });
 const firstTouch = (e) => {
   if (musicStarted || e.target.closest("#musicBtn")) return;
-  musicStarted = true; if (musicOn) playMusic(true);
+  musicStarted = true; musicHint.hidden = true; if (musicOn) playMusic(true);
 };
 addEventListener("pointerdown", firstTouch, true); addEventListener("keydown", firstTouch, true);
 document.addEventListener("play", (e) => { if (e.target !== music) playMusic(false); }, true);
