@@ -1,10 +1,10 @@
 // 3D Solar System: real positions from NASA JPL Horizons (orbits.json). Each world SPHEREx photographed is a place to fly to.
 import * as THREE from "./vendor/three.module.min.js";
 import { OrbitControls } from "./vendor/OrbitControls.js";
-import { $, Viewer, fmtDate } from "./viewer.js?v=36";
-import { t, tr } from "./i18n.js?v=36";
-import { irTexture } from "./irtex.js?v=36";
-import { composite } from "./colour.js?v=36";
+import { $, Viewer, fmtDate } from "./viewer.js?v=37";
+import { t, tr } from "./i18n.js?v=37";
+import { irTexture } from "./irtex.js?v=37";
+import { composite } from "./colour.js?v=37";
 import { EffectComposer } from "./vendor/postprocessing/EffectComposer.js";
 import { RenderPass } from "./vendor/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "./vendor/postprocessing/UnrealBloomPass.js";
@@ -13,10 +13,10 @@ import { OutputPass } from "./vendor/postprocessing/OutputPass.js";
 const v3 = ([x, y, z]) => new THREE.Vector3(x, z, -y);   // ecliptic x,y,z (au) → scene, with y up
 const COLORS = ["#8ab4ff", "#ffb547", "#6fe3ff", "#f7e26b", "#ff9a5c", "#c79bff", "#b6ff8a", "#ff6f91", "#7dffcf", "#ffd1dc"];
 const TRAIL = 30, TRAIL_STEP = 1.2;   // trail: 30 points, 1.2 timeline steps (6 days) apart
-const DAY = 864e5, HOME = { cam: [0, 30, 82], look: [0, 0, 0] };
+const DAY = 864e5, HOME = { cam: [1.5, 5.6, 9.4], look: [0, -0.4, 0] }, WIDE = { cam: [0, 30, 82], look: [0, 0, 0] };
 // surface map for each world's globe (see the About page for which are real maps)
-const SKIN = { uranus: { tex: "uranus", f: 1.25, ring: true }, neptune: { tex: "neptune", f: 1.25 }, pluto: { tex: "pluto" }, ceres: { tex: "ceres" }, haumea: { tex: "haumea", stretch: [1.6, 0.85, 1] }, makemake: { tex: "makemake" },
-  vesta: { tex: "rock", tint: 0xd8d2c8 }, pallas: { tex: "rock", tint: 0xb9bcc6 }, juno: { tex: "rock", tint: 0xd9c7ae }, hygiea: { tex: "rock", tint: 0x8f8a86 } };
+const SKIN = { uranus: { tex: "uranus", f: 1.25, ring: true, air: 0x9fe3e6 }, neptune: { tex: "neptune", f: 1.25, air: 0x4a7fff }, pluto: { tex: "pluto", solid: true }, ceres: { tex: "ceres", solid: true }, haumea: { tex: "haumea", stretch: [1.6, 0.85, 1], solid: true }, makemake: { tex: "makemake", solid: true },
+  vesta: { tex: "rock", tint: 0xd8d2c8, solid: true, stretch: [1.12, 0.9, 1] }, pallas: { tex: "rock", tint: 0xb9bcc6, solid: true, stretch: [1.08, 0.94, 0.98] }, juno: { tex: "rock", tint: 0xd9c7ae, solid: true, stretch: [1.18, 0.88, 0.95] }, hygiea: { tex: "rock", tint: 0x8f8a86, solid: true } };
 const PSTEP = { Mercury: 1, Venus: 2, Mars: 6, Jupiter: 36, Saturn: 90 };   // days between points on each planet's stored orbit, which starts on 1 Jan 2025
 
 function dotTexture(color) {
@@ -61,8 +61,9 @@ export async function initSpace(levels, actions) {
   const globes = [];
   function globe(tex, f = 1, o = {}) {      // a textured sphere, drawn far larger than life (size follows the camera so it can always be seen)
     const geo = new THREE.SphereGeometry(1, 64, 48); if (o.stretch) geo.scale(...o.stretch);
-    const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: map(tex), color: o.tint ?? 0xffffff, roughness: 1, metalness: 0 }));
+    const tx = map(tex), m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: tx, color: o.tint ?? 0xffffff, bumpMap: o.solid ? tx : null, bumpScale: o.solid ? 4 : 0, roughness: 1, metalness: 0 }));
     m.rotation.z = o.tilt || 0; scene.add(m);
+    if (o.air) m.add(new THREE.Mesh(new THREE.SphereGeometry(1.06, 48, 32), new THREE.MeshBasicMaterial({ color: o.air, transparent: true, opacity: 0.22, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false })));
     const g = { m, f, near: 0.04 }; globes.push(g); return g;
   }
   function ringOn(g, inner, outer, tex, tilt) {      // a ring whose texture runs outward from the planet
@@ -73,7 +74,7 @@ export async function initSpace(levels, actions) {
   }
 
   // backdrop (decoration only, not real star positions): three layers of stars that drift at different speeds, and soft nebula glow
-  const skies = [[500, 0xcfe0ff, 1.4, 0.45, 0.006], [60, 0xffe2b8, 2.4, 0.7, 0.01]].map(([count, color, size, opacity, spin]) => {
+  const skies = [].map(([count, color, size, opacity, spin]) => {
     const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) new THREE.Vector3().randomDirection().multiplyScalar(20000).toArray(pos, i * 3);
     const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
@@ -94,7 +95,11 @@ export async function initSpace(levels, actions) {
   }
 
   // Sun, planets, Earth
-  const sun = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 48), new THREE.MeshBasicMaterial({ map: map("sun"), toneMapped: false })); scene.add(sun); label(tr("Sun"), () => sun.position, "dim");
+  const sun = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 48), new THREE.MeshBasicMaterial({ map: map("sun"), toneMapped: false, color: new THREE.Color(1.45, 1.2, 0.95) })); scene.add(sun);
+  const rays = new THREE.Sprite(new THREE.SpriteMaterial({ map: (() => {
+    const c = document.createElement("canvas"); c.width = c.height = 512; const g = c.getContext("2d"); g.translate(256, 256);
+    for (let i = 0; i < 90; i++) { const a = Math.random() * 6.2832, len = 90 + Math.random() * 160, w = 0.012 + Math.random() * 0.03; const gr = g.createLinearGradient(0, 0, Math.cos(a) * len, Math.sin(a) * len); gr.addColorStop(0, "rgba(255,225,170,0.5)"); gr.addColorStop(1, "rgba(255,200,120,0)"); g.fillStyle = gr; g.beginPath(); g.moveTo(0, 0); g.lineTo(Math.cos(a - w) * len, Math.sin(a - w) * len); g.lineTo(Math.cos(a + w) * len, Math.sin(a + w) * len); g.fill(); }
+    return new THREE.CanvasTexture(c); })(), transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false })); scene.add(rays); label(tr("Sun"), () => sun.position, "dim");
   const corona = [0.13, 0.26].map((size, k) => {
     const c = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTexture(k ? "#ff8a3c" : "#ffc65c"), sizeAttenuation: false, depthTest: false, transparent: true, opacity: k ? 0.16 : 0.3, blending: THREE.AdditiveBlending }));
     c.userData.size = size; scene.add(c); return c;
@@ -103,24 +108,28 @@ export async function initSpace(levels, actions) {
   // the planets as globes, at their real positions for the date shown
   const planetAt = (p, ms) => { const x = (ms - Date.UTC(2025, 0, 1)) / DAY / PSTEP[p.name], n = p.path.length - 1, i = ((Math.floor(x) % n) + n) % n; return v3(p.path[i]).lerp(v3(p.path[i + 1]), x - Math.floor(x)); };
   const planetGlobes = [["Mars", "mars", 0.8], ["Jupiter", "jupiter", 1.7], ["Saturn", "saturn", 1.5]].map(([name, tex, f]) => {
-    const p = data.planets.find((q) => q.name === name), g = globe(tex, f, { tilt: name === "Saturn" ? 0.47 : 0.05 });
+    const p = data.planets.find((q) => q.name === name), g = globe(tex, f, { tilt: name === "Saturn" ? 0.47 : 0.05, solid: name === "Mars", air: name === "Mars" ? 0xffb090 : null });
     if (name === "Saturn") ringOn(g, 1.25, 2.3, map("saturn_ring", "png"), Math.PI / 2);
     if (name !== "Mars") label(tr(name), () => g.m.position, "dim");
     return { p, g };
   });
   scene.add(line(data.earth.path.map(v3), 0x4d7cff));
   const earth = dot("#4d9bff", 0.022); earth.visible = false; scene.add(earth); label(tr("Earth"), () => earth.position, "earth");
-  const earthGlobe = globe("earth", 1, { tilt: 0.41 });
+  const earthGlobe = globe("earth", 1, { tilt: 0.41, air: 0x5aa8ff });
   // the asteroid belt, where Vesta, Ceres, Pallas, Juno and Hygiea live (decoration: thousands of specks, not real asteroids)
-  const beltPos = new Float32Array(4200 * 3);
-  for (let i = 0; i < 4200; i++) { const r = 2.1 + Math.random() ** 0.8 * 1.25, a = Math.random() * 6.2832; beltPos.set([r * Math.cos(a), (Math.random() - 0.5) * 0.22 * r * 0.4, r * Math.sin(a)], i * 3); }
-  const beltGeo = new THREE.BufferGeometry(); beltGeo.setAttribute("position", new THREE.BufferAttribute(beltPos, 3));
-  const belt = new THREE.Points(beltGeo, new THREE.PointsMaterial({ color: 0xcdb99a, size: 0.035, transparent: true, opacity: 0.6, depthWrite: false })); scene.add(belt);
+  const BELT = 7000, beltPos = new Float32Array(BELT * 3), beltCol = new Float32Array(BELT * 3);
+  for (let i = 0; i < BELT; i++) {
+    const r = 2.1 + Math.random() ** 0.8 * 1.25, a = Math.random() * 6.2832, lum = 0.25 + Math.random() ** 3 * 0.75;
+    beltPos.set([r * Math.cos(a), (Math.random() + Math.random() - 1) * 0.11 * r, r * Math.sin(a)], i * 3);
+    beltCol.set([lum, lum * 0.92, lum * 0.8], i * 3);
+  }
+  const beltGeo = new THREE.BufferGeometry(); beltGeo.setAttribute("position", new THREE.BufferAttribute(beltPos, 3)); beltGeo.setAttribute("color", new THREE.BufferAttribute(beltCol, 3));
+  const belt = new THREE.Points(beltGeo, new THREE.PointsMaterial({ map: dotTexture("#e8d8bc"), vertexColors: true, size: 0.045, transparent: true, opacity: 0.8, depthWrite: false, blending: THREE.AdditiveBlending })); scene.add(belt);
 
   // the worlds SPHEREx photographed
   const worlds = levels.map((L, k) => {
     const o = data.objects[L.id], color = COLORS[k % COLORS.length], marker = dot(color, 0.026);
-    scene.add(line(o.path.map(v3), color, 0.38), marker);
+    scene.add(line(o.path.map(v3), color, 0.3), marker);
     // glowing trail behind the world: bright at the head, fading to nothing
     const tg = new THREE.BufferGeometry(), tcol = new Float32Array(TRAIL * 3), c3 = new THREE.Color(color);
     for (let i = 0; i < TRAIL; i++) { const f = (i / (TRAIL - 1)) ** 2; tcol.set([c3.r * f, c3.g * f, c3.b * f], i * 3); }
@@ -153,8 +162,8 @@ export async function initSpace(levels, actions) {
   const fanGeo = new THREE.BufferGeometry(), fanPts = [0, 0, 0];
   for (let i = 0; i <= 8; i++) { const a = (i / 8 - 0.5) * 0.16; fanPts.push(Math.cos(a), Math.sin(a), 0); }
   fanGeo.setAttribute("position", new THREE.Float32BufferAttribute(fanPts, 3)); fanGeo.setIndex(Array.from({ length: 8 }, (_, i) => [0, i + 1, i + 2]).flat());
-  const scan = new THREE.Group(), fan = new THREE.Mesh(fanGeo, new THREE.MeshBasicMaterial({ color: 0x6fe3ff, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }));
-  const scanRing = line(Array.from({ length: 97 }, (_, i) => new THREE.Vector3(Math.cos(i / 96 * 6.2832), Math.sin(i / 96 * 6.2832), 0)), 0x6fe3ff, 0.28);
+  const scan = new THREE.Group(), fan = new THREE.Mesh(fanGeo, new THREE.MeshBasicMaterial({ color: 0x6fe3ff, transparent: true, opacity: 0.2, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }));
+  const scanRing = line(Array.from({ length: 97 }, (_, i) => new THREE.Vector3(Math.cos(i / 96 * 6.2832), Math.sin(i / 96 * 6.2832), 0)), 0x6fe3ff, 0.14);
   scan.add(fan, scanRing); scene.add(scan);
   const scanTip = new THREE.Vector3(); label(tr("SPHEREx scanning"), () => scanTip, "scan");
   const texOf = new Map();
@@ -226,7 +235,7 @@ export async function initSpace(levels, actions) {
   $("worldList").innerHTML = worlds.map((w) => `<button class="worldbtn" data-id="${w.L.id}" style="--c:${w.color}"><i></i>${w.L.name}<small>${w.L.distance_au} au</small></button>`).join("");
   document.querySelectorAll(".worldbtn").forEach((b) => (b.onclick = () => select(worlds.find((w) => w.L.id === b.dataset.id))));
   $("worldBack").onclick = () => { clear(); flyTo(HOME.cam, HOME.look); setPlaying(true); };
-  $("homeBtn").onclick = () => { clear(); flyTo(HOME.cam, HOME.look); setPlaying(true); };
+  $("homeBtn").onclick = () => { clear(); flyTo(WIDE.cam, WIDE.look, 3200); setPlaying(true); };
   $("pxBtn").onclick = () => { clear(); flyTo([0, 900, 1700], [0, 0, 0]); };
   $("worldExplore").onclick = () => actions.explore(sel.L);
   $("worldStack").onclick = () => actions.stack(sel.L);
@@ -242,7 +251,11 @@ export async function initSpace(levels, actions) {
     if (playing) { tt += dt * 10; if (tt > N - 1) tt = 0; place(); }
     if (fly) {
       const k = Math.min(1, (now - fly.t0) / fly.ms), e = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
-      camera.position.lerpVectors(fly.c0, fly.c1, e); controls.target.lerpVectors(fly.l0, fly.l1, e);
+      const d0 = fly.c0.distanceTo(fly.l0), d1 = fly.c1.distanceTo(fly.l1);
+      if (d0 > d1 * 8) {      // falling in from far away: shrink the distance by a constant factor per moment, so the last part is unhurried
+        const dir = new THREE.Vector3().subVectors(fly.c0, fly.l0).normalize().lerp(new THREE.Vector3().subVectors(fly.c1, fly.l1).normalize(), e).normalize();
+        controls.target.lerpVectors(fly.l0, fly.l1, e); camera.position.copy(controls.target).addScaledVector(dir, d0 * Math.pow(d1 / d0, e));
+      } else { camera.position.lerpVectors(fly.c0, fly.c1, e); controls.target.lerpVectors(fly.l0, fly.l1, e); }
       if (k === 1) { fly = null; stage.classList.remove("intro"); }
     }
     // living scene: drifting star layers, breathing Sun, sweeping SPHEREx scan
@@ -253,7 +266,7 @@ export async function initSpace(levels, actions) {
       const chosen = sel && sel.g === g, cap = Math.max(0.25, g.m.position.length() * 0.11);      // never so big that neighbours on nearby orbits collide
       g.m.scale.setScalar(chosen ? Math.max(d * 0.017 * g.f, 0.32) : Math.max(Math.min(d * 0.017 * g.f, cap), g.near)); g.m.rotation.y += dt * 0.22;
     }
-    sun.scale.setScalar(THREE.MathUtils.clamp(camera.position.length() * 0.03, 0.1, 0.5)); sun.rotation.y += dt * 0.04;
+    sun.scale.setScalar(THREE.MathUtils.clamp(camera.position.length() * 0.03, 0.1, 0.5)); sun.rotation.y += dt * 0.04; rays.scale.setScalar(sun.scale.x * 7.5); rays.material.rotation += dt * 0.015;
     zoneGroup.visible = far0 > 140;      // the Planet X ring only shows once you pull far back
     belt.rotation.y += dt * 0.012; sky.position.copy(camera.position);
     const pulse = 1 + 0.07 * Math.sin(now / 520);
@@ -275,7 +288,7 @@ export async function initSpace(levels, actions) {
   place(); setPlaying(true); requestAnimationFrame(frame);
   stage.classList.add("ready", "intro");
   // opening shot: start far out, where a Planet X might be, and sweep in. Any click or scroll takes over.
-  camera.position.set(-500, 1100, 1900); flyTo(HOME.cam, HOME.look, 7000);
+  camera.position.set(-520, 1150, 1950); flyTo(HOME.cam, HOME.look, 10000);
   const skip = () => { if (stage.classList.contains("intro")) { fly = null; stage.classList.remove("intro"); } };
   renderer.domElement.addEventListener("pointerdown", skip); renderer.domElement.addEventListener("wheel", skip, { passive: true });
   window.__space = { select: (id) => select(worlds.find((w) => w.L.id === id)), px: () => $("pxBtn").click() };   // used by the browser check

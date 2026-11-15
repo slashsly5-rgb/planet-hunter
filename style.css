@@ -335,3 +335,7 @@ main:has(#voyage:not([hidden])) { max-width: none; padding: 0; }
 .viewer.askclick { box-shadow: 0 0 0 3px var(--hud), 0 0 40px #6fe3ff55; }
 #skipBtn { white-space: nowrap; }
 .vy-ammo { color: #ffb547 !important; text-shadow: 0 0 10px #ff7a1a !important; letter-spacing: .12em; }
+
+/* front page: darkened edges, like a camera lens */
+.space::before { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 1; background: radial-gradient(ellipse at 50% 55%, transparent 52%, #000a 100%); }
+.space-title, .space-worlds, .world-panel, .space-time, .labels, .frame-hud, .hud-strip { z-index: 2; }
