@@ -43,6 +43,13 @@ for (let chapter = 0; chapter < 3; chapter++) {
   log.push(`chapter ${chapter + 1}: reached fly = ${await until(["fly"], 40000)}`);
   await js(`window.__voyage.safe()`);
   await move(900, 300); await sleep(1400); await move(500, 600); await sleep(1400);
+  if (chapter === 0) {      // right click launches a missile
+    const before = await st();
+    for (const type of ["mousePressed", "mouseReleased"]) await cdp("Input.dispatchMouseEvent", { type, x: 600, y: 500, button: "right", buttons: 2, clickCount: 1 });
+    await sleep(350); await shot("v3b-missile.png"); await sleep(1300);
+    const after = await st();
+    log.push(`right click: missiles ${before.ammo} -> ${after.ammo}, rocks destroyed ${before.kills} -> ${after.kills}`);
+  }
   await shot(`v3-fly-${chapter}.png`);
   await js(`window.__voyage.arrive()`);
   await until(["scan", "ghost"]);

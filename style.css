@@ -334,3 +334,4 @@ main:has(#voyage:not([hidden])) { max-width: none; padding: 0; }
 @media (max-width: 860px) { .hunt-grid { grid-template-columns: 1fr; } }
 .viewer.askclick { box-shadow: 0 0 0 3px var(--hud), 0 0 40px #6fe3ff55; }
 #skipBtn { white-space: nowrap; }
+.vy-ammo { color: #ffb547 !important; text-shadow: 0 0 10px #ff7a1a !important; letter-spacing: .12em; }

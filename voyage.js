@@ -6,8 +6,8 @@
 // The ship, debris, lasers, radio chatter, sounds and the look of each world are game fiction.
 // The scanner pictures, positions, distances and sunlight levels are real.
 import * as THREE from "./vendor/three.module.min.js";
-import { $, Viewer, span } from "./viewer.js?v=27";
-import { makeStackGame } from "./stackgame.js?v=27";
+import { $, Viewer, span } from "./viewer.js?v=28";
+import { makeStackGame } from "./stackgame.js?v=28";
 
 const LOCK_RADIUS = 30, LOCK_SECONDS = 2.6, SCAN_SECONDS = 24;
 const BASE_SPEED = 70, BOOST = 1.7, FIRE_EVERY = 0.15, BOLT_SPEED = 420;
@@ -182,6 +182,37 @@ export function initVoyage(levels) {
   const boltGeo = new THREE.CylinderGeometry(0.09, 0.09, 4.2, 5).rotateX(Math.PI / 2), boltMat = new THREE.MeshBasicMaterial({ color: 0xff9a3c, fog: false }), bolts = [];
   for (let i = 0; i < 40; i++) { const m = new THREE.Mesh(boltGeo, boltMat); m.visible = false; scene.add(m); bolts.push({ m, live: false }); }
 
+  // missiles: slow, homing, and they clear everything near where they go off
+  const missileGeo = new THREE.ConeGeometry(0.28, 1.8, 8).rotateX(-Math.PI / 2), missileMat = new THREE.MeshStandardMaterial({ color: 0xffe9c0, emissive: 0xff7a1a, emissiveIntensity: 1.2 }), missiles = [];
+  for (let i = 0; i < 6; i++) { const m = new THREE.Mesh(missileGeo, missileMat); const g = glow(0xffa040, 2.6); g.position.z = 1.2; m.add(g); m.visible = false; scene.add(m); missiles.push({ m, live: false, target: null }); }
+  const MISSILES_PER_CHAPTER = 5, MISSILE_SPEED = 250, BLAST = 17;
+  let ammo = MISSILES_PER_CHAPTER, missileAt = 0;
+  function launchMissile() {
+    if (phase !== "fly" || ammo <= 0 || missileAt > 0) return;
+    const ms = missiles.find((x) => !x.live); if (!ms) return;
+    ammo--; missileAt = 0.45; ms.live = true; ms.m.visible = true; ms.m.position.set(ship.position.x, ship.position.y - 0.5, -2);
+    // aim at the biggest threat ahead: the solid rock closest to the ship's line of flight
+    let best = null, bestD = 1e9;
+    for (const r of rocks) if (r.live && r.solid && r.m.position.z < -30 && r.m.position.z > -330) { const d = Math.hypot(r.m.position.x - ship.position.x, r.m.position.y - ship.position.y) - r.r * 2; if (d < bestD) { bestD = d; best = r; } }
+    ms.target = best; sound.tone(220, 0.5, "sawtooth", 0.22, 900); bars();
+  }
+  function detonate(ms) {
+    const p = ms.m.position; ms.live = false; ms.m.visible = false; let n = 0;
+    for (const r of rocks) if (r.live && r.solid && Math.hypot(r.m.position.x - p.x, r.m.position.y - p.y, (r.m.position.z - p.z) * 0.5) < BLAST) { r.live = false; r.m.visible = false; explode(r.m.position, r.r); n++; }
+    for (let i = 0; i < 70; i++) spark(p.x, p.y, p.z, i % 2 ? 0xffb060 : 0xffffff, [0, 0, 30], rand(0.5, 1.2), 46);
+    kills += n; combo += n; comboT = 2.2; data += 10 * n; shake = Math.max(shake, 0.55); sound.boom(true); setTimeout(() => sound.boom(true), 90);
+  }
+  function moveMissiles(dt, v) {
+    missileAt = Math.max(0, missileAt - dt);
+    for (const ms of missiles) if (ms.live) {
+      const p = ms.m.position, t = ms.target?.live ? ms.target.m.position : null;
+      if (t) { p.x += THREE.MathUtils.clamp(t.x - p.x, -1, 1) * 34 * dt; p.y += THREE.MathUtils.clamp(t.y - p.y, -1, 1) * 34 * dt; }
+      p.z -= MISSILE_SPEED * dt;
+      spark(p.x, p.y, p.z + 1.5, 0xffa040, [0, 0, 20 + v * 0.3], 0.45, 2);
+      if ((t && p.z <= t.z + 4) || p.z < -300 || (!t && p.z < -150)) detonate(ms);
+    }
+  }
+
   // ---------- state ----------
   let n = 0, phase = "idle", hull = 100, data = 0, travelled = 0, goal = 1, speed = BASE_SPEED, boost = false, shake = 0, tPhase = 0;
   let spawnR = 0, spawnS = 0, spawnF = 0, spawnP = 6, fireAt = 0, firing = false, combo = 0, comboT = 0, kills = 0, hullAtStart = 100;
@@ -206,14 +237,14 @@ export function initVoyage(levels) {
     $("vyHull").style.width = Math.max(0, Math.min(100, hull)) + "%"; $("vyHull").classList.toggle("low", hull <= 40);
     hud("vyData", data); $("vyProg").style.width = Math.min(100, (travelled / goal) * 100) + "%";
     hud("vyChapter", `${n + 1} / ${TOTAL}  ${L().name.toUpperCase()}`);
-    hud("vyCombo", combo > 1 ? `x${combo}` : ""); hud("vyBuff", [shieldT > 0 && "SHIELD", magnetT > 0 && "MAGNET", rapidT > 0 && "RAPID FIRE"].filter(Boolean).join("  "));
+    hud("vyMissiles", "▲".repeat(ammo) || "none"); hud("vyCombo", combo > 1 ? `x${combo}` : ""); hud("vyBuff", [shieldT > 0 && "SHIELD", magnetT > 0 && "MAGNET", rapidT > 0 && "RAPID FIRE"].filter(Boolean).join("  "));
   }
   const clearField = (boom) => { for (const r of rocks) if (r.live) { if (boom && r.solid && r.m.position.z > -260) explode(r.m.position, r.r, 0x9fb4ff); r.live = false; r.m.visible = false; } [...frags, ...powers, ...bolts].forEach((o) => { o.live = false; o.m.visible = false; }); };
 
   // ---------- FLY ----------
   async function startFly() {
     phase = "card"; travelled = 0; goal = 2100 + n * 170; speed = BASE_SPEED + n * 5; spawnR = spawnS = spawnF = 0; spawnP = rand(5, 9); combo = 0; kills = 0; hullAtStart = hull;
-    clearField(false);
+    clearField(false); ammo = MISSILES_PER_CHAPTER; missiles.forEach((ms) => { ms.live = false; ms.m.visible = false; });
     zone = ZONES[zoneOf(L())];
     scene.fog.color.set(zone.fog); scene.background.set(zone.fog); nebulae.forEach((nb, i) => nb.material.color.set(zone.glow[i]));
     // sunlight really does fall off with distance squared; the scene dims with it (softened so the game stays playable)
@@ -225,7 +256,7 @@ export function initVoyage(levels) {
     rocks.filter((r) => r.live).forEach((r) => (r.m.position.z = rand(-460, -130)));
     $("vyScan").hidden = true; $("vyHud").hidden = false; bars(); sound.setEngine(1, false);
     await card(L().finale ? "FINAL CHAPTER  ·  BEYOND THE KUIPER BELT" : `CHAPTER ${n + 1}  ·  ${zone.name}`, L().finale ? "THE DARK" : L().name.toUpperCase(), L().finale ? "300 au from the Sun  ·  no known world" : `${L().kind}  ·  ${L().distance_au} au from the Sun`);
-    say("CONTROL", L().finale ? "Commander, there is something else out here. Fainter than anything we have locked. Nothing is charted at this distance. Get us there in one piece." : n === 0 ? "Commander, SPHEREx picked up something moving out here. Punch through the debris and get us a scanner lock. Steer with the mouse, hold the button to fire, Space to boost."
+    say("CONTROL", L().finale ? "Commander, there is something else out here. Fainter than anything we have locked. Nothing is charted at this distance. Get us there in one piece." : n === 0 ? "Commander, SPHEREx picked up something moving out here. Punch through the debris and get us a scanner lock. Steer with the mouse, hold the left button for lasers, right click for a missile, Space to boost."
       : pick([`Next signal: ${L().name}, ${L().distance_au} au out. The field is thicker here. Watch your hull.`, `${L().name} ahead. Sunlight is down to ${$("vySun").textContent} of what Earth gets. Stay sharp.`, `Signal bearing confirmed: ${L().name}. Clear a path, Commander.`]));
     phase = "fly";
   }
@@ -263,6 +294,7 @@ export function initVoyage(levels) {
     // weapons
     fireAt -= dt; if ((firing || keys.has("z") || keys.has("Control")) && fireAt <= 0) { fireBolts(); fireAt = rapidT > 0 ? FIRE_EVERY * 0.45 : FIRE_EVERY; }
     for (const b of bolts) if (b.live) { b.m.position.z -= BOLT_SPEED * dt; if (b.m.position.z < -430) { b.live = false; b.m.visible = false; } }
+    moveMissiles(dt, v);
     // spawning: the field thickens every chapter
     spawnR -= dt; if (spawnR <= 0) { spawnRock(true); spawnR = Math.max(0.085, 0.21 - n * 0.012) * (boost ? 0.75 : 1); }
     spawnS -= dt; if (spawnS <= 0) { spawnRock(false); spawnS = 0.09; }
@@ -514,10 +546,13 @@ export function initVoyage(levels) {
     if (root.hidden) return;
     keys.add(e.key.length === 1 ? e.key.toLowerCase() : e.key);
     if (e.key === " ") { e.preventDefault(); if (phase === "result") startWarp(); }
+    if (e.key.toLowerCase() === "x" && !e.repeat) launchMissile();
   });
   addEventListener("keyup", (e) => keys.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key));
   holder.addEventListener("pointermove", (e) => { const r = holder.getBoundingClientRect(); mouse.x = ((e.clientX - r.left) / r.width) * 2 - 1; mouse.y = -(((e.clientY - r.top) / r.height) * 2 - 1); mouse.used = true; });
-  holder.addEventListener("pointerdown", () => (firing = true)); addEventListener("pointerup", () => (firing = false));
+  holder.addEventListener("pointerdown", (e) => { if (e.button === 2) launchMissile(); else if (e.button === 0) firing = true; });
+  addEventListener("pointerup", (e) => { if (e.button === 0) firing = false; });
+  root.addEventListener("contextmenu", (e) => e.preventDefault());      // right click launches a missile instead of opening the browser menu
   $("vyStart").onclick = () => { sound.start(); $("vyStartBox").hidden = true; opening(); };
   $("vyAgain").onclick = () => { $("vyEnd").hidden = true; opening(); };
 
@@ -558,6 +593,6 @@ export function initVoyage(levels) {
   resize(); requestAnimationFrame(frame);
 
   // used by the browser check
-  window.__voyage = { state: () => ({ phase, n, hull, data, lock, kills, scanType, frames: ["scan", "result", "ghost", "probe"].includes(phase) ? L().frames : null, target: target?.frame, size: L().size, i: view.i, truth: stack?.truth, spot: stack?.spot, snr: stack?.snr }),
+  window.__voyage = { state: () => ({ phase, n, hull, data, lock, kills, ammo, scanType, frames: ["scan", "result", "ghost", "probe"].includes(phase) ? L().frames : null, target: target?.frame, size: L().size, i: view.i, truth: stack?.truth, spot: stack?.spot, snr: stack?.snr }),
     arrive: () => { travelled = goal; }, safe: () => { hull = 1e6; }, skipTo: (k) => { n = k; hull = 1e6; $("vyStartBox").hidden = true; $("vyEnd").hidden = true; startFly(); } };
 }
