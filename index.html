@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Planet Hunter: see the sky move in real SPHEREx images</title>
 <meta name="description" content="Watch real NASA SPHEREx images change over time. Spot the worlds that move, play back their paths, and learn how Planet X could be found.">
-<link rel="stylesheet" href="style.css?v=33">
+<link rel="stylesheet" href="style.css?v=36">
 <link rel="modulepreload" href="vendor/three.module.min.js">
 </head>
 <body>
@@ -85,7 +85,7 @@
       <button id="playBtn" class="small">Pause</button>
       <input id="timeSlider" type="range" min="0" max="1" value="0" step="1" aria-label="Date">
       <span id="timeLabel"></span>
-      <p class="space-help">Drag to rotate, scroll to zoom</p>
+      <p class="space-help">Drag to rotate, scroll to zoom · positions are real, sizes are enlarged</p>
     </div>
     <p class="no3d-msg">This browser cannot show the 3D view. Use Hunt and Explore above.</p>
   </div>
@@ -326,7 +326,7 @@
     <li>A level is only included if the object is detected exactly where JPL says it should be.</li>
   </ul>
   <p>The orange and purple colours are false colour: brightness shown as colour. Switch it off in Explore to see the plain greyscale images. Small specks that appear in only one image are cosmic rays hitting the detector, not objects.</p>
-  <p>In the 3D Solar System, the orbits and positions are real, from NASA JPL Horizons. The small background stars there are decoration, and the pink ring marking where a Planet X might be is hypothetical.</p>
+  <p>In the 3D Solar System, the orbits and positions are real, from NASA JPL Horizons. The planets and worlds are drawn very much larger than life so they can be seen, and the specks of the asteroid belt are decoration. The background is a real all-sky photograph of the Milky Way. The pink ring marking where a Planet X might be is hypothetical.</p>
 
   <h2>Three-colour pictures</h2>
   <p>The three-colour view combines three real SPHEREx images of the same patch, taken at different times and usually at different infrared wavelengths, as red, green and blue. Longer wavelengths are shown redder. Stars are in all three images, so their colour reflects how bright they are at each wavelength. A moving world is in a different place each time, so it appears three times, once in each colour. Each image's brightness is scaled separately, so the colours are a guide, not a measurement.</p>
@@ -353,6 +353,6 @@
 </section>
 </main>
 
-<script type="module" src="app.js?v=33"></script>
+<script type="module" src="app.js?v=36"></script>
 </body>
 </html>

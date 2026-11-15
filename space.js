@@ -1,15 +1,23 @@
 // 3D Solar System: real positions from NASA JPL Horizons (orbits.json). Each world SPHEREx photographed is a place to fly to.
 import * as THREE from "./vendor/three.module.min.js";
 import { OrbitControls } from "./vendor/OrbitControls.js";
-import { $, Viewer, fmtDate } from "./viewer.js?v=33";
-import { t, tr } from "./i18n.js?v=33";
-import { irTexture } from "./irtex.js?v=33";
-import { composite } from "./colour.js?v=33";
+import { $, Viewer, fmtDate } from "./viewer.js?v=36";
+import { t, tr } from "./i18n.js?v=36";
+import { irTexture } from "./irtex.js?v=36";
+import { composite } from "./colour.js?v=36";
+import { EffectComposer } from "./vendor/postprocessing/EffectComposer.js";
+import { RenderPass } from "./vendor/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "./vendor/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "./vendor/postprocessing/OutputPass.js";
 
 const v3 = ([x, y, z]) => new THREE.Vector3(x, z, -y);   // ecliptic x,y,z (au) → scene, with y up
 const COLORS = ["#8ab4ff", "#ffb547", "#6fe3ff", "#f7e26b", "#ff9a5c", "#c79bff", "#b6ff8a", "#ff6f91", "#7dffcf", "#ffd1dc"];
 const TRAIL = 30, TRAIL_STEP = 1.2;   // trail: 30 points, 1.2 timeline steps (6 days) apart
-const DAY = 864e5, HOME = { cam: [0, 46, 74], look: [0, 0, 0] };
+const DAY = 864e5, HOME = { cam: [0, 30, 82], look: [0, 0, 0] };
+// surface map for each world's globe (see the About page for which are real maps)
+const SKIN = { uranus: { tex: "uranus", f: 1.25, ring: true }, neptune: { tex: "neptune", f: 1.25 }, pluto: { tex: "pluto" }, ceres: { tex: "ceres" }, haumea: { tex: "haumea", stretch: [1.6, 0.85, 1] }, makemake: { tex: "makemake" },
+  vesta: { tex: "rock", tint: 0xd8d2c8 }, pallas: { tex: "rock", tint: 0xb9bcc6 }, juno: { tex: "rock", tint: 0xd9c7ae }, hygiea: { tex: "rock", tint: 0x8f8a86 } };
+const PSTEP = { Mercury: 1, Venus: 2, Mars: 6, Jupiter: 36, Saturn: 90 };   // days between points on each planet's stored orbit, which starts on 1 Jan 2025
 
 function dotTexture(color) {
   const c = document.createElement("canvas"); c.width = c.height = 64;
@@ -34,9 +42,38 @@ export async function initSpace(levels, actions) {
   camera.position.set(...HOME.cam);
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true; controls.minDistance = 0.4; controls.maxDistance = 9000;
+  controls.autoRotate = true; controls.autoRotateSpeed = 0.22;          // the view drifts slowly when left alone
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15;
+  let composer = null;      // glow around bright things; plain rendering if it cannot start
+  try {
+    composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    composer.addPass(new UnrealBloomPass(new THREE.Vector2(256, 256), 0.7, 0.8, 0.82));
+    composer.addPass(new OutputPass());
+  } catch { composer = null; }
+  const loader = new THREE.TextureLoader();
+  const map = (name, ext = "jpg") => { const t = loader.load(`tex/${name}.${ext}`); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; };
+  // a real all-sky photograph of the Milky Way, all around
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(30000, 48, 32), new THREE.MeshBasicMaterial({ map: map("sky"), side: THREE.BackSide, depthWrite: false, toneMapped: false }));
+  sky.rotation.set(1.05, 0.4, 0); scene.add(sky);
+  // sunlight from the centre: every globe gets a day side and a night side
+  scene.add(new THREE.AmbientLight(0x8a9ac0, 0.1), new THREE.PointLight(0xfff2dc, 3.4, 0, 0));
+  const globes = [];
+  function globe(tex, f = 1, o = {}) {      // a textured sphere, drawn far larger than life (size follows the camera so it can always be seen)
+    const geo = new THREE.SphereGeometry(1, 64, 48); if (o.stretch) geo.scale(...o.stretch);
+    const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: map(tex), color: o.tint ?? 0xffffff, roughness: 1, metalness: 0 }));
+    m.rotation.z = o.tilt || 0; scene.add(m);
+    const g = { m, f, near: 0.04 }; globes.push(g); return g;
+  }
+  function ringOn(g, inner, outer, tex, tilt) {      // a ring whose texture runs outward from the planet
+    const geo = new THREE.RingGeometry(inner, outer, 128, 1), p = geo.attributes.position, uv = geo.attributes.uv;
+    for (let i = 0; i < p.count; i++) uv.setXY(i, (Math.hypot(p.getX(i), p.getY(i)) - inner) / (outer - inner), 0.5);
+    const r = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, color: tex ? 0xffffff : 0x9fd8e0, transparent: true, opacity: tex ? 0.95 : 0.25, side: THREE.DoubleSide, depthWrite: false }));
+    r.rotation.x = tilt; g.m.add(r);
+  }
 
   // backdrop (decoration only, not real star positions): three layers of stars that drift at different speeds, and soft nebula glow
-  const skies = [[2600, 0x8d9fe8, 1.1, 0.55, 0.004], [700, 0xcfe0ff, 1.9, 0.8, 0.007], [90, 0xffe2b8, 3.2, 1, 0.011]].map(([count, color, size, opacity, spin]) => {
+  const skies = [[500, 0xcfe0ff, 1.4, 0.45, 0.006], [60, 0xffe2b8, 2.4, 0.7, 0.01]].map(([count, color, size, opacity, spin]) => {
     const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) new THREE.Vector3().randomDirection().multiplyScalar(20000).toArray(pos, i * 3);
     const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
@@ -44,7 +81,7 @@ export async function initSpace(levels, actions) {
     pts.userData.spin = spin; scene.add(pts); return pts;
   });
   for (const [color, x, y, z, s] of [["#5b2a9a", -9000, 3000, -12000, 17000], ["#12508a", 11000, -2000, -9000, 15000], ["#0f6a70", 2000, 6000, 13000, 14000], ["#8a2a5a", -12000, -4000, 8000, 13000]]) {
-    const n = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTexture(color), transparent: true, opacity: 0.2, depthWrite: false, blending: THREE.AdditiveBlending }));
+    const n = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTexture(color), transparent: true, opacity: 0.05, depthWrite: false, blending: THREE.AdditiveBlending }));
     n.position.set(x, y, z); n.scale.setScalar(s); scene.add(n);
   }
 
@@ -57,15 +94,28 @@ export async function initSpace(levels, actions) {
   }
 
   // Sun, planets, Earth
-  const sun = dot("#ffd66b", 0.05); scene.add(sun); label(tr("Sun"), () => sun.position, "dim");
-  const corona = [0.07, 0.12].map((size, k) => {
-    const c = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTexture(k ? "#ff8a3c" : "#ffc65c"), sizeAttenuation: false, depthTest: false, transparent: true, opacity: k ? 0.25 : 0.45, blending: THREE.AdditiveBlending }));
+  const sun = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 48), new THREE.MeshBasicMaterial({ map: map("sun"), toneMapped: false })); scene.add(sun); label(tr("Sun"), () => sun.position, "dim");
+  const corona = [0.13, 0.26].map((size, k) => {
+    const c = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTexture(k ? "#ff8a3c" : "#ffc65c"), sizeAttenuation: false, depthTest: false, transparent: true, opacity: k ? 0.16 : 0.3, blending: THREE.AdditiveBlending }));
     c.userData.size = size; scene.add(c); return c;
   });
   for (const p of data.planets) scene.add(line(p.path.map(v3), 0x3a4670, 0.55));
-  for (const name of ["Jupiter", "Saturn"]) { const p = data.planets.find((q) => q.name === name), at = v3(p.path[0]); label(tr(name), () => at, "dim"); }
+  // the planets as globes, at their real positions for the date shown
+  const planetAt = (p, ms) => { const x = (ms - Date.UTC(2025, 0, 1)) / DAY / PSTEP[p.name], n = p.path.length - 1, i = ((Math.floor(x) % n) + n) % n; return v3(p.path[i]).lerp(v3(p.path[i + 1]), x - Math.floor(x)); };
+  const planetGlobes = [["Mars", "mars", 0.8], ["Jupiter", "jupiter", 1.7], ["Saturn", "saturn", 1.5]].map(([name, tex, f]) => {
+    const p = data.planets.find((q) => q.name === name), g = globe(tex, f, { tilt: name === "Saturn" ? 0.47 : 0.05 });
+    if (name === "Saturn") ringOn(g, 1.25, 2.3, map("saturn_ring", "png"), Math.PI / 2);
+    if (name !== "Mars") label(tr(name), () => g.m.position, "dim");
+    return { p, g };
+  });
   scene.add(line(data.earth.path.map(v3), 0x4d7cff));
-  const earth = dot("#4d9bff", 0.022); scene.add(earth); label(tr("Earth"), () => earth.position, "earth");
+  const earth = dot("#4d9bff", 0.022); earth.visible = false; scene.add(earth); label(tr("Earth"), () => earth.position, "earth");
+  const earthGlobe = globe("earth", 1, { tilt: 0.41 });
+  // the asteroid belt, where Vesta, Ceres, Pallas, Juno and Hygiea live (decoration: thousands of specks, not real asteroids)
+  const beltPos = new Float32Array(4200 * 3);
+  for (let i = 0; i < 4200; i++) { const r = 2.1 + Math.random() ** 0.8 * 1.25, a = Math.random() * 6.2832; beltPos.set([r * Math.cos(a), (Math.random() - 0.5) * 0.22 * r * 0.4, r * Math.sin(a)], i * 3); }
+  const beltGeo = new THREE.BufferGeometry(); beltGeo.setAttribute("position", new THREE.BufferAttribute(beltPos, 3));
+  const belt = new THREE.Points(beltGeo, new THREE.PointsMaterial({ color: 0xcdb99a, size: 0.035, transparent: true, opacity: 0.6, depthWrite: false })); scene.add(belt);
 
   // the worlds SPHEREx photographed
   const worlds = levels.map((L, k) => {
@@ -78,7 +128,10 @@ export async function initSpace(levels, actions) {
     const trail = new THREE.Line(tg, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
     trail.frustumCulled = false; scene.add(trail);
     const frames = L.track?.length > 1 ? L.track : L.frames;
-    const w = { L, o, color, marker, frames, trail, when: (Date.parse(frames[0].date + "Z") - startMs) / (data.step_days * DAY) };
+    marker.visible = false;
+    const skin = SKIN[L.id] || { tex: "rock" }, g = globe(skin.tex, skin.f || 1, skin);
+    if (skin.ring) ringOn(g, 1.7, 1.95, null, 0.2);
+    const w = { L, o, color, marker, frames, trail, g, when: (Date.parse(frames[0].date + "Z") - startMs) / (data.step_days * DAY) };
     w.label = label(L.name, () => marker.position, L.distance_au < 6 ? "world inner" : "world", () => select(w));
     w.label.style.setProperty("--c", color);
     return w;
@@ -86,14 +139,14 @@ export async function initSpace(levels, actions) {
 
   // hypothetical Planet X zone, several hundred au out
   const zone = new THREE.Mesh(new THREE.RingGeometry(300, 900, 160), new THREE.MeshBasicMaterial({ color: 0xff6f91, transparent: true, opacity: 0.07, side: THREE.DoubleSide, depthWrite: false }));
-  zone.rotation.x = -Math.PI / 2; scene.add(zone);
-  for (const r of [300, 900]) scene.add(line(Array.from({ length: 161 }, (_, i) => new THREE.Vector3(r * Math.cos(i / 160 * 6.2832), 0, r * Math.sin(i / 160 * 6.2832))), 0xff6f91, 0.5));
+  zone.rotation.x = -Math.PI / 2; const zoneGroup = new THREE.Group(); zoneGroup.add(zone); scene.add(zoneGroup);
+  for (const r of [300, 900]) zoneGroup.add(line(Array.from({ length: 161 }, (_, i) => new THREE.Vector3(r * Math.cos(i / 160 * 6.2832), 0, r * Math.sin(i / 160 * 6.2832))), 0xff6f91, 0.5));
   const zoneAt = new THREE.Vector3(0, 0, 600); label(tr("Planet X? Somewhere out here (hypothetical)"), () => zoneAt, "px");
 
   // line of sight from Earth to the chosen world, and the SPHEREx picture as a window beside it
   const beam = line([new THREE.Vector3(), new THREE.Vector3()], 0xffffff, 0.9); beam.visible = false; scene.add(beam);
   const win = new THREE.Sprite(new THREE.SpriteMaterial({ sizeAttenuation: false, depthTest: false }));
-  win.scale.setScalar(0.17); win.center.set(1.12, -0.12);   // up and to the left of the world, clear of the side panel
+  win.scale.setScalar(0.2); win.center.set(1.7, 1.0);   // up and to the left of the world, clear of the side panel
   win.visible = false; scene.add(win);
 
   // SPHEREx near Earth: it sweeps a circle of sky at right angles to the Sun (drawn much larger than life so it can be seen)
@@ -112,9 +165,10 @@ export async function initSpace(levels, actions) {
   const at = (track, x) => { const i = Math.min(N - 2, Math.max(0, Math.floor(x))), f = Math.min(1, Math.max(0, x - i)); return v3(track[i]).lerp(v3(track[i + 1]), f); };
   const isoAt = (x) => new Date(startMs + x * data.step_days * DAY).toISOString().slice(0, 19);
   function place() {
-    earth.position.copy(at(data.earth.track, tt));
+    earth.position.copy(at(data.earth.track, tt)); earthGlobe.m.position.copy(earth.position);
+    for (const pg of planetGlobes) pg.g.m.position.copy(planetAt(pg.p, startMs + tt * data.step_days * DAY));
     for (const w of worlds) {
-      w.marker.position.copy(at(w.o.track, tt));
+      w.marker.position.copy(at(w.o.track, tt)); w.g.m.position.copy(w.marker.position);
       const pos = w.trail.geometry.attributes.position;
       for (let i = 0; i < TRAIL; i++) { const q = at(w.o.track, Math.max(0, tt - (TRAIL - 1 - i) * TRAIL_STEP)); pos.setXYZ(i, q.x, q.y, q.z); }
       pos.needsUpdate = true;
@@ -134,7 +188,7 @@ export async function initSpace(levels, actions) {
   const setPlaying = (on) => { playing = on; $("playBtn").textContent = on ? tr("Pause") : tr("Play"); };
   $("playBtn").onclick = () => setPlaying(!playing);
 
-  function flyTo(cam, look, ms = 1500) { fly = { ms, t0: performance.now(), c0: camera.position.clone(), l0: controls.target.clone(), c1: new THREE.Vector3(...cam), l1: new THREE.Vector3(...look) }; }
+  function flyTo(cam, look, ms = 2200) { fly = { ms, t0: performance.now(), c0: camera.position.clone(), l0: controls.target.clone(), c1: new THREE.Vector3(...cam), l1: new THREE.Vector3(...look) }; }
 
   // the picture panel
   const view = new Viewer($("worldView"));
@@ -158,8 +212,10 @@ export async function initSpace(levels, actions) {
     }).catch(() => {});
     view.load(w.frames, L.size).then(() => { view.pair = [0, w.frames.length - 1]; view.setMode("blink"); view.mark(""); });
     place();
-    const p = w.marker.position, r = Math.max(4, p.length());
-    flyTo([p.x * 0.5 + r * 0.25, r * 1.05, p.z * 0.5 + r * 1.05], [p.x * 0.5, 0, p.z * 0.5]);
+    // sweep in close: the camera sits sunward and to one side, so the globe shows mostly its lit face
+    const p = w.marker.position, out = p.clone().normalize(), side = new THREE.Vector3().crossVectors(out, new THREE.Vector3(0, 1, 0)).normalize();
+    const cam = p.clone().addScaledVector(out, -2.3).addScaledVector(side, 1.7).add(new THREE.Vector3(0, 0.9, 0));
+    flyTo(cam.toArray(), p.toArray(), 2600);
   }
   function clear() {
     sel = null; beam.visible = win.visible = false; view.stop();
@@ -176,7 +232,7 @@ export async function initSpace(levels, actions) {
   $("worldStack").onclick = () => actions.stack(sel.L);
 
   // draw
-  function resize() { const w = holder.clientWidth, h = holder.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+  function resize() { const w = holder.clientWidth, h = holder.clientHeight; renderer.setSize(w, h, false); composer?.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
   new ResizeObserver(resize).observe(holder); resize();
   const p = new THREE.Vector3(); let last = performance.now();
   function frame(now) {
@@ -191,13 +247,22 @@ export async function initSpace(levels, actions) {
     }
     // living scene: drifting star layers, breathing Sun, sweeping SPHEREx scan
     for (const s of skies) s.rotation.y += s.userData.spin * dt;
+    const far0 = camera.position.length();
+    for (const g of globes) {      // sizes follow the camera; the chosen world grows as you approach
+      const d = camera.position.distanceTo(g.m.position);
+      const chosen = sel && sel.g === g, cap = Math.max(0.25, g.m.position.length() * 0.11);      // never so big that neighbours on nearby orbits collide
+      g.m.scale.setScalar(chosen ? Math.max(d * 0.017 * g.f, 0.32) : Math.max(Math.min(d * 0.017 * g.f, cap), g.near)); g.m.rotation.y += dt * 0.22;
+    }
+    sun.scale.setScalar(THREE.MathUtils.clamp(camera.position.length() * 0.03, 0.1, 0.5)); sun.rotation.y += dt * 0.04;
+    zoneGroup.visible = far0 > 140;      // the Planet X ring only shows once you pull far back
+    belt.rotation.y += dt * 0.012; sky.position.copy(camera.position);
     const pulse = 1 + 0.07 * Math.sin(now / 520);
     corona.forEach((c) => c.scale.setScalar(c.userData.size * pulse));
     const reach = THREE.MathUtils.clamp(camera.position.distanceTo(earth.position) * 0.13, 0.3, 26);
     scan.position.copy(earth.position); scan.lookAt(0, 0, 0); scan.scale.setScalar(reach);
     fan.rotation.z = now / 900;
     scanTip.set(Math.cos(fan.rotation.z), Math.sin(fan.rotation.z), 0).multiplyScalar(reach).applyQuaternion(scan.quaternion).add(earth.position);
-    controls.update(); renderer.render(scene, camera);
+    controls.update(); if (composer) composer.render(); else renderer.render(scene, camera);
     const w = holder.clientWidth, h = holder.clientHeight, far = camera.position.distanceTo(controls.target);
     stage.classList.toggle("mid", far > 14); stage.classList.toggle("wide", far > 55); stage.classList.toggle("deep", far > 400);
     for (const l of labels) {
