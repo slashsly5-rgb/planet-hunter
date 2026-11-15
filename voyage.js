@@ -6,8 +6,8 @@
 // The ship, debris, lasers, radio chatter, sounds and the look of each world are game fiction.
 // The scanner pictures, positions, distances and sunlight levels are real.
 import * as THREE from "./vendor/three.module.min.js";
-import { $, Viewer, span } from "./viewer.js?v=48";
-import { makeStackGame } from "./stackgame.js?v=48";
+import { $, Viewer, span } from "./viewer.js?v=52";
+import { makeStackGame } from "./stackgame.js?v=52";
 import { EffectComposer } from "./vendor/postprocessing/EffectComposer.js";
 import { RenderPass } from "./vendor/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "./vendor/postprocessing/UnrealBloomPass.js";
@@ -230,8 +230,8 @@ export function initVoyage(levels) {
   for (let i = 0; i < 14; i++) { const m = new THREE.Mesh(fragGeo, new THREE.MeshStandardMaterial({ color: 0x7dffcf, emissive: 0x2fe0a0, emissiveIntensity: 1.6, flatShading: true })); m.visible = false; scene.add(m); frags.push({ m, live: false }); }
   const POWERS = { shield: 0x5ad0ff, magnet: 0x7dffcf, rapid: 0xffb547 }, powers = [];
   for (let i = 0; i < 3; i++) { const m = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.22, 8, 24), new THREE.MeshStandardMaterial({ emissiveIntensity: 2 })); m.visible = false; scene.add(m); powers.push({ m, live: false, kind: "shield" }); }
-  const boltGeo = new THREE.CylinderGeometry(0.09, 0.09, 4.2, 5).rotateX(Math.PI / 2), boltMat = new THREE.MeshBasicMaterial({ color: 0xff9a3c, fog: false }), bolts = [];
-  for (let i = 0; i < 40; i++) { const m = new THREE.Mesh(boltGeo, boltMat); m.visible = false; scene.add(m); bolts.push({ m, live: false }); }
+  const boltGeo = new THREE.CylinderGeometry(0.2, 0.2, 7, 6).rotateX(Math.PI / 2), boltMat = new THREE.MeshBasicMaterial({ color: 0xffb060, fog: false, toneMapped: false }), bolts = [];      // thick and bright enough to see on a phone
+  for (let i = 0; i < 40; i++) { const m = new THREE.Mesh(boltGeo, boltMat); m.add(glow(0xff7a2a, 2.2, 0.8)); m.visible = false; scene.add(m); bolts.push({ m, live: false, pz: 0 }); }
 
   // missiles: slow, homing, and they clear everything near where they go off
   const missileGeo = new THREE.ConeGeometry(0.28, 1.8, 8).rotateX(-Math.PI / 2), missileMat = new THREE.MeshStandardMaterial({ color: 0xffe9c0, emissive: 0xff7a1a, emissiveIntensity: 1.2 }), missiles = [];
@@ -308,8 +308,8 @@ export function initVoyage(levels) {
     $("vyScan").hidden = true; $("vyHud").hidden = false; bars(); sound.setEngine(1, false);
     await card(L().finale ? "FINAL CHAPTER  ·  BEYOND THE KUIPER BELT" : `CHAPTER ${n + 1}  ·  ${zone.name}`, L().finale ? "THE DARK" : L().name.toUpperCase(), L().finale ? "300 au from the Sun  ·  no known world" : `${L().kind}  ·  ${L().distance_au} au from the Sun`);
     say("CONTROL", L().finale ? "Commander, there is something else out here. Fainter than anything we have locked. Nothing is charted at this distance. Get us there in one piece." : n === 0 ? (tilt ? "Commander, SPHEREx picked up something moving out here. Punch through the debris and get us a scanner lock. Tilt your phone to steer. The lasers fire by themselves. Use the buttons for missiles and boost."
-        : PHONE ? "Commander, SPHEREx picked up something moving out here. Punch through the debris and get us a scanner lock. Drag your finger to steer and fire. Use the buttons for missiles and boost."
-        : "Commander, SPHEREx picked up something moving out here. Punch through the debris and get us a scanner lock. Steer with the mouse, hold the left button for lasers, right click for a missile, Space to boost.")
+        : PHONE ? "Commander, SPHEREx picked up something moving out here. Punch through the debris and get us a scanner lock. Drag your finger to steer. The lasers fire by themselves. Use the buttons for missiles and boost."
+        : "Commander, SPHEREx picked up something moving out here. Punch through the debris and get us a scanner lock. Steer with the mouse. The lasers fire by themselves. Right click for a missile, Space to boost.")
       : pick([`Next signal: ${L().name}, ${L().distance_au} au out. The field is thicker here. Watch your hull.`, `${L().name} ahead. Sunlight is down to ${$("vySun").textContent} of what Earth gets. Stay sharp.`, `Signal bearing confirmed: ${L().name}. Clear a path, Commander.`]));
     phase = "fly";
   }
@@ -327,7 +327,7 @@ export function initVoyage(levels) {
   }
   function spawn(pool, set) { const o = pool.find((x) => !x.live); if (!o) return; o.live = true; o.m.position.set(rand(-11, 11), rand(-6, 6), -470); o.m.visible = true; set?.(o); }
   function fireBolts() {
-    for (const s of [-1, 1]) { const b = bolts.find((x) => !x.live); if (!b) return; b.live = true; b.m.position.set(ship.position.x + s * 0.66, ship.position.y, -5.2); b.m.visible = true; }
+    for (const s of [-1, 1]) { const b = bolts.find((x) => !x.live); if (!b) return; b.live = true; b.m.position.set(ship.position.x + s * 0.8, ship.position.y, -6); b.pz = -6; b.m.visible = true; }
     sound.laser();
   }
   function hurt(amount) {
@@ -346,8 +346,9 @@ export function initVoyage(levels) {
     ship.rotation.x = THREE.MathUtils.lerp(ship.rotation.x, (ty - ship.position.y) * 0.06, 0.2);
     travelled += v * dt;
     // weapons
-    fireAt -= dt; if ((firing || tilt || keys.has("z") || keys.has("Control")) && fireAt <= 0)      // when steering by tilt, the lasers fire by themselves { fireBolts(); fireAt = rapidT > 0 ? FIRE_EVERY * 0.45 : FIRE_EVERY; }
-    for (const b of bolts) if (b.live) { b.m.position.z -= BOLT_SPEED * dt; if (b.m.position.z < -430) { b.live = false; b.m.visible = false; } }
+    // the lasers fire by themselves for the whole flight, on every device
+    fireAt -= dt; if (fireAt <= 0) { fireBolts(); fireAt = rapidT > 0 ? FIRE_EVERY * 0.45 : FIRE_EVERY; }
+    for (const b of bolts) if (b.live) { b.pz = b.m.position.z; b.m.position.z -= BOLT_SPEED * dt; if (b.m.position.z < -430) { b.live = false; b.m.visible = false; } }
     moveMissiles(dt, v);
     // spawning: the field thickens every chapter
     spawnR -= dt; if (spawnR <= 0) { spawnRock(true); spawnR = Math.max(0.085, 0.21 - n * 0.012) * (boost ? 0.75 : 1); }
@@ -357,7 +358,7 @@ export function initVoyage(levels) {
     for (const r of rocks) if (r.live) {
       r.m.position.z += v * dt; r.m.position.x += r.drift.x * dt; r.m.position.y += r.drift.y * dt; r.m.rotation.x += r.spin.x * dt; r.m.rotation.y += r.spin.y * dt;
       if (r.solid) {
-        for (const b of bolts) if (b.live && Math.abs(b.m.position.z - r.m.position.z) < r.r + 3 && Math.hypot(b.m.position.x - r.m.position.x, b.m.position.y - r.m.position.y) < r.r + 0.3) {
+        for (const b of bolts) if (b.live && r.m.position.z > b.m.position.z - r.r - 3 && r.m.position.z < b.pz + r.r + 3 && Math.hypot(b.m.position.x - r.m.position.x, b.m.position.y - r.m.position.y) < r.r + 0.6) {      // the bolt's whole path this frame is checked, so a fast bolt cannot jump through a rock
           b.live = false; b.m.visible = false; r.hp--; spark(b.m.position.x, b.m.position.y, b.m.position.z, 0xffd08a, [0, 0, 40], 0.25, 10);
           if (r.hp <= 0) { r.live = false; r.m.visible = false; explode(r.m.position, r.r); sound.boom(r.r > 2.2); kills++; combo++; comboT = 2.2; data += 5 * Math.min(combo, 10); shake = Math.max(shake, r.r * 0.05); break; }
         }

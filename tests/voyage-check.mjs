@@ -43,7 +43,9 @@ const log = [];
 for (let chapter = 0; chapter < 3; chapter++) {
   log.push(`chapter ${chapter + 1}: reached fly = ${await until(["fly"], 40000)}`);
   await js(`window.__voyage.safe()`);
-  await move(900, 300); await sleep(1400); await move(500, 600); await sleep(1400);
+  const k0 = (await st()).kills;
+  await move(+W * 0.62, +H * 0.4); await sleep(1400); await move(+W * 0.4, +H * 0.6); await sleep(1400); await move(+W * 0.5, +H * 0.5); await sleep(2600);
+  if (chapter === 0) { await shot("v3a-lasers.png"); log.push(`auto-fire lasers: rocks destroyed in about 5 s without missiles: ${(await st()).kills - k0}`); }
   if (chapter === 0 && +W < 600) {      // phone: tilting steers
     const tiltTo = async (gamma, beta) => { await cdp("DeviceOrientation.setDeviceOrientationOverride", { alpha: 0, beta, gamma }); await sleep(1300); return await st(); };
     const level = await tiltTo(0, 45), right = await tiltTo(24, 45), left = await tiltTo(-24, 45), up = await tiltTo(0, 25);
