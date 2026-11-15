@@ -294,3 +294,10 @@ main:has(#voyage:not([hidden])) { max-width: none; padding: 0; }
 .voyage.cine .vy-hud, .voyage.cine .vy-comm { opacity: 0; } .vy-hud, .vy-comm { transition: opacity .4s; }
 .vy-card { place-content: start center; padding-top: 20vh; }
 .vy-scan.done .vy-viewwrap { width: 52%; margin: 0 auto; }
+
+/* voyage v2 */
+.vy-combo { color: #ffd35c !important; text-shadow: 0 0 12px #ffb547 !important; margin-left: 6px; }
+.vy-buff { position: absolute; left: 50%; top: 92px; transform: translateX(-50%); margin: 0; z-index: 3; pointer-events: none; font: 700 13px/1 ui-monospace, Consolas, monospace; letter-spacing: .3em; color: #ffd35c; text-shadow: 0 0 14px #ffb547; }
+.vy-grade { display: inline-grid; place-items: center; width: 34px; height: 34px; margin-left: 10px; border-radius: 8px; font: 800 20px/1 system-ui, sans-serif; letter-spacing: 0; color: #06121f; background: var(--good); box-shadow: 0 0 18px var(--good); vertical-align: middle; }
+.vy-grade.gS { background: #ffd35c; box-shadow: 0 0 22px #ffb547; } .vy-grade.gB { background: #8ab4ff; box-shadow: 0 0 14px #8ab4ff; } .vy-grade.gC { background: #9aa6c4; box-shadow: none; }
+.vy-chip { min-width: 120px; }

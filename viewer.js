@@ -1,5 +1,5 @@
 // Shared pieces: the image viewer, date formatting, and the SVG overlays.
-import { t, tr, locale } from "./i18n.js?v=13";
+import { t, tr, locale } from "./i18n.js?v=15";
 export const BLINK_MS = 700, PLAY_MS = 650;
 export const BANDS = { D1: "0.75 to 1.11", D2: "1.10 to 1.65", D3: "1.63 to 2.43" };   // micrometres
 export const ARCHIVE = "https://irsa.ipac.caltech.edu/ibe/data/spherex/";
@@ -48,7 +48,7 @@ export class Viewer {
   setMode(mode) {
     this.stop(); this.mode = mode; this.canvas.hidden = mode !== "diff";
     const [a, b] = this.pair;
-    if (mode === "blink") { let on = false; this.show(a); this.timer = setInterval(() => { if (!this.paused) { on = !on; this.show(on ? b : a); } }, BLINK_MS); }
+    if (mode === "blink") { let on = false; this.show(a); this.timer = setInterval(() => { if (!this.paused) { on = !on; this.show(on ? b : a); } }, this.blinkMs || BLINK_MS); }
     if (mode === "play") this.timer = setInterval(() => { if (!this.paused) this.show((this.i + 1) % this.frames.length); }, PLAY_MS);
     if (mode === "slide") this.setFade(this.fade);
     if (mode === "diff") {

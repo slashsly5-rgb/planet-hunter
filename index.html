@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Planet Hunter: see the sky move in real SPHEREx images</title>
 <meta name="description" content="Watch real NASA SPHEREx images change over time. Spot the worlds that move, play back their paths, and learn how Planet X could be found.">
-<link rel="stylesheet" href="style.css?v=13">
+<link rel="stylesheet" href="style.css?v=15">
 <link rel="modulepreload" href="vendor/three.module.min.js">
 </head>
 <body>
@@ -242,8 +242,11 @@
     <div class="vy-chip"><span>CHAPTER</span><b id="vyChapter"></b></div>
     <div class="vy-chip wide"><span>DISTANCE TO SIGNAL</span><div class="vy-meter"><i id="vyProg"></i></div></div>
     <div class="vy-chip wide"><span>HULL</span><div class="vy-meter hull"><i id="vyHull"></i></div></div>
-    <div class="vy-chip"><span>DATA</span><b id="vyData">0</b></div>
+    <div class="vy-chip"><span>SUNLIGHT</span><b id="vySun"></b></div>
+    <div class="vy-chip"><span>DATA</span><b id="vyData">0</b> <b id="vyCombo" class="vy-combo"></b></div>
   </div>
+
+  <p id="vyBuff" class="vy-buff"></p>
 
   <div id="vyComm" class="vy-comm" hidden><b id="vyWho"></b><p id="vySay"></p></div>
 
@@ -254,7 +257,7 @@
     <div class="vy-viewwrap"><div id="vyView"></div><div id="vyReticle" class="vy-reticle"></div></div>
     <div id="vyLockRow" class="vy-lockrow"><span>LOCK</span><div class="vy-meter lock"><i id="vyLock"></i></div><b id="vyTime"></b></div>
     <div id="vyResult" class="vy-result" hidden>
-      <p class="vy-ok">LOCK CONFIRMED</p>
+      <p class="vy-ok">LOCK CONFIRMED <b id="vyGrade" class="vy-grade"></b></p>
       <h2 id="vyRName"></h2>
       <p id="vyRKind" class="note"></p>
       <p id="vyRBlurb"></p>
@@ -270,11 +273,13 @@
     <p id="vyStartMsg" class="lead">Pilot your ship from the asteroid belt to the edge of the Solar System. Dodge the debris, then use your scanner, fed with real SPHEREx images, to lock onto each hidden world.</p>
     <ul class="vy-keys">
       <li><b>Mouse</b> or <b>arrow keys</b>: steer</li>
+      <li><b>Hold the mouse button</b> or <b>Z</b>: fire lasers</li>
       <li><b>Space</b>: boost</li>
+      <li><b>Rings</b>: shield, magnet, rapid fire</li>
       <li><b>Scanner</b>: keep the reticle on the dot that jumps</li>
     </ul>
     <button id="vyStart" class="primary">Launch</button>
-    <p class="note">The ship, debris and radio voices are game fiction. The scanner pictures, positions and distances are real.</p>
+    <p class="note">The ship, debris, lasers, radio voices and the look of each world are game fiction. The scanner pictures, positions, distances and sunlight levels are real.</p>
   </div>
 </section>
 
@@ -318,6 +323,6 @@
 </section>
 </main>
 
-<script type="module" src="app.js?v=13"></script>
+<script type="module" src="app.js?v=15"></script>
 </body>
 </html>
