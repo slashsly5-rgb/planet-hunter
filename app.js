@@ -1,12 +1,12 @@
-import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=12";
-import { speedChart } from "./lab.js?v=12";
-import { t, tr } from "./i18n.js?v=12";
-import { initSpace } from "./space.js?v=12";
-import { showStack, hideStack } from "./stack3d.js?v=12";
-import { initHunt } from "./hunt.js?v=12";
-import { initVoyage } from "./voyage.js?v=12";
-import { detect, judge, overlay } from "./detect.js?v=12";
-import { composite, colourMarks } from "./colour.js?v=12";
+import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=13";
+import { speedChart } from "./lab.js?v=13";
+import { t, tr } from "./i18n.js?v=13";
+import { initSpace } from "./space.js?v=13";
+import { showStack, hideStack } from "./stack3d.js?v=13";
+import { initHunt } from "./hunt.js?v=13";
+import { initVoyage } from "./voyage.js?v=13";
+import { detect, judge, overlay } from "./detect.js?v=13";
+import { composite, colourMarks } from "./colour.js?v=13";
 
 // ---------- state ----------
 let levels = [], hunt = null;
@@ -169,6 +169,9 @@ fetch("levels.json")
       .map(([b, label]) => `<div class="stat"><b>${b}</b><span>${label}</span></div>`).join("");
     hunt = initHunt(levels, go);
     initVoyage(levels);
+    // direct links: .../#voyage, #hunt, #explore, #lab, #about open that screen
+    const want = location.hash.slice(1);
+    if (want && want !== "home" && document.getElementById(want)?.classList.contains("view")) go(want);
     $("startBtn").textContent = tr("Start the hunt"); $("startBtn").disabled = false;
     drawGrid();
     return initSpace(levels, { explore: (L) => openObject(L), stack: (L) => openObject(L, "stack") });

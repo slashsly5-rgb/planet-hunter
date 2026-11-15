@@ -4,7 +4,7 @@
 //   WARP  jump onward through the Solar System
 // The ship, rocks, radio chatter and sounds are game fiction. The scanner pictures, positions and distances are real.
 import * as THREE from "./vendor/three.module.min.js";
-import { $, Viewer, span } from "./viewer.js?v=12";
+import { $, Viewer, span } from "./viewer.js?v=13";
 
 const LOCK_RADIUS = 34;        // image pixels: how close the reticle must be to the object's current position
 const LOCK_SECONDS = 2.4;      // time on target needed
