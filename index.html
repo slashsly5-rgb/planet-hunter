@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Planet Hunter: see the sky move in real SPHEREx images</title>
 <meta name="description" content="Watch real NASA SPHEREx images change over time. Spot the worlds that move, play back their paths, and learn how Planet X could be found.">
-<link rel="stylesheet" href="style.css?v=66">
+<link rel="stylesheet" href="style.css?v=67">
 <link rel="modulepreload" href="vendor/three.module.min.js">
 </head>
 <body>
@@ -515,7 +515,7 @@
   <p>Every picture on this site was made by the same six steps, run once with Python scripts. Nothing is changed except alignment, brightness and colour.</p>
   <ol class="pipeline">
     <li><b>NASA JPL Horizons</b><span>Where each world was, at the exact moment of each image.</span></li>
-    <li><b>SPHEREx archive</b><span>Which exposures covered that spot (NASA/IPAC, releases DR1 and QR3).</span></li>
+    <li><b>SPHEREx archive</b><span>Which exposures covered that spot (NASA/IPAC, releases <i id="relNames">DR1 and QR3</i>).</span></li>
     <li><b>Cut-out</b><span>Read only the small patch needed, from NASA's copy on AWS Open Data.</span></li>
     <li><b>Align</b><span>Turn north up on a common grid, so stars match pixel for pixel.</span></li>
     <li><b>Check</b><span>Keep a world only if it is detected at the predicted spot in both images, at least 5 times the background noise.</span></li>
@@ -574,6 +574,6 @@
   </div>
 </div>
 <div id="glossPop" class="gloss-pop" role="tooltip" hidden></div>
-<script type="module" src="app.js?v=66"></script>
+<script type="module" src="app.js?v=67"></script>
 </body>
 </html>

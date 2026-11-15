@@ -1,12 +1,12 @@
-import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=66";
-import { speedChart } from "./lab.js?v=66";
-import { t, tr } from "./i18n.js?v=66";
-import { initSpace } from "./space.js?v=66";
-import { showStack, hideStack } from "./stack3d.js?v=66";
-import { initHunt } from "./hunt.js?v=66";
-import { initVoyage } from "./voyage.js?v=66";
-import { detect, judge, overlay } from "./detect.js?v=66";
-import { composite, colourMarks } from "./colour.js?v=66";
+import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=67";
+import { speedChart } from "./lab.js?v=67";
+import { t, tr } from "./i18n.js?v=67";
+import { initSpace } from "./space.js?v=67";
+import { showStack, hideStack } from "./stack3d.js?v=67";
+import { initHunt } from "./hunt.js?v=67";
+import { initVoyage } from "./voyage.js?v=67";
+import { detect, judge, overlay } from "./detect.js?v=67";
+import { composite, colourMarks } from "./colour.js?v=67";
 
 // ---------- state ----------
 let levels = [], hunt = null;
@@ -176,6 +176,9 @@ fetch("levels.json")
     else if (want && want !== "home" && document.getElementById(want)?.classList.contains("view")) go(want);
     $("startBtn").textContent = tr("Start the hunt"); $("startBtn").disabled = false;
     drawGrid();
+    // name the data releases the pictures really come from (the first folder of each archive path), so a data update keeps the About page right
+    const rel = [...new Set(levels.flatMap((L) => [...L.frames, ...(L.track || []), ...(L.other_pass ? [L.other_pass] : [])]).map((f) => f.source?.split("/")[0]).filter(Boolean))].sort().map((r) => r.toUpperCase());
+    if (rel.length) $("relNames").textContent = rel.length > 1 ? rel.slice(0, -1).join(", ") + tr(" and ") + rel.at(-1) : rel[0];
     return initSpace(levels, { explore: (L) => openObject(L), stack: (L) => openObject(L, "stack"), chime: () => chime() });
   })
   .catch((e) => { console.error(String((e && e.stack) || e)); fail(tr("The game data did not load. Check your connection and refresh the page.")); });

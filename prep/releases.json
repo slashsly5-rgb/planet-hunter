@@ -1,0 +1,5 @@
+{
+ "use": ["spherex_dr1", "spherex_qr3"],
+ "skip": {"spherex_qr2": "an earlier quick release whose exposures are in spherex_dr1"},
+ "_note": "Releases are listed oldest first. When two releases hold the same exposure, the later one in this list is used. prep/update.py adds new releases here by itself."
+}

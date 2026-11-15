@@ -17,12 +17,16 @@ Every object is already known. This site has not found Planet X.
 - Images: SPHEREx spectral images from the NASA/IPAC Infrared Science Archive (IRSA), read from NASA's copy on AWS Open Data.
 - Positions: NASA JPL Horizons.
 
-The scripts in `prep/` run once to make the images. The website only loads the finished pictures and `levels.json`.
+The scripts in `prep/` make the images in advance. The website only loads the finished pictures and `levels.json`.
+
+**New SPHEREx release?** Run `python prep/update.py` (or `--check` to only look). Full steps: [UPDATING.md](UPDATING.md).
 
 | Script | What it does |
 |---|---|
 | `prep/find_obs.py <id>` | Lists SPHEREx exposures (detectors D1 to D3) that contain an object. |
 | `prep/build_levels.py [id ...]` | Picks two exposures per object, cuts a small aligned north-up image from each, checks the object is detected at the JPL position, and writes `img/` and `levels.json`. |
+| `prep/update.py [--check] [id ...]` | One command for a data update: finds new releases, then runs every step below and `release.py`. |
+| `prep/releases.py`, `prep/releases.json` | Which SPHEREx releases are used, and which ones NASA has published. |
 | `prep/horizons.py`, `prep/cutter.py` | JPL Horizons client; cutouts by HTTP range request. |
 
 ## Run it yourself

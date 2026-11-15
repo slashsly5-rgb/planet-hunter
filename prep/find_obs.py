@@ -1,10 +1,9 @@
 """List SPHEREx exposures (detectors D1-D3) that contain a Solar System body.  usage: find_obs.py <target id>"""
 import csv, io, json, math, sys, time, requests
-import horizons
+from datetime import date
+import horizons, releases
 SIA = "https://irsa.ipac.caltech.edu/SIA"
 BANDS = {"SPHEREx-D1", "SPHEREx-D2", "SPHEREx-D3"}
-
-DR1_END = 61174   # MJD of 14 May 2026: spherex_dr1 holds earlier exposures, spherex_qr3 later ones
 
 def sia(coll, ra, dec, radius, mjd):
     for _ in range(5):
@@ -30,17 +29,16 @@ def inside(region, ra, dec):
 
 def main(tid):
     t = next(x for x in json.load(open("targets.json")) if x["id"] == tid)
-    days = [d for d in horizons.daily(t["hid"], "2025-04-20", "2026-09-20") if 60 <= d["elong"] <= 125]  # SPHEREx imaged Pluto at 102-119 deg
+    days = [d for d in horizons.daily(t["hid"], "2025-04-20", date.today().isoformat()) if 60 <= d["elong"] <= 125]   # up to today: new releases add later dates  # SPHEREx imaged Pluto at 102-119 deg
     print(tid, "days in the SPHEREx viewing zone:", len(days), flush=True)
-    rows = {}
+    rows, colls = {}, releases.use()      # oldest release first, so a newer copy of the same exposure replaces the older one
     for d in days[::3]:
         mjd = d["jd"] - 2400000.5
-        colls = [c for c, ok in (("spherex_dr1", mjd < DR1_END + 3), ("spherex_qr3", mjd > DR1_END - 3)) if ok]
         for coll in colls:
             for x in sia(coll, d["ra"], d["dec"], 1.2, mjd):
                 tm = (float(x["t_min"]) + float(x["t_max"])) / 2
                 if x["energy_bandpassname"] in BANDS and abs(tm - mjd) <= 2:
-                    rows[(x["obs_id"], x["energy_bandpassname"])] = (tm, x)
+                    rows[(round(tm, 4), x["energy_bandpassname"])] = (tm, x)     # same time and detector = the same exposure, whichever release
         print(" ", round(mjd), "candidates so far", len(rows), flush=True)
     rows = sorted(rows.values(), key=lambda r: r[0])
     pos = horizons.at(t["hid"], [tm + 2400000.5 for tm, _ in rows]) if rows else []

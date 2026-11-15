@@ -6,9 +6,11 @@ Writes ../orbits.json:
   objects: {id: {path, track}}  the game's objects
 usage: build_orbits.py"""
 import json, time, requests
+from datetime import date, timedelta
 
 API = "https://ssd.jpl.nasa.gov/api/horizons.api"
-START, STOP, STEP = "2025-04-01", "2027-04-01", 5          # timeline covers every SPHEREx image on the site
+START, STEP = "2025-04-01", 5
+STOP = max("2027-04-01", (date.today() + timedelta(days=365)).isoformat())   # timeline covers every SPHEREx image on the site, and a year ahead
 PLANETS = [("Mercury", "199", 88), ("Venus", "299", 225), ("Mars", "499", 687), ("Jupiter", "5", 4333), ("Saturn", "6", 10759)]
 PERIODS = {"ceres": 1680, "pallas": 1686, "juno": 1593, "vesta": 1325, "hygiea": 2030, "uranus": 30687, "neptune": 60190,
            "pluto": 90560, "makemake": 111800, "haumea": 103400}                                  # orbital periods in days

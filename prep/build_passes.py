@@ -6,6 +6,7 @@ from astropy.time import Time
 import cutter
 from build_levels import N, SCALE
 from find_obs import SIA, BANDS
+import releases
 
 MIN_GAP_DAYS, TRIES = 60, 6
 
@@ -13,7 +14,7 @@ def build(level):
     c, first = level["center"], level["track"][0]
     t0 = Time(first["date"]).mjd
     rows = []
-    for coll in ("spherex_dr1", "spherex_qr3"):   # every exposure that ever covered this spot: one query per release, no date filter
+    for coll in releases.use():   # every exposure that ever covered this spot: one query per release, no date filter
         r = requests.get(SIA, params=dict(COLLECTION=coll, POS=f"circle {c['ra']} {c['dec']} 0.02", RESPONSEFORMAT="csv"), timeout=300)
         if r.ok and r.text.startswith("s_ra"): rows += [x for x in csv.DictReader(io.StringIO(r.text)) if x["energy_bandpassname"] in BANDS]
     seen, cands = set(), []
