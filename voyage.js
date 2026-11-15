@@ -6,8 +6,12 @@
 // The ship, debris, lasers, radio chatter, sounds and the look of each world are game fiction.
 // The scanner pictures, positions, distances and sunlight levels are real.
 import * as THREE from "./vendor/three.module.min.js";
-import { $, Viewer, span } from "./viewer.js?v=28";
-import { makeStackGame } from "./stackgame.js?v=28";
+import { $, Viewer, span } from "./viewer.js?v=30";
+import { makeStackGame } from "./stackgame.js?v=30";
+import { EffectComposer } from "./vendor/postprocessing/EffectComposer.js";
+import { RenderPass } from "./vendor/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "./vendor/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "./vendor/postprocessing/OutputPass.js";
 
 const LOCK_RADIUS = 30, LOCK_SECONDS = 2.6, SCAN_SECONDS = 24;
 const BASE_SPEED = 70, BOOST = 1.7, FIRE_EVERY = 0.15, BOLT_SPEED = 420;
@@ -72,6 +76,31 @@ class Sound {
   warp() { this.tone(90, 2.2, "sawtooth", 0.3, 1400); }
 }
 
+// ---------- asteroids: irregular bodies with dents and a rough, cratered surface ----------
+function rockTexture() {
+  const c = document.createElement("canvas"); c.width = c.height = 256; const g = c.getContext("2d");
+  g.fillStyle = "#8a8a8a"; g.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 2600; i++) { g.globalAlpha = rand(0.05, 0.22); g.fillStyle = Math.random() < 0.55 ? "#000" : "#fff"; g.beginPath(); g.arc(rand(0, 256), rand(0, 256), rand(0.6, 5), 0, 7); g.fill(); }
+  for (let i = 0; i < 26; i++) {
+    const x = rand(0, 256), y = rand(0, 256), r = rand(5, 22);
+    g.globalAlpha = 0.45; g.fillStyle = "#000"; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+    g.globalAlpha = 0.4; g.strokeStyle = "#fff"; g.lineWidth = 2; g.beginPath(); g.arc(x - 1.5, y - 1.5, r, 3.5, 5.9); g.stroke();
+  }
+  g.globalAlpha = 1; const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+function rockShape() {
+  const geo = new THREE.IcosahedronGeometry(1, 3), p = geo.attributes.position, v = new THREE.Vector3(), s = rand(0, 20);
+  const dents = Array.from({ length: 5 }, () => ({ d: new THREE.Vector3().randomDirection(), r: rand(0.35, 0.7), depth: rand(0.12, 0.3) }));
+  const sq = [rand(0.7, 1.15), rand(0.7, 1.15), rand(0.8, 1.2)];
+  for (let i = 0; i < p.count; i++) {
+    v.fromBufferAttribute(p, i).normalize();
+    let k = 1 + 0.2 * Math.sin(v.x * 2.1 + s) * Math.cos(v.y * 2.7 - s) + 0.11 * Math.sin(v.z * 5.3 + s * 2) * Math.sin(v.x * 4.7) + 0.05 * Math.sin(v.y * 11 + s) * Math.cos(v.z * 9.5);
+    for (const d of dents) { const a = v.distanceTo(d.d); if (a < d.r) k -= d.depth * (1 - (a / d.r) ** 2); }      // impact craters
+    p.setXYZ(i, v.x * k * sq[0], v.y * k * sq[1], v.z * k * sq[2]);
+  }
+  geo.computeVertexNormals(); return geo;
+}
+
 // ---------- painted surfaces for the worlds ----------
 function surface(look) {
   const c = document.createElement("canvas"); c.width = 512; c.height = 256;
@@ -94,13 +123,13 @@ function surface(look) {
 }
 function makeWorld(id) {
   const look = LOOK[id] || LOOK.vesta, grp = new THREE.Group();
-  const geo = look.kind === "rock" ? new THREE.IcosahedronGeometry(1, 5) : new THREE.SphereGeometry(1, 48, 32);
+  const geo = new THREE.SphereGeometry(1, 96, 64);      // shared corners, so the lumpy surface is lit smoothly
   if (look.lumpy) {                                   // small bodies are not round
     const p = geo.attributes.position, v = new THREE.Vector3(), s = rand(0, 10);
     for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); const k = 1 + look.lumpy * (Math.sin(v.x * 2.3 + s) * Math.cos(v.y * 2.9 - s) + 0.6 * Math.sin(v.z * 4.1 + s * 2)); p.setXYZ(i, v.x * k, v.y * k, v.z * k); }
     geo.computeVertexNormals();
   }
-  const body = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: surface(look), roughness: look.kind === "gas" ? 0.6 : 0.95, metalness: 0, fog: false }));
+  const tex = surface(look), body = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: tex, bumpMap: look.kind === "gas" ? null : tex, bumpScale: 3, roughness: look.kind === "gas" ? 0.6 : 0.95, metalness: 0, fog: false }));
   if (look.stretch) body.scale.set(...look.stretch);
   grp.add(body); grp.userData.body = body;
   if (look.kind === "gas") { const halo = new THREE.Mesh(new THREE.SphereGeometry(1.06, 32, 24), new THREE.MeshBasicMaterial({ color: look.base, transparent: true, opacity: 0.16, side: THREE.BackSide, fog: false })); grp.add(halo); }
@@ -113,6 +142,7 @@ export function initVoyage(levels) {
   let renderer;
   try { renderer = new THREE.WebGLRenderer({ antialias: true }); } catch { $("vyStartMsg").textContent = "This browser cannot show 3D, so the voyage is unavailable. Use Hunt instead."; $("vyStart").disabled = true; return; }
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); holder.append(renderer.domElement);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.25;      // film-style response: bright things roll off instead of clipping
   const sound = new Sound();
   const chapters = [...levels].sort((a, b) => a.distance_au - b.distance_au);   // travel outward from the Sun
 
@@ -124,12 +154,23 @@ export function initVoyage(levels) {
   const glowTex = (() => { const c = document.createElement("canvas"); c.width = c.height = 64; const g = c.getContext("2d"), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, "#fff"); gr.addColorStop(0.3, "#ffffffaa"); gr.addColorStop(1, "transparent"); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
   const glow = (color, size, opacity = 1) => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity, fog: false })); s.scale.setScalar(size); return s; };
 
+  // glow around anything bright (engines, lasers, explosions, sunlit edges). Falls back to plain rendering if it cannot start.
+  let composer = null;
+  try {
+    composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    composer.addPass(new UnrealBloomPass(new THREE.Vector2(256, 256), 0.85, 0.7, 0.78));
+    composer.addPass(new OutputPass());
+  } catch { composer = null; }
+  // a hard key light from the Sun and a faint cool fill, as in real space photographs: bright lit sides, dark shadows
+  const rim = new THREE.DirectionalLight(0x7aa8ff, 0.5); rim.position.set(8, -3, -10); scene.add(rim);
+
   // ---------- the ship: a swept-wing fighter built from flat panels ----------
   const ship = new THREE.Group();
   const white = new THREE.MeshStandardMaterial({ color: 0xeef2fb, metalness: 0.75, roughness: 0.28, flatShading: true });
   const navy = new THREE.MeshStandardMaterial({ color: 0x1b2a55, metalness: 0.8, roughness: 0.35, flatShading: true });
   const orange = new THREE.MeshStandardMaterial({ color: 0xff7a1a, emissive: 0xff5a00, emissiveIntensity: 0.9, flatShading: true });
-  const cyan = new THREE.MeshStandardMaterial({ color: 0x6fe3ff, emissive: 0x2fc8ff, emissiveIntensity: 1.6 });
+  const cyan = new THREE.MeshStandardMaterial({ color: 0x6fe3ff, emissive: 0x2fc8ff, emissiveIntensity: 0.9 });
   const panel = (pts, mat, depth = 0.12) => {       // a flat plate from an outline in the x-z plane (nose is -z)
     const sh = new THREE.Shape(); sh.moveTo(pts[0][0], -pts[0][1]); for (const p of pts.slice(1)) sh.lineTo(p[0], -p[1]);
     const m = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth, bevelEnabled: false }), mat); m.rotation.x = -Math.PI / 2; m.position.y = -depth / 2; return m;
@@ -173,8 +214,8 @@ export function initVoyage(levels) {
   }
 
   // ---------- debris, shards, pick-ups, bolts: all reused from pools ----------
-  const rockGeo = new THREE.IcosahedronGeometry(1, 0), shardGeo = new THREE.OctahedronGeometry(1, 0), rocks = [];
-  for (let i = 0; i < 150; i++) { const m = new THREE.Mesh(rockGeo, new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.92 })); m.visible = false; scene.add(m); rocks.push({ m, r: 1, hp: 1, live: false, solid: true, spin: new THREE.Vector3(), drift: new THREE.Vector2() }); }
+  const rockGeos = Array.from({ length: 7 }, rockShape), rockTex = rockTexture(), shardGeo = new THREE.OctahedronGeometry(1, 0), rocks = [];
+  for (let i = 0; i < 150; i++) { const m = new THREE.Mesh(rockGeos[i % 7], new THREE.MeshStandardMaterial({ map: rockTex, bumpMap: rockTex, bumpScale: 2.2, roughness: 0.96, metalness: 0.04 })); m.visible = false; scene.add(m); rocks.push({ m, r: 1, hp: 1, live: false, solid: true, spin: new THREE.Vector3(), drift: new THREE.Vector2() }); }
   const fragGeo = new THREE.OctahedronGeometry(0.6, 0), frags = [];
   for (let i = 0; i < 14; i++) { const m = new THREE.Mesh(fragGeo, new THREE.MeshStandardMaterial({ color: 0x7dffcf, emissive: 0x2fe0a0, emissiveIntensity: 1.6, flatShading: true })); m.visible = false; scene.add(m); frags.push({ m, live: false }); }
   const POWERS = { shield: 0x5ad0ff, magnet: 0x7dffcf, rapid: 0xffb547 }, powers = [];
@@ -184,13 +225,13 @@ export function initVoyage(levels) {
 
   // missiles: slow, homing, and they clear everything near where they go off
   const missileGeo = new THREE.ConeGeometry(0.28, 1.8, 8).rotateX(-Math.PI / 2), missileMat = new THREE.MeshStandardMaterial({ color: 0xffe9c0, emissive: 0xff7a1a, emissiveIntensity: 1.2 }), missiles = [];
-  for (let i = 0; i < 6; i++) { const m = new THREE.Mesh(missileGeo, missileMat); const g = glow(0xffa040, 2.6); g.position.z = 1.2; m.add(g); m.visible = false; scene.add(m); missiles.push({ m, live: false, target: null }); }
-  const MISSILES_PER_CHAPTER = 5, MISSILE_SPEED = 250, BLAST = 17;
-  let ammo = MISSILES_PER_CHAPTER, missileAt = 0;
+  for (let i = 0; i < 10; i++) { const m = new THREE.Mesh(missileGeo, missileMat); const g = glow(0xffa040, 2.6); g.position.z = 1.2; m.add(g); m.visible = false; scene.add(m); missiles.push({ m, live: false, target: null }); }
+  const MISSILE_SPEED = 250, BLAST = 17;
+  let fired = 0, missileAt = 0;
   function launchMissile() {
-    if (phase !== "fly" || ammo <= 0 || missileAt > 0) return;
+    if (phase !== "fly" || missileAt > 0) return;      // unlimited; only a short reload between launches
     const ms = missiles.find((x) => !x.live); if (!ms) return;
-    ammo--; missileAt = 0.45; ms.live = true; ms.m.visible = true; ms.m.position.set(ship.position.x, ship.position.y - 0.5, -2);
+    fired++; missileAt = 0.3; ms.live = true; ms.m.visible = true; ms.m.position.set(ship.position.x, ship.position.y - 0.5, -2);
     // aim at the biggest threat ahead: the solid rock closest to the ship's line of flight
     let best = null, bestD = 1e9;
     for (const r of rocks) if (r.live && r.solid && r.m.position.z < -30 && r.m.position.z > -330) { const d = Math.hypot(r.m.position.x - ship.position.x, r.m.position.y - ship.position.y) - r.r * 2; if (d < bestD) { bestD = d; best = r; } }
@@ -237,18 +278,18 @@ export function initVoyage(levels) {
     $("vyHull").style.width = Math.max(0, Math.min(100, hull)) + "%"; $("vyHull").classList.toggle("low", hull <= 40);
     hud("vyData", data); $("vyProg").style.width = Math.min(100, (travelled / goal) * 100) + "%";
     hud("vyChapter", `${n + 1} / ${TOTAL}  ${L().name.toUpperCase()}`);
-    hud("vyMissiles", "▲".repeat(ammo) || "none"); hud("vyCombo", combo > 1 ? `x${combo}` : ""); hud("vyBuff", [shieldT > 0 && "SHIELD", magnetT > 0 && "MAGNET", rapidT > 0 && "RAPID FIRE"].filter(Boolean).join("  "));
+    hud("vyMissiles", missileAt > 0 ? "RELOADING" : "∞ READY"); hud("vyCombo", combo > 1 ? `x${combo}` : ""); hud("vyBuff", [shieldT > 0 && "SHIELD", magnetT > 0 && "MAGNET", rapidT > 0 && "RAPID FIRE"].filter(Boolean).join("  "));
   }
   const clearField = (boom) => { for (const r of rocks) if (r.live) { if (boom && r.solid && r.m.position.z > -260) explode(r.m.position, r.r, 0x9fb4ff); r.live = false; r.m.visible = false; } [...frags, ...powers, ...bolts].forEach((o) => { o.live = false; o.m.visible = false; }); };
 
   // ---------- FLY ----------
   async function startFly() {
     phase = "card"; travelled = 0; goal = 2100 + n * 170; speed = BASE_SPEED + n * 5; spawnR = spawnS = spawnF = 0; spawnP = rand(5, 9); combo = 0; kills = 0; hullAtStart = hull;
-    clearField(false); ammo = MISSILES_PER_CHAPTER; missiles.forEach((ms) => { ms.live = false; ms.m.visible = false; });
+    clearField(false); missiles.forEach((ms) => { ms.live = false; ms.m.visible = false; });
     zone = ZONES[zoneOf(L())];
     scene.fog.color.set(zone.fog); scene.background.set(zone.fog); nebulae.forEach((nb, i) => nb.material.color.set(zone.glow[i]));
     // sunlight really does fall off with distance squared; the scene dims with it (softened so the game stays playable)
-    const sun = 1 / L().distance_au ** 2; sunLight.intensity = 0.5 + 2.2 * Math.pow(sun / (1 / 2.15 ** 2), 0.22); ambient.intensity = 0.55 + 0.5 * Math.pow(sun * 4.6, 0.2);
+    const sun = 1 / L().distance_au ** 2; sunLight.intensity = 0.5 + 2.2 * Math.pow(sun / (1 / 2.15 ** 2), 0.22); ambient.intensity = 0.22 + 0.3 * Math.pow(sun * 4.6, 0.2);
     hud("vySun", sun >= 0.01 ? `${(sun * 100).toFixed(1)}%` : `${(sun * 100).toFixed(3)}%`);
     if (world) scene.remove(world);
     world = makeWorld(L().id); world.position.set(14, 9, -760); world.scale.setScalar(8); scene.add(world);
@@ -264,7 +305,7 @@ export function initVoyage(levels) {
     const r = rocks.find((x) => !x.live); if (!r) return;
     const icy = Math.random() < zone.ice;
     r.live = true; r.solid = solid; r.r = solid ? rand(0.9, 3.4) : rand(2, 9); r.hp = Math.ceil(r.r * 0.9);
-    r.m.geometry = icy ? shardGeo : rockGeo;
+    r.m.geometry = icy ? shardGeo : pick(rockGeos); r.m.material.flatShading = icy; r.m.material.map = icy ? null : rockTex; r.m.material.bumpMap = icy ? null : rockTex; r.m.material.needsUpdate = true;
     r.m.material.color.setHSL(zone.rock[0] + rand(-0.03, 0.03), icy ? 0.5 : zone.rock[1], zone.rock[2] + rand(-0.1, 0.1));
     r.m.material.emissive.setHex(icy ? 0x1a4a6a : 0x000000); r.m.material.transparent = icy; r.m.material.opacity = icy ? 0.85 : 1;
     r.m.scale.set(r.r * (icy ? 0.6 : 1), r.r * (icy ? 1.5 : rand(0.75, 1.1)), r.r * (icy ? 0.6 : 1));
@@ -557,7 +598,7 @@ export function initVoyage(levels) {
   $("vyAgain").onclick = () => { $("vyEnd").hidden = true; opening(); };
 
   // ---------- draw ----------
-  function resize() { const w = holder.clientWidth, h = holder.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+  function resize() { const w = holder.clientWidth, h = holder.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); composer?.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
   new ResizeObserver(resize).observe(holder);
   let last = performance.now();
   function frame(now) {
@@ -582,17 +623,17 @@ export function initVoyage(levels) {
     shake = Math.max(0, shake - dt * 1.7);
     camera.position.set(ship.position.x * 0.5 + rand(-1, 1) * shake, 2.6 + ship.position.y * 0.5 + rand(-1, 1) * shake, 10.5);
     camera.lookAt(ship.position.x * 0.62, ship.position.y * 0.62, -30);
-    const flick = 2.0 + Math.random() * 0.7 + (boost && moving ? 1.6 : 0) + (phase === "warp" ? 3 : 0);
+    const flick = 1.2 + Math.random() * 0.4 + (boost && moving ? 1.0 : 0) + (phase === "warp" ? 2 : 0);
     flames.forEach((f) => f.scale.setScalar(flick));
     ship.children.forEach((c) => { if (c.userData.nav) c.material.opacity = (now % 1000) < 500 ? 1 : 0.15; });
     shield.material.opacity = shieldT > 0 ? 0.22 + 0.1 * Math.sin(now / 90) : 0; shield.rotation.y += dt * 2;
     if (world) world.userData.body.rotation.y += dt * 0.12;
     if (!moving && phase !== "arrive") { ship.rotation.z *= 0.92; ship.rotation.x *= 0.92; ship.position.y += (Math.sin(now / 700) * 0.4 - 1.5 - ship.position.y) * dt * 1.5; ship.position.x += ((["scan", "result", "ghost", "probe", "stack"].includes(phase) ? -7 : 0) - ship.position.x) * dt * 1.2; }
-    renderer.render(scene, camera);
+    if (composer) composer.render(); else renderer.render(scene, camera);
   }
   resize(); requestAnimationFrame(frame);
 
   // used by the browser check
-  window.__voyage = { state: () => ({ phase, n, hull, data, lock, kills, ammo, scanType, frames: ["scan", "result", "ghost", "probe"].includes(phase) ? L().frames : null, target: target?.frame, size: L().size, i: view.i, truth: stack?.truth, spot: stack?.spot, snr: stack?.snr }),
+  window.__voyage = { state: () => ({ phase, n, hull, data, lock, kills, fired, scanType, frames: ["scan", "result", "ghost", "probe"].includes(phase) ? L().frames : null, target: target?.frame, size: L().size, i: view.i, truth: stack?.truth, spot: stack?.spot, snr: stack?.snr }),
     arrive: () => { travelled = goal; }, safe: () => { hull = 1e6; }, skipTo: (k) => { n = k; hull = 1e6; $("vyStartBox").hidden = true; $("vyEnd").hidden = true; startFly(); } };
 }

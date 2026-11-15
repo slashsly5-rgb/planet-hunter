@@ -1,10 +1,10 @@
 // 3D Solar System: real positions from NASA JPL Horizons (orbits.json). Each world SPHEREx photographed is a place to fly to.
 import * as THREE from "./vendor/three.module.min.js";
 import { OrbitControls } from "./vendor/OrbitControls.js";
-import { $, Viewer, fmtDate } from "./viewer.js?v=28";
-import { t, tr } from "./i18n.js?v=28";
-import { irTexture } from "./irtex.js?v=28";
-import { composite } from "./colour.js?v=28";
+import { $, Viewer, fmtDate } from "./viewer.js?v=30";
+import { t, tr } from "./i18n.js?v=30";
+import { irTexture } from "./irtex.js?v=30";
+import { composite } from "./colour.js?v=30";
 
 const v3 = ([x, y, z]) => new THREE.Vector3(x, z, -y);   // ecliptic x,y,z (au) → scene, with y up
 const COLORS = ["#8ab4ff", "#ffb547", "#6fe3ff", "#f7e26b", "#ff9a5c", "#c79bff", "#b6ff8a", "#ff6f91", "#7dffcf", "#ffd1dc"];
