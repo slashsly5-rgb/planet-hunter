@@ -30,8 +30,13 @@ const centre = (sel) => js(`(() => { const r = document.querySelector(${JSON.str
 
 await cdp("Runtime.enable"); await cdp("Page.enable");
 await cdp("Emulation.setDeviceMetricsOverride", { width: +W, height: +H, deviceScaleFactor: 1, mobile: +W < 600 });
-await cdp("Page.navigate", { url: (process.env.PH_URL || "http://localhost:8765") + "/index.html" });
+await cdp("Page.navigate", { url: (process.env.PH_URL || "http://localhost:8765") + "/index.html" + (process.env.PH_HASH || "") });
 await sleep(+process.env.PH_WAIT || 1500);   // a slow connection needs longer for the 3D library
+if (process.env.PH_HASH) {     // check a direct link such as #hunt: report what the visitor lands on, then stop
+  await sleep(2500); await shot("hash.png");
+  console.log(JSON.stringify({ hash: process.env.PH_HASH, hunt: await js(`window.__hunt?.state().step`), prompt: await js(`document.querySelector("#prompt").textContent.slice(0, 60)`), voyageStart: await js(`!document.querySelector("#voyage").hidden`), errors }));
+  ws.close(); proc.kill(); process.exit(0);
+}
 if (process.env.PH_LANG) { await js(`localStorage.setItem("lang", ${JSON.stringify(process.env.PH_LANG)})`); await cdp("Page.reload"); await sleep(1500); }
 await shot("1-start.png");
 // 3D Solar System: fly to a world, then out to the Planet X zone, then back

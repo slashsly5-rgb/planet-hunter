@@ -1,12 +1,12 @@
-import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=24";
-import { speedChart } from "./lab.js?v=24";
-import { t, tr } from "./i18n.js?v=24";
-import { initSpace } from "./space.js?v=24";
-import { showStack, hideStack } from "./stack3d.js?v=24";
-import { initHunt } from "./hunt.js?v=24";
-import { initVoyage } from "./voyage.js?v=24";
-import { detect, judge, overlay } from "./detect.js?v=24";
-import { composite, colourMarks } from "./colour.js?v=24";
+import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=25";
+import { speedChart } from "./lab.js?v=25";
+import { t, tr } from "./i18n.js?v=25";
+import { initSpace } from "./space.js?v=25";
+import { showStack, hideStack } from "./stack3d.js?v=25";
+import { initHunt } from "./hunt.js?v=25";
+import { initVoyage } from "./voyage.js?v=25";
+import { detect, judge, overlay } from "./detect.js?v=25";
+import { composite, colourMarks } from "./colour.js?v=25";
 
 // ---------- state ----------
 let levels = [], hunt = null;
@@ -171,7 +171,8 @@ fetch("levels.json")
     initVoyage(levels);
     // direct links: .../#voyage, #hunt, #explore, #lab, #about open that screen
     const want = location.hash.slice(1);
-    if (want && want !== "home" && document.getElementById(want)?.classList.contains("view")) go(want);
+    if (want === "hunt") document.querySelector('.top [data-view="hunt"]').click();      // opening the hunt must also start its first mission
+    else if (want && want !== "home" && document.getElementById(want)?.classList.contains("view")) go(want);
     $("startBtn").textContent = tr("Start the hunt"); $("startBtn").disabled = false;
     drawGrid();
     return initSpace(levels, { explore: (L) => openObject(L), stack: (L) => openObject(L, "stack") });
