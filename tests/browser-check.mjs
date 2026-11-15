@@ -56,6 +56,12 @@ const tapHunt = async (pt, size) => { const r = await js(`(() => { const r = doc
 const hs = () => js(`window.__hunt.state()`);
 for (let i = 0; i < 40; i++) {                       // each mission: detect, (predict), classify. Odd missions get wrong answers on purpose.
   if (await js(`!document.querySelector("#huntEnd").hidden`)) break;
+  // PH_REAL=1: press buttons with a real mouse click at their position, as a person would, instead of calling click() on them
+  const press = async (sel) => { if (!process.env.PH_REAL) return js(`document.querySelector(${JSON.stringify(sel)}).click()`);
+    await js(`document.querySelector(${JSON.stringify(sel)}).scrollIntoView({ block: "center" })`); await sleep(350);
+    const hit = await js(`(() => { const b = document.querySelector(${JSON.stringify(sel)}), r = b.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2, top = document.elementFromPoint(x, y); return [x, y, top === b || b.contains(top), top ? (top.id || top.className || top.tagName) : "nothing"]; })()`);
+    if (!hit[2]) blocked.push(`${sel} is covered by: ${hit[3]}`);
+    await click(hit[0], hit[1]); };
   for (let w = 0; w < 30 && (await hs()).step !== "detect"; w++) await sleep(300);
   let st = await hs(); const good = i % 2 === 0, far = (f) => ({ x: (f.x + st.size / 2) % st.size, y: (f.y + st.size / 2) % st.size });
   if (process.env.PH_SECOND && good) await tapHunt(far(st.frames[0]), st.size);   // optional: miss once, then find it on the second try
@@ -63,15 +69,10 @@ for (let i = 0; i < 40; i++) {                       // each mission: detect, (p
   if (!good) await tapHunt(far(st.frames[0]), st.size);          // second try, also wrong
   if (i < 2) await shot(`3-detect-${i}.png`);
   st = await hs();
-  if (st.step === "predict") { await tapHunt(good ? st.target : far(st.target), st.size); if (i < 2) await shot(`3-predict-${i}.png`); }
+  if (st.step === "predict" && process.env.PH_SKIP) { await press("#skipBtn"); await sleep(500); }
+  else if (st.step === "predict") { await tapHunt(good ? st.target : far(st.target), st.size); if (i < 2) await shot(`3-predict-${i}.png`); }
   st = await hs();
   const zsel = `.zone[data-z="${good ? st.zone : (st.zone === "belt" ? "outer" : "belt")}"]`;
-  // PH_REAL=1: press buttons with a real mouse click at their position, as a person would, instead of calling click() on them
-  const press = async (sel) => { if (!process.env.PH_REAL) return js(`document.querySelector(${JSON.stringify(sel)}).click()`);
-    await js(`document.querySelector(${JSON.stringify(sel)}).scrollIntoView({ block: "center" })`); await sleep(350);
-    const hit = await js(`(() => { const b = document.querySelector(${JSON.stringify(sel)}), r = b.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2, top = document.elementFromPoint(x, y); return [x, y, top === b || b.contains(top), top ? (top.id || top.className || top.tagName) : "nothing"]; })()`);
-    if (!hit[2]) blocked.push(`${sel} is covered by: ${hit[3]}`);
-    await click(hit[0], hit[1]); };
   await press(zsel); await sleep(500);
   if (i < 2) await shot(`3-reveal-${i}.png`);
   results.push({ mission: i + 1, played: good ? "well" : "badly", result: await js(`document.querySelector("#prompt").textContent`) });

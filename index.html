@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Planet Hunter: see the sky move in real SPHEREx images</title>
 <meta name="description" content="Watch real NASA SPHEREx images change over time. Spot the worlds that move, play back their paths, and learn how Planet X could be found.">
-<link rel="stylesheet" href="style.css?v=25">
+<link rel="stylesheet" href="style.css?v=27">
 <link rel="modulepreload" href="vendor/three.module.min.js">
 </head>
 <body>
@@ -123,6 +123,10 @@
       </div>
       <div class="hunt-right">
         <p id="prompt" class="prompt"></p>
+        <div id="skipRow" class="next-row" hidden>
+          <button id="skipBtn" class="ghost">Skip this step</button>
+          <span class="note">Stuck? Skipping scores 0 for the step and moves on.</span>
+        </div>
         <div id="nextRow" class="next-row" hidden>
           <button id="nextBtn" class="primary">Next</button>
           <span class="note">or press Enter</span>
@@ -344,6 +348,6 @@
 </section>
 </main>
 
-<script type="module" src="app.js?v=25"></script>
+<script type="module" src="app.js?v=27"></script>
 </body>
 </html>

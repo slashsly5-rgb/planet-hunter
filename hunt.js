@@ -3,11 +3,11 @@
 //   2 Predict   from its two positions, say where it will be in a third real image
 //   3 Classify  from how fast it moves, say where it orbits
 // The last missions are simulated Planet X candidates (made-up objects on real images, labelled as simulated).
-import { isHit } from "./score.js?v=25";
-import { $, Viewer, fmtDate, fmtTime, span, ring, ruler } from "./viewer.js?v=25";
-import { speedChart, simFrames } from "./lab.js?v=25";
-import { t, tr } from "./i18n.js?v=25";
-import { detect, judge } from "./detect.js?v=25";
+import { isHit } from "./score.js?v=27";
+import { $, Viewer, fmtDate, fmtTime, span, ring, ruler } from "./viewer.js?v=27";
+import { speedChart, simFrames } from "./lab.js?v=27";
+import { t, tr } from "./i18n.js?v=27";
+import { detect, judge } from "./detect.js?v=27";
 
 const FOUND_RADIUS = 20;          // image pixels: how close a tap must be to count as a detection
 const TRIES = 2;
@@ -64,6 +64,7 @@ export function initHunt(levels, go) {
       li.className = i < now ? "done" : i === now ? "now" : "";
       li.hidden = li.dataset.step === "predict" && !m?.target;
     });
+    $("skipRow").hidden = !(step === "detect" || step === "predict");
   }
 
   async function startMission() {
@@ -100,8 +101,8 @@ export function initHunt(levels, go) {
     step = "predict"; bar(); view.root.classList.add("askclick");
     const [a, b] = m.L.frames, f = m.target.frame;
     prompt(m.target.forward
-      ? t`<strong>Predict.</strong> It was at the dashed ring on ${when(a.date)} and at the solid ring on ${when(b.date)}. Tap where it will be on <strong>${when(f.date)}</strong>.`
-      : t`<strong>Predict.</strong> It was at the dashed ring on ${when(a.date)} and at the solid ring on ${when(b.date)}. Tap where it was earlier, on <strong>${when(f.date)}</strong>.`);
+      ? t`<strong>Predict.</strong> Now click on the picture where you think it will be next. It was at the dashed ring on ${when(a.date)}, then at the solid ring on ${when(b.date)}. Where will it be on <strong>${when(f.date)}</strong>? Follow the line onward.`
+      : t`<strong>Predict.</strong> Now click on the picture where you think it was before. It was at the dashed ring on ${when(a.date)}, then at the solid ring on ${when(b.date)}. Where was it earlier, on <strong>${when(f.date)}</strong>? Follow the line backward, past the dashed ring.`);
   }
 
   function toClassify() {
@@ -199,6 +200,10 @@ export function initHunt(levels, go) {
   addEventListener("keydown", (e) => {                     // Enter moves on once a mission is complete
     if (e.key === "Enter" && step === "done" && !$("hunt").hidden && !$("huntPlay").hidden) { e.preventDefault(); $("nextBtn").click(); }
   });
+  $("skipBtn").onclick = () => {            // never leave a player stuck: give up on this step and carry on
+    if (step === "detect") { pts.detect = 0; note(tr("<strong>Skipped.</strong> The rings show where it was on each date.")); afterDetect(); bar(); }
+    else if (step === "predict") { pts.predict = 0; const f = m.target.frame; view.show(2); view.mark(ring(f) + ring(f, "pulse")); note(t`<strong>Skipped.</strong> This is the real image from ${when(f.date)}. The ring shows where it really was.`); toClassify(); }
+  };
   $("startBtn").onclick = start;
   $("againBtn").onclick = start;
   document.querySelector('.top [data-view="hunt"]').onclick = () => { if (m) go("hunt"); else start(); };

@@ -327,3 +327,10 @@ main:has(#voyage:not([hidden])) { max-width: none; padding: 0; }
 @media (prefers-reduced-motion: reduce) { .next-row .primary, .viewer.askclick::after { animation: none; } }
 @media (max-height: 760px) { .hunt-grid { grid-template-columns: minmax(0, 58vh) minmax(0, 1fr); } .card { padding: 12px 14px; } .card h2 { font-size: 1.25rem; } }
 .viewer.askclick::after { white-space: nowrap; }
+
+/* hunt layout: the instructions column always keeps a readable width; the picture takes what is left */
+.hunt-grid { grid-template-columns: minmax(0, min(66vh, calc(100% - 448px))) minmax(420px, 1fr); }
+@media (max-height: 760px) { .hunt-grid { grid-template-columns: minmax(0, min(58vh, calc(100% - 448px))) minmax(420px, 1fr); } }
+@media (max-width: 860px) { .hunt-grid { grid-template-columns: 1fr; } }
+.viewer.askclick { box-shadow: 0 0 0 3px var(--hud), 0 0 40px #6fe3ff55; }
+#skipBtn { white-space: nowrap; }
