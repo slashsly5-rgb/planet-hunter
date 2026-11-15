@@ -518,3 +518,11 @@ abbr.term:focus-visible { outline: 2px solid var(--hud); outline-offset: 2px; bo
 .help li { display: block; margin: 0; line-height: 1.55; }   /* plain text lines, not the judges page's claim-and-button rows */
 .help .cta { margin-top: 12px; }
 
+/* live data status chip on the front page */
+.data-status { display: inline-block; margin-top: 10px; padding: 6px 12px; min-height: 0; border-radius: 999px; border: 1px solid var(--line);
+  background: #0b1226cc; color: var(--dim); font: inherit; font-size: .82rem; line-height: 1.35; text-align: left; cursor: pointer; }
+.data-status::before { content: ""; display: inline-block; vertical-align: 1px; margin-right: 8px; width: 8px; height: 8px; border-radius: 50%; background: #8a93ad; }
+.data-status.ok { color: #c9f5e1; border-color: #2a6b55; } .data-status.ok::before { background: #3ddc97; box-shadow: 0 0 8px #3ddc97; animation: livePulse 2s ease-in-out infinite; }
+.data-status.new { color: #ffe2b0; border-color: #7a5a20; } .data-status.new::before { background: #ffb547; box-shadow: 0 0 8px #ffb547; }
+@keyframes livePulse { 50% { opacity: .35; } }
+

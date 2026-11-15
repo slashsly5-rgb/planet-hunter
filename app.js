@@ -1,12 +1,12 @@
-import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=67";
-import { speedChart } from "./lab.js?v=67";
-import { t, tr } from "./i18n.js?v=67";
-import { initSpace } from "./space.js?v=67";
-import { showStack, hideStack } from "./stack3d.js?v=67";
-import { initHunt } from "./hunt.js?v=67";
-import { initVoyage } from "./voyage.js?v=67";
-import { detect, judge, overlay } from "./detect.js?v=67";
-import { composite, colourMarks } from "./colour.js?v=67";
+import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=69";
+import { speedChart } from "./lab.js?v=69";
+import { t, tr } from "./i18n.js?v=69";
+import { initSpace } from "./space.js?v=69";
+import { showStack, hideStack } from "./stack3d.js?v=69";
+import { initHunt } from "./hunt.js?v=69";
+import { initVoyage } from "./voyage.js?v=69";
+import { detect, judge, overlay } from "./detect.js?v=69";
+import { composite, colourMarks } from "./colour.js?v=69";
 
 // ---------- state ----------
 let levels = [], hunt = null;
@@ -179,6 +179,7 @@ fetch("levels.json")
     // name the data releases the pictures really come from (the first folder of each archive path), so a data update keeps the About page right
     const rel = [...new Set(levels.flatMap((L) => [...L.frames, ...(L.track || []), ...(L.other_pass ? [L.other_pass] : [])]).map((f) => f.source?.split("/")[0]).filter(Boolean))].sort().map((r) => r.toUpperCase());
     if (rel.length) $("relNames").textContent = rel.length > 1 ? rel.slice(0, -1).join(", ") + tr(" and ") + rel.at(-1) : rel[0];
+    dataStatus(rel, levels);
     return initSpace(levels, { explore: (L) => openObject(L), stack: (L) => openObject(L, "stack"), chime: () => chime() });
   })
   .catch((e) => { console.error(String((e && e.stack) || e)); fail(tr("The game data did not load. Check your connection and refresh the page.")); });
@@ -370,5 +371,35 @@ function chime() {
   const close = () => { w.hidden = true; localStorage.setItem("welcomed", "1"); };
   w.addEventListener("click", (e) => { if (e.target === w || e.target.closest("button")) close(); });
   addEventListener("keydown", (e) => { if (e.key === "Escape" && !w.hidden) close(); });
+}
+
+// ---------- is the data up to date? On every visit, ask NASA's SPHEREx copy on AWS Open Data which releases exist ----------
+// (a release is a top folder holding level-2 images; prep/releases.json lists the ones the pictures were built from, or deliberately skip)
+async function dataStatus(rel, levels) {
+  const chip = $("dataStatus"), full = $("freshStatus");
+  const list = (a) => (a.length > 1 ? a.slice(0, -1).join(", ") + tr(" and ") + a.at(-1) : a[0] || "");
+  const R = list(rel), newest = fmtDate(levels.flatMap((L) => [...L.frames, ...(L.track || [])]).map((f) => f.date).sort().at(-1));
+  const BUCKET = "https://nasa-irsa-spherex.s3.amazonaws.com/";
+  const folders = async (prefix) => {
+    const xml = await (await fetch(`${BUCKET}?list-type=2&delimiter=/&prefix=${prefix}`, { signal: AbortSignal.timeout(12000) })).text();
+    return [...new DOMParser().parseFromString(xml, "text/xml").getElementsByTagName("Prefix")].map((p) => p.textContent).filter((p) => p && p !== prefix);
+  };
+  try {
+    const [cfg, tops] = await Promise.all([fetch("prep/releases.json").then((r) => r.json()), folders("")]);
+    const pub = (await Promise.all(tops.map(async (f) => ((await folders(f)).includes(f + "level2/") ? f.slice(0, -1) : null)))).filter(Boolean).sort();
+    if (!pub.length) throw new Error("no releases listed");
+    const known = new Set([...cfg.use, ...Object.keys(cfg.skip)].map((c) => c.replace("spherex_", "")));
+    const fresh = list(pub.filter((p) => !known.has(p)).map((p) => p.toUpperCase())), P = list(pub.map((p) => p.toUpperCase()));
+    if (fresh) {
+      chip.className = "data-status new"; chip.innerHTML = t`<b>New NASA data:</b> ${fresh} is out, not in these pictures yet`;
+      full.innerHTML = t`<b>Right now: new data is out.</b> NASA has published ${P}. These pictures come from ${R}, so ${fresh} is not in them yet. Newest image on this site: ${newest}.`;
+    } else {
+      chip.className = "data-status ok"; chip.innerHTML = t`<b>Up to date with NASA</b> · SPHEREx ${R} · checked just now`;
+      full.innerHTML = t`<b>Right now: up to date.</b> NASA has published ${P}, and these pictures use ${R} (releases left out are older copies of the same exposures). Newest image on this site: ${newest}.`;
+    }
+  } catch {
+    chip.className = "data-status"; chip.innerHTML = t`Data from NASA SPHEREx ${R} · newest image ${newest}`;
+    full.innerHTML = t`<b>NASA's servers did not answer just now</b>, so this could not be checked. These pictures come from ${R}. Newest image on this site: ${newest}.`;
+  }
 }
 

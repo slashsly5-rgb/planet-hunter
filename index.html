@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Planet Hunter: see the sky move in real SPHEREx images</title>
 <meta name="description" content="Watch real NASA SPHEREx images change over time. Spot the worlds that move, play back their paths, and learn how Planet X could be found.">
-<link rel="stylesheet" href="style.css?v=67">
+<link rel="stylesheet" href="style.css?v=69">
 <link rel="modulepreload" href="vendor/three.module.min.js">
 </head>
 <body>
@@ -63,6 +63,7 @@
         <button class="ghost" data-view="help">How to use</button>
       </div>
       <p class="note">Every object here is already known. We have not found Planet X.</p>
+      <button id="dataStatus" class="data-status" data-proof="about:freshness">Checking NASA's servers…</button>
     </div>
 
     <div class="space-worlds">
@@ -460,6 +461,7 @@
         <li><span>Every sky image is a real SPHEREx observation, with its date, detector and a link to NASA's original file.</span><button class="small" data-proof="explore:pluto:play">See an image's details</button></li>
         <li><span>Every position is checked against NASA JPL Horizons. The faintest detection used is 11 times the background noise. Eris was left out as too faint.</span><button class="small" data-proof="about:method">Data and method</button></li>
         <li><span>Our own detector's score is shown honestly: right for 7 of 10 worlds.</span><button class="small" data-proof="explore:makemake:scan">See a miss</button></li>
+        <li><span>On every visit the site checks NASA's servers live and shows whether its pictures use the latest SPHEREx release. A weekly automatic check alerts the team to new releases.</span><button class="small" data-proof="about:freshness">Data status</button></li>
         <li><span>Simplifications, simulations and decoration are stated openly.</span><button class="small" data-proof="about:limits">What this can't do</button></li>
       </ul>
     </article>
@@ -537,6 +539,11 @@
       <li>The shooting stars and coloured haze on the front page, and the music, are decoration.</li>
   </ul>
 
+  <h2 id="freshness">Is the data up to date?</h2>
+  <p>Every time this site opens, it asks NASA's servers which SPHEREx data releases exist and compares them with the releases these pictures come from.</p>
+  <p id="freshStatus" class="tip">Checking NASA's servers…</p>
+  <p>Every Monday, an automatic check on GitHub also looks for new releases and alerts the team. The pictures are then rebuilt with one command, checked against NASA JPL positions again, and published once a person has looked at them.</p>
+
   <h2 id="limits">What this can't do</h2>
   <ul>
     <li>It does not search for new objects. Every object here is already known, and we chose and checked each one.</li>
@@ -574,6 +581,6 @@
   </div>
 </div>
 <div id="glossPop" class="gloss-pop" role="tooltip" hidden></div>
-<script type="module" src="app.js?v=67"></script>
+<script type="module" src="app.js?v=69"></script>
 </body>
 </html>

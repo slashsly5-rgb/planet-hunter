@@ -591,5 +591,17 @@ export const MS = {
   "Close": "Tutup",
   "A Help page that explains every part, and a welcome card for first-time visitors.": "Halaman Bantuan yang menerangkan setiap bahagian, dan kad alu-aluan untuk pelawat kali pertama.",
   "Open Help": "Buka Bantuan",
-  "×": "×"
+  "×": "×",
+  "Checking NASA's servers…": "Menyemak pelayan NASA…",
+  "Is the data up to date?": "Adakah data terkini?",
+  "Every time this site opens, it asks NASA's servers which SPHEREx data releases exist and compares them with the releases these pictures come from.": "Setiap kali laman ini dibuka, ia bertanya kepada pelayan NASA keluaran data SPHEREx yang wujud dan membandingkannya dengan keluaran yang digunakan untuk gambar-gambar ini.",
+  "Every Monday, an automatic check on GitHub also looks for new releases and alerts the team. The pictures are then rebuilt with one command, checked against NASA JPL positions again, and published once a person has looked at them.": "Setiap hari Isnin, semakan automatik di GitHub juga mencari keluaran baharu dan memaklumkan pasukan. Gambar kemudian dibina semula dengan satu arahan, disemak semula dengan kedudukan NASA JPL, dan diterbitkan selepas seseorang memeriksanya.",
+  "On every visit the site checks NASA's servers live and shows whether its pictures use the latest SPHEREx release. A weekly automatic check alerts the team to new releases.": "Pada setiap lawatan, laman ini menyemak pelayan NASA secara langsung dan menunjukkan sama ada gambarnya menggunakan keluaran SPHEREx terkini. Semakan automatik mingguan memaklumkan pasukan tentang keluaran baharu.",
+  "Data status": "Status data",
+  "<b>New NASA data:</b> {0} is out, not in these pictures yet": "<b>Data NASA baharu:</b> {0} sudah keluar, belum ada dalam gambar ini",
+  "<b>Right now: new data is out.</b> NASA has published {0}. These pictures come from {1}, so {2} is not in them yet. Newest image on this site: {3}.": "<b>Ketika ini: data baharu sudah keluar.</b> NASA telah menerbitkan {0}. Gambar ini daripada {1}, jadi {2} belum ada di dalamnya. Imej terbaharu di laman ini: {3}.",
+  "<b>Up to date with NASA</b> · SPHEREx {0} · checked just now": "<b>Terkini dengan NASA</b> · SPHEREx {0} · baru disemak",
+  "<b>Right now: up to date.</b> NASA has published {0}, and these pictures use {1} (releases left out are older copies of the same exposures). Newest image on this site: {2}.": "<b>Ketika ini: terkini.</b> NASA telah menerbitkan {0}, dan gambar ini menggunakan {1} (keluaran yang tidak digunakan ialah salinan lama rakaman yang sama). Imej terbaharu di laman ini: {2}.",
+  "Data from NASA SPHEREx {0} · newest image {1}": "Data daripada SPHEREx NASA {0} · imej terbaharu {1}",
+  "<b>NASA's servers did not answer just now</b>, so this could not be checked. These pictures come from {0}. Newest image on this site: {1}.": "<b>Pelayan NASA tidak menjawab sebentar tadi</b>, jadi perkara ini tidak dapat disemak. Gambar ini daripada {0}. Imej terbaharu di laman ini: {1}."
 };
