@@ -85,10 +85,10 @@ for i, s in enumerate(STARTS):
     print(f"line {i}: starts {s + 0.12:5.2f} s, lasts {len(a) / SR:4.2f} s, next scene at {STARTS[i + 1] if i + 1 < len(STARTS) else DUR:5.2f} s")
 # the music sits under the voice and rises in the gaps and at the end
 duck = np.convolve(speaking, np.ones(int(SR * 0.3)) / int(SR * 0.3), mode="same")
-out = voice * 0.9 + music * (0.62 - 0.34 * duck)
+out = voice * 0.9 + music * (0.5 - 0.41 * duck)
 out *= np.clip(t / 0.4, 0, 1) * np.clip((DUR - t) / 1.6, 0, 1)
 out = out / np.max(np.abs(out)) * 0.95
 with wave.open(sys.argv[2], "wb") as w:
     w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
     w.writeframes((out * 32767).astype("<i2").tobytes())
-print("wrote", sys.argv[2], "| music level without voice vs with:", round(float(np.sqrt(np.mean((music * 0.62) ** 2))), 3), round(float(np.sqrt(np.mean((music * 0.28) ** 2))), 3), "| voice:", round(float(np.sqrt(np.mean(voice[speaking > 0] ** 2)) * 0.9), 3))
+print("wrote", sys.argv[2], "| music level without voice vs with:", round(float(np.sqrt(np.mean((music * 0.5) ** 2))), 3), round(float(np.sqrt(np.mean((music * 0.09) ** 2))), 3), "| voice:", round(float(np.sqrt(np.mean(voice[speaking > 0] ** 2)) * 0.9), 3))
