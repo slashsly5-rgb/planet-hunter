@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Planet Hunter: see the sky move in real SPHEREx images</title>
 <meta name="description" content="Watch real NASA SPHEREx images change over time. Spot the worlds that move, play back their paths, and learn how Planet X could be found.">
-<link rel="stylesheet" href="style.css?v=52">
+<link rel="stylesheet" href="style.css?v=54">
 <link rel="modulepreload" href="vendor/three.module.min.js">
 </head>
 <body>
@@ -29,6 +29,7 @@
     <button data-view="explore">Explore</button>
     <button data-view="lab">Planet X</button>
     <button data-view="about">About</button>
+    <button data-view="judges">Judges</button>
     <button id="langBtn" class="lang" aria-label="Language / Bahasa"></button>
   </nav>
 </header>
@@ -52,6 +53,7 @@
         <button class="primary" data-view="voyage">Play the Voyage</button>
         <button id="startBtn" class="ghost" disabled>Loading…</button>
         <button id="exploreBtn" class="ghost" data-view="explore">Explore the sky</button>
+        <button class="ghost tour-btn" data-tour>Take the 60-second tour</button>
       </div>
       <p class="note">Every object here is already known. We have not found Planet X.</p>
     </div>
@@ -337,6 +339,70 @@
   </div>
 </section>
 
+<section id="judges" class="view" hidden>
+  <p class="eyebrow">For judges</p>
+  <h1>Planet Hunter, criterion by criterion</h1>
+  <p class="lead">The challenge: a public web tool that displays SPHEREx sky images and makes it easy for anyone to see how they change over time. Each claim below has a button that takes you straight to the proof on this site.</p>
+  <div class="judge-videos">
+    <figure><video src="requirements.mp4#t=1.5" controls preload="metadata" playsinline></video><figcaption>Demo: how it meets the challenge (30 seconds)</figcaption></figure>
+    <figure><video src="trailer.mp4#t=27" controls preload="metadata" playsinline></video><figcaption>Trailer (30 seconds)</figcaption></figure>
+  </div>
+  <div class="cta"><button class="primary" data-tour>Take the 60-second tour</button><button class="ghost" data-proof="about:method">How the data was made</button></div>
+
+  <div class="criteria">
+    <article class="crit">
+      <h2><b>1</b> Impact</h2>
+      <p class="crit-q">How many people can it help or inspire?</p>
+      <ul>
+        <li><span>Free and public. No login, no install, on a computer or a phone.</span><button class="small" data-proof="home">Open the start page</button></li>
+        <li><span>Teaches the real steps of discovery to anyone, from school pupils up.</span><button class="small" data-proof="hunt">Start the hunt</button></li>
+        <li><span>In English and Bahasa Malaysia (the BM button, top right).</span></li>
+        <li><span>A ready-made 30-minute lesson for teachers, in both languages.</span><a class="btnlink small" href="classroom.html">Classroom sheet</a></li>
+      </ul>
+    </article>
+    <article class="crit">
+      <h2><b>2</b> Creativity</h2>
+      <p class="crit-q">What is new here?</p>
+      <ul>
+        <li><span>A three-step hunt that copies real astronomy: detect, predict against a third real image, classify.</span><button class="small" data-proof="hunt">Try it</button></li>
+        <li><span>The 3D time stack: change over time as one shape.</span><button class="small" data-proof="explore:pluto:stack">See it</button></li>
+        <li><span>Three-colour pictures in which a moving world splits into red, green and blue.</span><button class="small" data-proof="explore:uranus:rgb">See it</button></li>
+        <li><span>Human against machine: an automatic detector tries the same job, and you see when it fails.</span><button class="small" data-proof="explore:makemake:scan">See it fail</button></li>
+        <li><span>A space game whose finale is the real method of the Planet Nine search: stacking images.</span><button class="small" data-proof="voyage">Play the Voyage</button></li>
+      </ul>
+    </article>
+    <article class="crit">
+      <h2><b>3</b> Validity</h2>
+      <p class="crit-q">Is the science sound and the data used accurately?</p>
+      <ul>
+        <li><span>Every sky image is a real SPHEREx observation, with its date, detector and a link to NASA's original file.</span><button class="small" data-proof="explore:pluto:play">See an image's details</button></li>
+        <li><span>Every position is checked against NASA JPL Horizons. The faintest detection used is 11 times the background noise. Eris was left out as too faint.</span><button class="small" data-proof="about:method">Data and method</button></li>
+        <li><span>Our own detector's score is shown honestly: right for 7 of 10 worlds.</span><button class="small" data-proof="explore:makemake:scan">See a miss</button></li>
+        <li><span>Simplifications, simulations and decoration are stated openly.</span><button class="small" data-proof="about:limits">What this can't do</button></li>
+      </ul>
+    </article>
+    <article class="crit">
+      <h2><b>4</b> Relevance</h2>
+      <p class="crit-q">Does it answer the challenge, with NASA data at its core?</p>
+      <ul>
+        <li><span>Displays SPHEREx sky images: 60 real images of 10 worlds.</span><button class="small" data-proof="explore">Explore all worlds</button></li>
+        <li><span>Change over time, one click each:</span><span class="btnrow"><button class="small" data-proof="explore:pluto:blink">Blink</button><button class="small" data-proof="explore:pluto:play">Time-lapse</button><button class="small" data-proof="explore:pluto:pass">Six months apart</button><button class="small" data-proof="explore:pluto:stack">3D stack</button></span></li>
+        <li><span>Open NASA data throughout: SPHEREx images from NASA/IPAC, positions and orbits from NASA JPL.</span><button class="small" data-proof="home:galaxy">See the orbits</button></li>
+      </ul>
+    </article>
+    <article class="crit">
+      <h2><b>5</b> Presentation</h2>
+      <p class="crit-q">Is it clear to someone without a science background?</p>
+      <ul>
+        <li><span>A 60-second guided tour of the whole site.</span><button class="small" data-tour>Take the tour</button></li>
+        <li><span>Step-by-step cards in the hunt, and plain-word explanations: tap any word with a dotted line, such as au or arcsecond.</span></li>
+        <li><span>Info cards on everything in the 3D view.</span><button class="small" data-proof="home:rings">Saturn's rings</button></li>
+        <li><span>Two 30-second videos, above.</span></li>
+      </ul>
+    </article>
+  </div>
+</section>
+
 <section id="about" class="view" hidden>
   <p class="eyebrow">About</p>
   <h1>What you are looking at</h1>
@@ -362,7 +428,32 @@
   <p>Each hunt mission has three steps taken from real astronomy: detect the object, predict where it will be in a third real image, and classify it by how fast it moves. The last two missions are Planet X drills: a made-up planet placed into real images, always labelled as simulated.</p>
   <p>The "Computer scan" is classic image processing, not machine learning: it subtracts one image from the other and flags what is left. On our ten real worlds its top pick is right for seven. It is fooled by cosmic rays and it misses the two faintest, most distant worlds, which is exactly where a Planet X would be.</p>
 
-  <h2>What this can't do</h2>
+  <h2 id="method">Data and method</h2>
+  <p>Every picture on this site was made by the same six steps, run once with Python scripts. Nothing is changed except alignment, brightness and colour.</p>
+  <ol class="pipeline">
+    <li><b>NASA JPL Horizons</b><span>Where each world was, at the exact moment of each image.</span></li>
+    <li><b>SPHEREx archive</b><span>Which exposures covered that spot (NASA/IPAC, releases DR1 and QR3).</span></li>
+    <li><b>Cut-out</b><span>Read only the small patch needed, from NASA's copy on AWS Open Data.</span></li>
+    <li><b>Align</b><span>Turn north up on a common grid, so stars match pixel for pixel.</span></li>
+    <li><b>Check</b><span>Keep a world only if it is detected at the predicted spot in both images, at least 5 times the background noise.</span></li>
+    <li><b>Your screen</b><span>Small pictures and one data file. The site never needs the archive while you use it.</span></li>
+  </ol>
+  <dl class="numbers">
+    <dt>Objects searched</dt><dd>11</dd>
+    <dt>Passed the check</dt><dd>10 (Eris failed: only 1.4 to 4 times the noise)</dd>
+    <dt>Real SPHEREx images used</dt><dd>60</dd>
+    <dt>Faintest detection used</dt><dd>11 times the background noise (Haumea)</dd>
+    <dt>Automatic detector</dt><dd>top pick right for 7 of 10 worlds; misses Makemake and Haumea</dd>
+  </dl>
+  <h3>Simplifications, stated openly</h3>
+  <ul>
+    <li>Positions are computed from Earth's centre. SPHEREx orbits about 7,000 km from it, which shifts the nearest worlds here by up to about 5 arcseconds: less than one detector pixel (6.2 arcseconds).</li>
+    <li>The Planet X simulator scales brightness and motion simply from Pluto (brightness falls with the fourth power of distance, motion with distance).</li>
+    <li>Classifying a world by its speed is a first clue only: speed across the sky also depends on where Earth is in its orbit.</li>
+    <li>Picture brightness is stretched separately in each image so faint things show. It is not a measurement.</li>
+  </ul>
+
+  <h2 id="limits">What this can't do</h2>
   <ul>
     <li>It does not search for new objects. Every object here is already known, and we chose and checked each one.</li>
     <li>It shows small prepared patches of sky, not the whole SPHEREx survey.</li>
@@ -380,6 +471,12 @@
 </section>
 </main>
 
-<script type="module" src="app.js?v=52"></script>
+<div id="tour" class="tour" hidden role="dialog" aria-live="polite">
+  <p class="tour-step" id="tourStep"></p>
+  <p id="tourText"></p>
+  <div class="tour-btns"><button id="tourBack" class="ghost small">Back</button><button id="tourNext" class="primary small">Next</button><button id="tourEnd" class="ghost small">End tour</button></div>
+</div>
+<div id="glossPop" class="gloss-pop" role="tooltip" hidden></div>
+<script type="module" src="app.js?v=54"></script>
 </body>
 </html>

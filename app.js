@@ -1,12 +1,12 @@
-import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=52";
-import { speedChart } from "./lab.js?v=52";
-import { t, tr } from "./i18n.js?v=52";
-import { initSpace } from "./space.js?v=52";
-import { showStack, hideStack } from "./stack3d.js?v=52";
-import { initHunt } from "./hunt.js?v=52";
-import { initVoyage } from "./voyage.js?v=52";
-import { detect, judge, overlay } from "./detect.js?v=52";
-import { composite, colourMarks } from "./colour.js?v=52";
+import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=54";
+import { speedChart } from "./lab.js?v=54";
+import { t, tr } from "./i18n.js?v=54";
+import { initSpace } from "./space.js?v=54";
+import { showStack, hideStack } from "./stack3d.js?v=54";
+import { initHunt } from "./hunt.js?v=54";
+import { initVoyage } from "./voyage.js?v=54";
+import { detect, judge, overlay } from "./detect.js?v=54";
+import { composite, colourMarks } from "./colour.js?v=54";
 
 // ---------- state ----------
 let levels = [], hunt = null;
@@ -178,3 +178,91 @@ fetch("levels.json")
     return initSpace(levels, { explore: (L) => openObject(L), stack: (L) => openObject(L, "stack") });
   })
   .catch((e) => { console.error(String((e && e.stack) || e)); fail(tr("The game data did not load. Check your connection and refresh the page.")); });
+
+
+// ---------- For judges: buttons that jump straight to the proof of a claim ----------
+const findL = (id) => levels.find((l) => l.id === id);
+function proof(spec) {
+  const [where, a, b] = spec.split(":");
+  if (where === "explore") return a ? openObject(findL(a), b || "rgb") : go("explore");
+  if (where === "hunt") return $("startBtn").click();
+  if (where === "home") { go("home"); if (a === "galaxy") window.__space?.galaxy(); else if (a) window.__space?.info(a); else window.__space?.home(); return; }
+  if (where === "about") { go("about"); if (a) setTimeout(() => document.getElementById(a)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); return; }
+  go(where);
+}
+document.addEventListener("click", (e) => {
+  const p = e.target.closest("[data-proof]"); if (p) { e.preventDefault(); proof(p.dataset.proof); return; }
+  if (e.target.closest("[data-tour]")) { e.preventDefault(); tourGo(0); }
+});
+
+// ---------- the 60-second guided tour ----------
+const TOUR = [
+  [() => { go("home"); window.__space?.galaxy(); }, "This is a model of our galaxy, the Milky Way. The Sun is one of its hundreds of billions of stars."],
+  [() => { go("home"); window.__space?.home(); }, "Our Solar System in 3D. Every planet and world is where NASA JPL says it is. You can click any of them to learn about it."],
+  [() => { go("home"); window.__space?.select("pluto"); }, "Choose a world and the camera flies there. These are real pictures of Pluto taken by NASA's SPHEREx telescope."],
+  [() => openObject(findL("pluto"), "play"), "Explore: watch Pluto move, picture by picture. The stars stay still. Every picture links to NASA's original file."],
+  [() => openObject(findL("pluto"), "stack"), "The 3D time stack: each sheet is one real image. Stars make straight pillars; Pluto cuts across them."],
+  [() => $("startBtn").click(), "The Hunt: find what moves, predict where it goes next, and decide where it orbits, just like an astronomer."],
+  [() => go("lab"), "The Planet X lab: why a distant planet is so hard to find."],
+  [() => go("voyage"), "And the Voyage: a space adventure across ten real worlds. Press Launch to play. That's the tour!"],
+];
+let tourAt = -1;
+function tourGo(i) {
+  if (i < 0 || i >= TOUR.length) return tourEnd();
+  tourAt = i; TOUR[i][0]();
+  $("tourStep").textContent = t`Tour ${i + 1} of ${TOUR.length}`; $("tourText").textContent = tr(TOUR[i][1]);
+  $("tourBack").disabled = i === 0; $("tourNext").textContent = i === TOUR.length - 1 ? tr("Finish") : tr("Next");
+  $("tour").hidden = false; document.body.classList.add("touring");
+}
+function tourEnd() { tourAt = -1; $("tour").hidden = true; document.body.classList.remove("touring"); }
+$("tourNext").onclick = () => tourGo(tourAt + 1); $("tourBack").onclick = () => tourGo(tourAt - 1); $("tourEnd").onclick = tourEnd;
+addEventListener("keydown", (e) => { if (tourAt < 0) return; if (e.key === "Escape") tourEnd(); else if (e.key === "ArrowRight") tourGo(tourAt + 1); else if (e.key === "ArrowLeft") tourGo(tourAt - 1); });
+
+// ---------- plain-word explanations: dotted words open a one-line meaning ----------
+const GLOSS = {
+  au: "Astronomical unit: the distance from Earth to the Sun, about 150 million km.",
+  arcsecond: "A tiny angle: 1/3600 of a degree. The full Moon is about 1,800 arcseconds wide.",
+  arcminute: "A small angle: 1/60 of a degree. The full Moon is about 30 arcminutes wide.",
+  infrared: "Light just beyond red, invisible to our eyes. SPHEREx sees in infrared.",
+  magnitude: "Astronomers' brightness scale: lower numbers are brighter. 5 steps is 100 times brighter.",
+  noise: "The random speckle in every image. A real detection must stand well above it.",
+  lightyear: "The distance light travels in a year, about 9.5 trillion km.",
+  micrometre: "A millionth of a metre. Used to measure the wavelength of infrared light.",
+  dwarf: "A world big enough to be round, but which has not cleared its orbit of other bodies, like Pluto.",
+};
+const TERM_RE = /\b(au|[Aa]rcseconds?|[Aa]rcminutes?|[Ii]nfrared|[Mm]agnitude|[Bb]ackground noise|light-years?|micrometres?|[Dd]warf planets?|arka saat|arka minit|[Ii]nframerah|hingar latar|mikrometer|magnitud|planet kerdil)\b/;
+const KEY = (w) => { w = w.toLowerCase();
+  return w === "au" ? "au" : w.startsWith("arcs") || w === "arka saat" ? "arcsecond" : w.startsWith("arcm") || w === "arka minit" ? "arcminute" : w.includes("infra") || w.includes("inframerah") ? "infrared"
+    : w.startsWith("magnitud") ? "magnitude" : w.includes("noise") || w === "hingar latar" ? "noise" : w.startsWith("light") ? "lightyear" : w.startsWith("micro") || w === "mikrometer" ? "micrometre" : "dwarf"; };
+const SKIP = "button, a, abbr, svg, h1, h2, h3, label, input, select, textarea, script, style, .chip, .viewer, .labels, .slabel, .vy-hud, .vy-comm, .space-time, .step-head, .tour, .gloss-pop, .vy-card, .intro-cap, #stats";
+function glossify(root) {
+  const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), todo = [];
+  for (let n = walk.nextNode(); n; n = walk.nextNode()) if (TERM_RE.test(n.nodeValue) && !n.parentElement?.closest(SKIP)) todo.push(n);
+  for (const n of todo) {
+    const m = n.nodeValue.match(TERM_RE); if (!m) continue;
+    const key = KEY(m[1]), block = n.parentElement.closest("p, li, dd, td, div") || n.parentElement;
+    if (block.querySelector(`abbr.term[data-k="${key}"]`)) continue;      // one explanation per word per paragraph is enough
+    const after = n.splitText(m.index), rest = after.splitText(m[1].length);
+    const ab = document.createElement("abbr"); ab.className = "term"; ab.dataset.k = key; ab.tabIndex = 0; ab.textContent = after.nodeValue;
+    after.replaceWith(ab); if (TERM_RE.test(rest.nodeValue)) todo.push(rest);
+  }
+}
+let glossTimer = 0;
+new MutationObserver((ms) => {
+  if (ms.every((m) => m.target.parentElement?.closest?.(SKIP) || m.target.closest?.(SKIP))) return;   // ignore the many per-frame HUD updates
+  clearTimeout(glossTimer); glossTimer = setTimeout(() => glossify(document.querySelector("main")), 150);
+}).observe(document.querySelector("main"), { childList: true, subtree: true, characterData: true });
+glossify(document.querySelector("main"));
+function showGloss(el) {
+  const pop = $("glossPop"); pop.textContent = tr(GLOSS[el.dataset.k]); pop.hidden = false;
+  const r = el.getBoundingClientRect(), w = Math.min(300, innerWidth - 24);
+  pop.style.width = w + "px"; pop.style.left = Math.max(12, Math.min(innerWidth - w - 12, r.left + r.width / 2 - w / 2)) + "px";
+  pop.style.top = (r.bottom + 8 + pop.offsetHeight > innerHeight ? r.top - pop.offsetHeight - 8 : r.bottom + 8) + "px";
+}
+document.addEventListener("click", (e) => { const a = e.target.closest("abbr.term"); if (a) showGloss(a); else $("glossPop").hidden = true; });
+document.addEventListener("mouseover", (e) => { const a = e.target.closest("abbr.term"); if (a && matchMedia("(hover: hover)").matches) showGloss(a); });
+document.addEventListener("mouseout", (e) => { if (e.target.closest("abbr.term") && matchMedia("(hover: hover)").matches) $("glossPop").hidden = true; });
+document.addEventListener("focusin", (e) => { const a = e.target.closest("abbr.term"); if (a) showGloss(a); });
+document.addEventListener("focusout", (e) => { if (e.target.closest("abbr.term")) $("glossPop").hidden = true; });
+addEventListener("scroll", () => ($("glossPop").hidden = true), { passive: true });
+window.__tour = { go: tourGo, at: () => tourAt };

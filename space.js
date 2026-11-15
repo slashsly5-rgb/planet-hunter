@@ -1,10 +1,10 @@
 // 3D Solar System: real positions from NASA JPL Horizons (orbits.json). Each world SPHEREx photographed is a place to fly to.
 import * as THREE from "./vendor/three.module.min.js";
 import { OrbitControls } from "./vendor/OrbitControls.js";
-import { $, Viewer, fmtDate } from "./viewer.js?v=52";
-import { t, tr } from "./i18n.js?v=52";
-import { irTexture } from "./irtex.js?v=52";
-import { composite } from "./colour.js?v=52";
+import { $, Viewer, fmtDate } from "./viewer.js?v=54";
+import { t, tr } from "./i18n.js?v=54";
+import { irTexture } from "./irtex.js?v=54";
+import { composite } from "./colour.js?v=54";
 import { EffectComposer } from "./vendor/postprocessing/EffectComposer.js";
 import { RenderPass } from "./vendor/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "./vendor/postprocessing/UnrealBloomPass.js";
@@ -107,8 +107,8 @@ export async function initSpace(levels, actions) {
     earth: { name: "Earth", kind: "our home planet", text: "SPHEREx orbits Earth, passing over the poles about 650 km up. From there it scans a circle of sky at right angles to the Sun, shown here as a sheet of light.",
       facts: [["Diameter", "12,742 km"], ["Distance from the Sun", "1 au, by definition about 150 million km"], ["One year", "365.25 days"], ["Moons", "1"]] },
     mars: { name: "Mars", kind: "rocky planet", text: "The red planet. Beyond it lies the asteroid belt.", facts: [["Diameter", "6,779 km"], ["Distance from the Sun", "1.52 au"], ["One year", "687 days"], ["Moons", "2"]] },
-    jupiter: { name: "Jupiter", kind: "gas giant planet", text: "The largest planet. Its gravity shapes the asteroid belt inside its orbit.", facts: [["Diameter", "139,820 km, 11 Earths across"], ["Distance from the Sun", "5.2 au"], ["One year", "11.9 Earth years"], ["Known moons", "95"]] },
-    saturn: { name: "Saturn", kind: "gas giant planet", text: "The ringed planet. Click its rings to learn about them.", facts: [["Diameter", "116,460 km"], ["Distance from the Sun", "9.5 au"], ["One year", "29.4 Earth years"], ["Known moons", "more than 140"]] },
+    jupiter: { name: "Jupiter", kind: "gas giant planet", text: "The largest planet. Its gravity shapes the asteroid belt inside its orbit.", facts: [["Diameter", "139,820 km, 11 Earths across"], ["Distance from the Sun", "5.2 au"], ["One year", "11.9 Earth years"], ["Known moons", "more than 90"]] },
+    saturn: { name: "Saturn", kind: "gas giant planet", text: "The ringed planet. Click its rings to learn about them.", facts: [["Diameter", "116,460 km"], ["Distance from the Sun", "9.5 au"], ["One year", "29.4 Earth years"], ["Known moons", "more than 270"]] },
     rings: { name: "Saturn's rings", kind: "rings of ice", text: "Countless pieces of water ice, from grains to boulders, each orbiting Saturn. They are enormously wide but astonishingly thin.",
       facts: [["Width", "about 280,000 km"], ["Typical thickness", "about 10 metres"], ["Made of", "mostly water ice"]] },
     belt: { name: "The asteroid belt", kind: "a ring of rocky bodies", text: "Vesta, Ceres, Pallas, Juno and Hygiea all live here. Asteroids are close to us, so they cross the sky quickly: that is why they are the easy targets in the hunt.",
@@ -407,6 +407,6 @@ export async function initSpace(levels, actions) {
   });
   let hoverAt = 0;
   renderer.domElement.addEventListener("pointermove", (e) => { const now = performance.now(); if (now - hoverAt < 80) return; hoverAt = now; renderer.domElement.style.cursor = pickAt(e) ? "pointer" : "grab"; });
-  window.__space = { select: (id) => select(worlds.find((w) => w.L.id === id)), px: () => $("pxBtn").click(), info: (k) => showInfo(k, k === "saturn" || k === "rings" ? planetGlobes[4].g : null), galaxy: () => $("galaxyBtn").click(), far: () => camera.position.length() };   // used by the browser check
+  window.__space = { select: (id) => select(worlds.find((w) => w.L.id === id)), px: () => $("pxBtn").click(), home: () => { clear(); flyTo(HOME.cam, HOME.look, 4000); setPlaying(true); }, info: (k) => showInfo(k, k === "saturn" || k === "rings" ? planetGlobes[4].g : null), galaxy: () => $("galaxyBtn").click(), far: () => camera.position.length() };   // used by the browser check
   return true;
 }

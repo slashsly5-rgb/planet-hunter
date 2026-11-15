@@ -6,8 +6,8 @@
 // The ship, debris, lasers, radio chatter, sounds and the look of each world are game fiction.
 // The scanner pictures, positions, distances and sunlight levels are real.
 import * as THREE from "./vendor/three.module.min.js";
-import { $, Viewer, span } from "./viewer.js?v=52";
-import { makeStackGame } from "./stackgame.js?v=52";
+import { $, Viewer, span } from "./viewer.js?v=54";
+import { makeStackGame } from "./stackgame.js?v=54";
 import { EffectComposer } from "./vendor/postprocessing/EffectComposer.js";
 import { RenderPass } from "./vendor/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "./vendor/postprocessing/UnrealBloomPass.js";
