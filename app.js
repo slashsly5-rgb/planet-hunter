@@ -1,12 +1,12 @@
-import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=54";
-import { speedChart } from "./lab.js?v=54";
-import { t, tr } from "./i18n.js?v=54";
-import { initSpace } from "./space.js?v=54";
-import { showStack, hideStack } from "./stack3d.js?v=54";
-import { initHunt } from "./hunt.js?v=54";
-import { initVoyage } from "./voyage.js?v=54";
-import { detect, judge, overlay } from "./detect.js?v=54";
-import { composite, colourMarks } from "./colour.js?v=54";
+import { BANDS, ARCHIVE, $, fmtDate, fmtTime, span, Viewer, ring, pathSvg, ruler } from "./viewer.js?v=56";
+import { speedChart } from "./lab.js?v=56";
+import { t, tr } from "./i18n.js?v=56";
+import { initSpace } from "./space.js?v=56";
+import { showStack, hideStack } from "./stack3d.js?v=56";
+import { initHunt } from "./hunt.js?v=56";
+import { initVoyage } from "./voyage.js?v=56";
+import { detect, judge, overlay } from "./detect.js?v=56";
+import { composite, colourMarks } from "./colour.js?v=56";
 
 // ---------- state ----------
 let levels = [], hunt = null;
@@ -126,6 +126,7 @@ function openObject(L, mode = "rgb") {
   ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
   $("exRuler").innerHTML = ruler(L.name, L.distance_au);
   $("exChart").innerHTML = speedChart(levels, L.id);
+  $("exBands").innerHTML = bandChart(frames.concat(L.other_pass ? [L.other_pass] : []));
   $("passBtn").hidden = !L.other_pass;
   ex.onFrame = (i) => {
     const f = ex.frames[i];
@@ -179,6 +180,19 @@ fetch("levels.json")
   })
   .catch((e) => { console.error(String((e && e.stack) || e)); fail(tr("The game data did not load. Check your connection and refresh the page.")); });
 
+
+// ---------- which of SPHEREx's six detectors (its colours of infrared light) a world's images came from ----------
+const DETECTORS = [["D1", 0.75, 1.11], ["D2", 1.10, 1.65], ["D3", 1.63, 2.43], ["D4", 2.40, 3.82], ["D5", 3.82, 4.42], ["D6", 4.42, 5.00]];
+function bandChart(frames) {
+  const used = new Set(frames.map((f) => f.band)), X = (um) => 20 + (um - 0.4) / (5.0 - 0.4) * 560;
+  const bars = DETECTORS.map(([d, a, b]) => { const on = used.has(d); return `<rect x="${X(a)}" y="${on ? 22 : 30}" width="${X(b) - X(a) - 1}" height="${on ? 30 : 14}" rx="3" fill="${on ? "#ffb547" : "#27335a"}"/><text x="${(X(a) + X(b)) / 2}" y="70" text-anchor="middle" class="${on ? "me" : ""}">${d}</text>`; }).join("");
+  const ticks = [0.5, 1, 2, 3, 4, 5].map((u) => `<text x="${X(u)}" y="92" text-anchor="middle">${u}</text>`).join("");
+  const n = frames.filter((f) => f.band).length;
+  return `<div class="rulerbox"><svg viewBox="0 0 600 100" role="img" aria-label="${tr("Which colours of infrared light these images captured")}">
+    <rect x="${X(0.4)}" y="26" width="${X(0.7) - X(0.4)}" height="22" fill="url(#vis)"/><defs><linearGradient id="vis"><stop offset="0" stop-color="#7a4dff"/><stop offset=".5" stop-color="#3dd17a"/><stop offset="1" stop-color="#ff4a3a"/></linearGradient></defs>
+    <text x="${X(0.55)}" y="18" text-anchor="middle">${tr("eyes")}</text>${bars}${ticks}
+  </svg><p class="note">${t`SPHEREx sees infrared light from 0.75 to 5 micrometres, beyond what our eyes see, split into 102 colours by six detectors. These ${n} images came from the highlighted detectors, the short-wavelength ones, where worlds in our Solar System shine by reflected sunlight.`}</p></div>`;
+}
 
 // ---------- For judges: buttons that jump straight to the proof of a claim ----------
 const findL = (id) => levels.find((l) => l.id === id);
