@@ -1,7 +1,7 @@
 // Planet X lab: a speed-versus-distance chart, and a simulator that hides a made-up planet in real SPHEREx images.
-import { $, Viewer, span } from "./viewer.js?v=56";
-import { t, tr } from "./i18n.js?v=56";
-import { isHit } from "./score.js?v=56";
+import { $, Viewer, span } from "./viewer.js?v=58";
+import { t, tr } from "./i18n.js?v=58";
+import { isHit } from "./score.js?v=58";
 
 const PLUTO_KM = 1188;   // Pluto's radius; the simulator scales brightness from the real Pluto in the same images
 const SIZES = [{ label: "Pluto-sized", km: 1188 }, { label: "Earth-sized", km: 6371 }, { label: "3× Earth's width", km: 19113 }];

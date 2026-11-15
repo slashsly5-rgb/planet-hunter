@@ -29,6 +29,7 @@ await cdp("Runtime.enable"); await cdp("Page.enable");
 await cdp("Emulation.setDeviceMetricsOverride", { width: +W, height: +H, deviceScaleFactor: 1, mobile: +W < 600 });
 await cdp("Page.navigate", { url: (process.env.PH_URL || "http://localhost:8765") + "/index.html#judges" });
 await sleep(+process.env.PH_WAIT || 14000);
+if (process.env.PH_LANG) { await js(`localStorage.setItem("lang", ${JSON.stringify(process.env.PH_LANG)})`); await cdp("Page.reload"); await sleep(+process.env.PH_WAIT || 14000); }
 await shot("j1-judges.png");
 const proofs = await js(`[...document.querySelectorAll("#judges [data-proof]")].map((b) => b.dataset.proof)`);
 const landed = [];
@@ -52,5 +53,5 @@ for (let i = 0; i < 8; i++) {
   await js(`document.querySelector("#tourNext").click()`); await sleep(3500);
 }
 const tourClosed = await js(`document.querySelector("#tour").hidden`);
-console.log(JSON.stringify({ proofs: proofs.length, landed, terms, pop, tour, tourClosed, errors }, null, 1));
+console.log(JSON.stringify({ proofs: proofs.length, landed, terms, pop, tour, tourClosed, missing: await js(`[...(window.__missing || [])]`), errors }, null, 1));
 ws.close(); proc.kill();
