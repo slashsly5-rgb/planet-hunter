@@ -1,5 +1,5 @@
 // Shared pieces: the image viewer, date formatting, and the SVG overlays.
-import { t, tr, locale } from "./i18n.js?v=15";
+import { t, tr, locale } from "./i18n.js?v=22";
 export const BLINK_MS = 700, PLAY_MS = 650;
 export const BANDS = { D1: "0.75 to 1.11", D2: "1.10 to 1.65", D3: "1.63 to 2.43" };   // micrometres
 export const ARCHIVE = "https://irsa.ipac.caltech.edu/ibe/data/spherex/";

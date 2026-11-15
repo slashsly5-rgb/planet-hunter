@@ -301,3 +301,19 @@ main:has(#voyage:not([hidden])) { max-width: none; padding: 0; }
 .vy-grade { display: inline-grid; place-items: center; width: 34px; height: 34px; margin-left: 10px; border-radius: 8px; font: 800 20px/1 system-ui, sans-serif; letter-spacing: 0; color: #06121f; background: var(--good); box-shadow: 0 0 18px var(--good); vertical-align: middle; }
 .vy-grade.gS { background: #ffd35c; box-shadow: 0 0 22px #ffb547; } .vy-grade.gB { background: #8ab4ff; box-shadow: 0 0 14px #8ab4ff; } .vy-grade.gC { background: #9aa6c4; box-shadow: none; }
 .vy-chip { min-width: 120px; }
+
+/* voyage v3: scanner modes, stack finale, ending */
+.vy-scan-head b { color: #ffd35c; }
+.vy-stackbox { display: flex; flex-direction: column; gap: 8px; }
+.vy-stackview { position: relative; aspect-ratio: 1; width: min(100%, 46vh); margin: 0 auto; border-radius: 10px; overflow: hidden; border: 1px solid #3a4a80; cursor: crosshair; }
+.vy-stackview canvas, .vy-stackview svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.vy-stackview canvas { filter: url(#ir); image-rendering: auto; } .vy-stackview svg { pointer-events: none; }
+.vy-slider { display: grid; grid-template-columns: 170px 1fr; gap: 10px; align-items: center; }
+.vy-slider span { font: 600 10px/1.2 ui-monospace, Consolas, monospace; letter-spacing: .16em; color: var(--hud); }
+.vy-slider input { accent-color: var(--accent); height: 30px; }
+.vy-hint { margin: 0; font-weight: 600; color: #ffd35c; min-height: 1.5em; }
+.vy-stackbox .note { margin: 0; }
+.vy-end { text-align: center; max-height: 86vh; overflow: auto; }
+.vy-grades { list-style: none; padding: 0; margin: 12px auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 14px; text-align: left; }
+.vy-grades li { display: flex; justify-content: space-between; align-items: center; background: #0d1830; border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px 4px 10px; font-size: .9rem; }
+.vy-grades .vy-grade { width: 26px; height: 26px; font-size: 15px; margin: 0; }

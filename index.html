@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Planet Hunter: see the sky move in real SPHEREx images</title>
 <meta name="description" content="Watch real NASA SPHEREx images change over time. Spot the worlds that move, play back their paths, and learn how Planet X could be found.">
-<link rel="stylesheet" href="style.css?v=15">
+<link rel="stylesheet" href="style.css?v=22">
 <link rel="modulepreload" href="vendor/three.module.min.js">
 </head>
 <body>
@@ -253,9 +253,17 @@
   <div id="vyCard" class="vy-card" hidden><p id="vyKicker"></p><h1 id="vyTitle"></h1><p id="vySub"></p></div>
 
   <div id="vyScan" class="vy-scan" hidden>
-    <p class="vy-scan-head">SCANNER · REAL SPHEREx IMAGES</p>
+    <p class="vy-scan-head">SCANNER · REAL SPHEREx IMAGES · <b id="vyMode"></b></p>
     <div class="vy-viewwrap"><div id="vyView"></div><div id="vyReticle" class="vy-reticle"></div></div>
-    <div id="vyLockRow" class="vy-lockrow"><span>LOCK</span><div class="vy-meter lock"><i id="vyLock"></i></div><b id="vyTime"></b></div>
+    <div id="vyStackBox" class="vy-stackbox" hidden>
+      <div class="vy-stackview"><canvas id="vyStack"></canvas><svg id="vyStackMark" class="mark" viewBox="0 0 100 100"></svg></div>
+      <p id="vyStackInfo" class="note"></p>
+      <label class="vy-slider"><span>DRIFT EAST–WEST</span><input id="vyVx" type="range"></label>
+      <label class="vy-slider"><span>DRIFT NORTH–SOUTH</span><input id="vyVy" type="range"></label>
+      <div class="vy-lockrow"><span>SIGNAL</span><div class="vy-meter lock"><i id="vySignal"></i></div><b id="vyStackTime"></b></div>
+      <p id="vyStackHint" class="vy-hint"></p>
+    </div>
+    <div id="vyLockRow" class="vy-lockrow"><span id="vyLockLabel">LOCK</span><div class="vy-meter lock"><i id="vyLock"></i></div><b id="vyTime"></b></div>
     <div id="vyResult" class="vy-result" hidden>
       <p class="vy-ok">LOCK CONFIRMED <b id="vyGrade" class="vy-grade"></b></p>
       <h2 id="vyRName"></h2>
@@ -264,6 +272,18 @@
       <p id="vyRFact"></p>
       <p class="badge">✔ Checked against NASA JPL Horizons</p>
       <button id="vyNext" class="primary"></button>
+    </div>
+  </div>
+
+  <div id="vyEnd" class="vy-start vy-end" hidden>
+    <p class="eyebrow">Voyage complete</p>
+    <h1 id="vyEndRank"></h1>
+    <p class="lead">Data collected: <b id="vyEndData"></b></p>
+    <ul id="vyEndGrades" class="vy-grades"></ul>
+    <p>Every one of the ten worlds you locked is real, seen in real SPHEREx images at positions checked against NASA JPL. The eleventh was a simulation. If a Planet X exists, it is still out there, and stacking images is how astronomers are searching for it.</p>
+    <div class="cta" style="justify-content:center">
+      <button id="vyAgain" class="primary">Fly again</button>
+      <button class="ghost" data-view="explore">See the real worlds</button>
     </div>
   </div>
 
@@ -276,7 +296,7 @@
       <li><b>Hold the mouse button</b> or <b>Z</b>: fire lasers</li>
       <li><b>Space</b>: boost</li>
       <li><b>Rings</b>: shield, magnet, rapid fire</li>
-      <li><b>Scanner</b>: keep the reticle on the dot that jumps</li>
+      <li><b>Scanner</b>: a different challenge at each world. Your ship's computer explains each one</li>
     </ul>
     <button id="vyStart" class="primary">Launch</button>
     <p class="note">The ship, debris, lasers, radio voices and the look of each world are game fiction. The scanner pictures, positions, distances and sunlight levels are real.</p>
@@ -323,6 +343,6 @@
 </section>
 </main>
 
-<script type="module" src="app.js?v=15"></script>
+<script type="module" src="app.js?v=22"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-// Plays the first chapters of the Voyage in headless Edge and saves screenshots.
+// Plays the Voyage in headless Edge: opening, three chapters (one of each scanner type), then the Planet X finale. Saves screenshots.
 // usage: node tests/voyage-check.mjs <outdir> [width height]     PH_URL=<site> to test the live site (default http://localhost:8765)
 import { spawn } from "node:child_process";
 import { writeFileSync, mkdtempSync } from "node:fs";
@@ -25,38 +25,60 @@ const cdp = (method, params = {}) => new Promise((r) => { waiting.set(++id, r); 
 const js = async (expr) => (await cdp("Runtime.evaluate", { expression: expr, returnByValue: true, awaitPromise: true })).result?.value;
 const shot = async (name) => writeFileSync(join(out, name), Buffer.from((await cdp("Page.captureScreenshot", { format: "png" })).data, "base64"));
 const move = (x, y) => cdp("Input.dispatchMouseEvent", { type: "mouseMoved", x, y });
+const click = async (x, y) => { await move(x, y); for (const type of ["mousePressed", "mouseReleased"]) await cdp("Input.dispatchMouseEvent", { type, x, y, button: "left", clickCount: 1 }); };
 const st = () => js(`window.__voyage.state()`);
-const until = async (phase, ms = 15000) => { for (let t = 0; t < ms; t += 200) { if ((await st()).phase === phase) return true; await sleep(200); } return false; };
+const until = async (phases, ms = 20000) => { for (let t = 0; t < ms; t += 200) { if (phases.includes((await st()).phase)) return true; await sleep(200); } return false; };
+const rect = (sel) => js(`(() => { const r = document.querySelector("${sel}").getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; })()`);
+const at = async (pt, size) => { const r = await rect("#vyView"); return [r[0] + pt.x * r[2] / size, r[1] + pt.y * r[2] / size]; };
 
 await cdp("Runtime.enable"); await cdp("Page.enable");
 await cdp("Emulation.setDeviceMetricsOverride", { width: +W, height: +H, deviceScaleFactor: 1, mobile: false });
-await cdp("Page.navigate", { url: (process.env.PH_URL || "http://localhost:8765") + "/index.html" });
+await cdp("Page.navigate", { url: (process.env.PH_URL || "http://localhost:8765") + "/index.html#voyage" });
 await sleep(+process.env.PH_WAIT || 5000);
-await js(`document.querySelector('.top [data-view="voyage"]').click()`); await sleep(800);
 await shot("v1-start.png");
-await js(`document.querySelector("#vyStart").click()`); await sleep(1200);
-await shot("v2-title.png");
+await js(`document.querySelector("#vyStart").click()`); await sleep(2500);
+await shot("v2-opening.png");
 const log = [];
-for (let chapter = 0; chapter < 2; chapter++) {
-  log.push(`chapter ${chapter + 1}: reached fly = ${await until("fly")}`);
+for (let chapter = 0; chapter < 3; chapter++) {
+  log.push(`chapter ${chapter + 1}: reached fly = ${await until(["fly"], 40000)}`);
   await js(`window.__voyage.safe()`);
-  await move(900, 300); await sleep(1500); await move(500, 600); await sleep(1500);
+  await move(900, 300); await sleep(1400); await move(500, 600); await sleep(1400);
   await shot(`v3-fly-${chapter}.png`);
   await js(`window.__voyage.arrive()`);
-  log.push(`chapter ${chapter + 1}: reached scan = ${await until("scan")}`);
-  await sleep(600); await shot(`v4-scan-${chapter}.png`);
-  // follow the object with the pointer, as a player would
-  for (let i = 0; i < 80; i++) {
-    const s = await st(); if (s.phase !== "scan") break;
-    const r = await js(`(() => { const r = document.querySelector("#vyView").getBoundingClientRect(); return [r.left, r.top, r.width]; })()`);
-    const f = s.frames[s.i === 1 ? 1 : 0];
-    await move(r[0] + f.x * r[2] / s.size, r[1] + f.y * r[2] / s.size); await sleep(90);
+  await until(["scan", "ghost"]);
+  let s = await st(); await sleep(500); await shot(`v4-scan-${chapter}.png`);
+  if (s.phase === "ghost") {
+    await click(...(await at(s.frames[0], s.size))); await sleep(300); await click(...(await at(s.frames[1], s.size)));
+  } else {
+    for (let i = 0; i < 90; i++) {                     // follow the object with the pointer, as a player would
+      s = await st(); if (s.phase !== "scan") break;
+      await move(...(await at(s.frames[s.i === 1 ? 1 : 0], s.size))); await sleep(90);
+    }
+    s = await st();
+    if (s.phase === "probe") { await sleep(400); await shot(`v4b-probe-${chapter}.png`); await click(...(await at(s.target, s.size))); }
   }
-  log.push(`chapter ${chapter + 1}: locked = ${(await st()).phase === "result"}`);
-  await sleep(500); await shot(`v5-result-${chapter}.png`);
+  await sleep(700); s = await st();
+  log.push(`chapter ${chapter + 1} (${s.scanType}): result = ${s.phase === "result"}, ${await js(`document.querySelector("#vyRFact").textContent.slice(0, 70)`)}`);
+  await shot(`v5-result-${chapter}.png`);
   await js(`document.querySelector("#vyNext").click()`); await sleep(900);
-  await shot(`v6-warp-${chapter}.png`);
 }
-log.push(`after two chapters: ${JSON.stringify(await st()).slice(0, 80)}`);
+// the finale
+await js(`window.__voyage.skipTo(10)`);
+log.push(`finale: reached fly = ${await until(["fly"], 15000)}`);
+await sleep(1500); await shot("v7-finale-fly.png");
+await js(`window.__voyage.arrive()`);
+log.push(`finale: reached stack = ${await until(["stack"], 20000)}`);
+await sleep(600); await shot("v8-stack-start.png");
+let s = await st();
+log.push(`stack signal with no drift: ${s.snr?.toFixed(1)}`);
+await js(`(() => { const set = (id, v) => { const e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event("input")); }; const t = window.__voyage.state().truth; set("vyVx", t.vx); set("vyVy", t.vy); })()`);
+await sleep(500); s = await st();
+log.push(`stack signal with the right drift: ${s.snr?.toFixed(1)}`);
+await shot("v9-stack-found.png");
+const r = await rect("#vyStack");
+await click(r[0] + s.spot.x * r[2], r[1] + s.spot.y * r[3]);
+await sleep(11000);
+log.push(`ending shown = ${await js(`!document.querySelector("#vyEnd").hidden`)}, rank = ${await js(`document.querySelector("#vyEndRank").textContent`)}`);
+await shot("v10-ending.png");
 console.log(JSON.stringify({ log, errors }, null, 1));
 ws.close(); proc.kill();

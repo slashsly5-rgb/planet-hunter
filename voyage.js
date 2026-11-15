@@ -6,7 +6,8 @@
 // The ship, debris, lasers, radio chatter, sounds and the look of each world are game fiction.
 // The scanner pictures, positions, distances and sunlight levels are real.
 import * as THREE from "./vendor/three.module.min.js";
-import { $, Viewer, span } from "./viewer.js?v=15";
+import { $, Viewer, span } from "./viewer.js?v=22";
+import { makeStackGame } from "./stackgame.js?v=22";
 
 const LOCK_RADIUS = 30, LOCK_SECONDS = 2.6, SCAN_SECONDS = 24;
 const BASE_SPEED = 70, BOOST = 1.7, FIRE_EVERY = 0.15, BOLT_SPEED = 420;
@@ -19,10 +20,24 @@ const ZONES = {
   kuiper: { fog: 0x05030c, glow: [0x5a2aa0, 0x2a1a6a, 0x7a2a6a], rock: [0.72, 0.2, 0.36], ice: 0.35, name: "KUIPER BELT" },
 };
 const zoneOf = (L) => (L.distance_au < 6 ? "belt" : L.distance_au < 31 ? "giants" : "kuiper");
+// the last chapter: fiction. No such object is known; the scanner there uses a simulated planet on real images
+const FINALE = { id: "planetx", name: "Unknown signal", kind: "unidentified source", distance_au: 300, finale: true };
+// what the scanner asks for in each chapter, so no two neighbours play the same
+const SCAN_TYPES = ["lock", "ghost", "probe"];
+const dist2 = (p, q) => Math.hypot(p.x - q.x, p.y - q.y);
+// a third real image for the probe shot: the next one in which the object has clearly moved on
+function targetOf(L) {
+  const track = L.track || [], [a, b] = L.frames, ib = track.findIndex((f) => f.source === b.source), ia = track.findIndex((f) => f.source === a.source);
+  if (ib < 0 || ia < 0) return null;
+  const later = track.slice(ib + 1).find((f) => dist2(f, b) >= 12); if (later) return { frame: later, forward: true };
+  const earlier = track.slice(0, ia).reverse().find((f) => dist2(f, a) >= 12); return earlier ? { frame: earlier, forward: false } : null;
+}
+const when = (iso) => new Date(iso + "Z").toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "UTC" }) + " UTC";
 const LOOK = {   // how each world is drawn (artist's impression, not data)
   vesta: { base: "#8d8a86", kind: "rock", lumpy: 0.2 }, ceres: { base: "#77746f", kind: "rock", lumpy: 0.03, spots: true }, pallas: { base: "#7f8088", kind: "rock", lumpy: 0.16 },
   juno: { base: "#93897c", kind: "rock", lumpy: 0.22 }, hygiea: { base: "#55524f", kind: "rock", lumpy: 0.07 },
   uranus: { base: "#9fe3e6", kind: "gas", band: "#8ad6dc", ring: 0x9fd8e0, tilt: 1.45 }, neptune: { base: "#3a5fd0", kind: "gas", band: "#2a49b0", storm: true },
+  earth: { base: "#2f66c0", kind: "gas", band: "#3f9a5a" }, planetx: { base: "#1d2440", kind: "gas", band: "#2a3a6a" },
   pluto: { base: "#c9ab8a", kind: "ice", heart: true }, makemake: { base: "#b5674a", kind: "ice" }, haumea: { base: "#d8d4d0", kind: "ice", stretch: [1.7, 0.85, 1], ring: 0xcfc6c0, tilt: 0.3 },
 };
 
@@ -173,7 +188,9 @@ export function initVoyage(levels) {
   let shieldT = 0, magnetT = 0, rapidT = 0, lock = 0, scanLeft = 0, assisted = false, tickAt = 0, world = null, zone = ZONES.belt;
   const aim = new THREE.Vector2(), keys = new Set(), mouse = { x: 0, y: 0, used: false };
   const hud = (id, v) => ($(id).textContent = v);
-  const L = () => chapters[Math.min(n, chapters.length - 1)];
+  const L = () => (n >= chapters.length ? FINALE : chapters[n]);
+  const TOTAL = chapters.length + 1, grades = [];
+  let scanType = "lock", target = null, ghost = null, stack = null, stackLeft = 0, probeLeft = 0, probeBonus = 0;
 
   function say(who, text) {
     const el = $("vyComm"); el.hidden = false; $("vyWho").textContent = who; const body = $("vySay"); body.textContent = "";
@@ -188,7 +205,7 @@ export function initVoyage(levels) {
   function bars() {
     $("vyHull").style.width = Math.max(0, Math.min(100, hull)) + "%"; $("vyHull").classList.toggle("low", hull <= 40);
     hud("vyData", data); $("vyProg").style.width = Math.min(100, (travelled / goal) * 100) + "%";
-    hud("vyChapter", `${n + 1} / ${chapters.length}  ${L().name.toUpperCase()}`);
+    hud("vyChapter", `${n + 1} / ${TOTAL}  ${L().name.toUpperCase()}`);
     hud("vyCombo", combo > 1 ? `x${combo}` : ""); hud("vyBuff", [shieldT > 0 && "SHIELD", magnetT > 0 && "MAGNET", rapidT > 0 && "RAPID FIRE"].filter(Boolean).join("  "));
   }
   const clearField = (boom) => { for (const r of rocks) if (r.live) { if (boom && r.solid && r.m.position.z > -260) explode(r.m.position, r.r, 0x9fb4ff); r.live = false; r.m.visible = false; } [...frags, ...powers, ...bolts].forEach((o) => { o.live = false; o.m.visible = false; }); };
@@ -207,8 +224,8 @@ export function initVoyage(levels) {
     for (let i = 0; i < 22; i++) spawnRock(true); for (let i = 0; i < 40; i++) spawnRock(false);
     rocks.filter((r) => r.live).forEach((r) => (r.m.position.z = rand(-460, -130)));
     $("vyScan").hidden = true; $("vyHud").hidden = false; bars(); sound.setEngine(1, false);
-    await card(`CHAPTER ${n + 1}  ·  ${zone.name}`, L().name.toUpperCase(), `${L().kind}  ·  ${L().distance_au} au from the Sun`);
-    say("CONTROL", n === 0 ? "Commander, SPHEREx picked up something moving out here. Punch through the debris and get us a scanner lock. Steer with the mouse, hold the button to fire, Space to boost."
+    await card(L().finale ? "FINAL CHAPTER  ·  BEYOND THE KUIPER BELT" : `CHAPTER ${n + 1}  ·  ${zone.name}`, L().finale ? "THE DARK" : L().name.toUpperCase(), L().finale ? "300 au from the Sun  ·  no known world" : `${L().kind}  ·  ${L().distance_au} au from the Sun`);
+    say("CONTROL", L().finale ? "Commander, there is something else out here. Fainter than anything we have locked. Nothing is charted at this distance. Get us there in one piece." : n === 0 ? "Commander, SPHEREx picked up something moving out here. Punch through the debris and get us a scanner lock. Steer with the mouse, hold the button to fire, Space to boost."
       : pick([`Next signal: ${L().name}, ${L().distance_au} au out. The field is thicker here. Watch your hull.`, `${L().name} ahead. Sunlight is down to ${$("vySun").textContent} of what Earth gets. Stay sharp.`, `Signal bearing confirmed: ${L().name}. Clear a path, Commander.`]));
     phase = "fly";
   }
@@ -299,13 +316,13 @@ export function initVoyage(levels) {
   function startArrive() {
     phase = "arrive"; tPhase = 0; clearField(true); sound.setEngine(0.6, false); firing = false;
     root.classList.add("cine");
-    say("CONTROL", `There it is. ${L().name}. Bringing the scanner online.`);
+    say("CONTROL", L().finale ? "We are on top of the signal, but there is nothing to see. Scanner, deep mode." : `There it is. ${L().name}. Bringing the scanner online.`);
   }
   function arrive(dt) {
     tPhase += dt; const k = Math.min(1, tPhase / 3.2), e = k * k * (3 - 2 * k);
     world.scale.setScalar(68); world.position.set(10 - e * 82, 6 - e * 2, -460 + e * 245);   // sweep past: the world settles as a globe off the port side
     ship.position.x += (6 - ship.position.x) * dt * 1.5; ship.position.y += (-2 - ship.position.y) * dt * 1.5;
-    if (k >= 1) { root.classList.remove("cine"); startScan(); }
+    if (k >= 1) { root.classList.remove("cine"); if (L().finale) startStack(); else startScan(); }
   }
 
   // ---------- SCAN ----------
@@ -313,12 +330,24 @@ export function initVoyage(levels) {
   let cursor = null;
   $("vyView").addEventListener("pointermove", (e) => { const r = $("vyView").getBoundingClientRect(); cursor = { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height }; reticle.style.left = cursor.x * 100 + "%"; reticle.style.top = cursor.y * 100 + "%"; });
   async function startScan() {
-    phase = "card"; sound.setEngine(0.25, false); lock = 0; scanLeft = SCAN_SECONDS; assisted = false; cursor = null;
-    await view.load(L().frames, L().size); view.pair = [0, 1]; view.blinkMs = Math.max(430, 700 - n * 30); view.setMode("blink"); view.mark("");   // the flip gets faster each chapter
+    phase = "card"; sound.setEngine(0.25, false); lock = 0; scanLeft = SCAN_SECONDS; assisted = false; cursor = null; probeBonus = 0;
+    target = targetOf(L()); scanType = SCAN_TYPES[n % 3]; if (scanType === "probe" && !target) scanType = "lock";
+    $("vyView").hidden = false; $("vyStackBox").hidden = true; reticle.hidden = false;
+    $("vyLock").style.width = "0%"; reticle.classList.remove("on");
+    await view.load([...L().frames, ...(target ? [target.frame] : [])], L().size); view.pair = [0, 1]; view.blinkMs = Math.max(430, 700 - n * 30); view.mark("");   // the flip gets faster each chapter
     $("vyScan").hidden = false; $("vyScan").classList.remove("done"); $("vyResult").hidden = true; $("vyLockRow").hidden = false;
-    say("ASTRA", n === 0 ? "Scanner online. These are two real SPHEREx images, flipping. The stars hold still. Keep the reticle on the one thing that jumps until I have a lock."
-      : "Scanner online. Find the jumper and stay on it. Ignore the cosmic-ray flashes.");
-    phase = "scan";
+    hud("vyMode", { lock: "TRACKING LOCK", probe: "TRACKING LOCK + PROBE", ghost: "SUBTRACTION SCAN" }[scanType]);
+    if (scanType === "ghost") {
+      // subtraction scan: one image minus the other. Stars cancel; the mover is left behind twice. Click both ghosts.
+      view.setMode("diff"); ghost = { a: false, b: false }; hud("vyLockLabel", "GHOSTS");
+      say("ASTRA", "Subtraction scan. I took one real image away from the other. The stars cancel out. The mover is left behind twice: click both of its ghosts. Wrong clicks cost time.");
+      phase = "ghost";
+    } else {
+      view.setMode("blink"); hud("vyLockLabel", "LOCK");
+      say("ASTRA", n === 0 ? "Scanner online. These are two real SPHEREx images, flipping. The stars hold still. Keep the reticle on the one thing that jumps until I have a lock."
+        : "Scanner online. Find the jumper and stay on it. Ignore the cosmic-ray flashes.");
+      phase = "scan";
+    }
   }
   function scan(dt) {
     scanLeft -= dt;
@@ -327,7 +356,7 @@ export function initVoyage(levels) {
     reticle.classList.toggle("on", !!on); $("vyLock").style.width = lock * 100 + "%"; hud("vyTime", Math.max(0, Math.ceil(scanLeft)));
     if (on && performance.now() > tickAt) { tickAt = performance.now() + 140; sound.lockTick(lock); }
     if (Math.random() < dt * (1.4 + n * 0.25)) interference();
-    if (lock >= 1) return locked();
+    if (lock >= 1) return scanType === "probe" ? startProbe() : locked();
     if (scanLeft <= 0) {
       sound.fail(); hull = Math.max(10, hull - 12); scanLeft = SCAN_SECONDS; assisted = true; bars();
       const [a, b] = L().frames;
@@ -340,16 +369,109 @@ export function initVoyage(levels) {
     view.svg.insertAdjacentHTML("beforeend", `<circle id="${id}" cx="${rand(20, s - 20)}" cy="${rand(20, s - 20)}" r="${rand(3, 7)}" fill="#fff" opacity=".9"/>`);
     setTimeout(() => view.svg.querySelector("#" + id)?.remove(), 170);
   }
+  // ghost scan: click both leftovers of the mover in the subtracted image
+  function ghostClick(p) {
+    const [a, b] = L().frames, hitA = !ghost.a && dist2(p, a) < 26, hitB = !ghost.b && dist2(p, b) < 26;
+    if (hitA) ghost.a = true; else if (hitB) ghost.b = true;
+    else { scanLeft -= 3; sound.fail(); root.classList.add("hurt"); setTimeout(() => root.classList.remove("hurt"), 160); return; }
+    sound.lockTick(ghost.a && ghost.b ? 1 : 0.5); lock = (ghost.a + ghost.b) / 2; $("vyLock").style.width = lock * 100 + "%";
+    view.mark((ghost.a ? `<circle class="ring" cx="${a.x}" cy="${a.y}" r="18"/>` : "") + (ghost.b ? `<circle class="ring" cx="${b.x}" cy="${b.y}" r="18"/>` : ""));
+    if (ghost.a && ghost.b) locked();
+  }
+  function ghostTick(dt) {
+    scanLeft -= dt; hud("vyTime", Math.max(0, Math.ceil(scanLeft)));
+    if (scanLeft <= 0) {
+      sound.fail(); hull = Math.max(10, hull - 12); scanLeft = SCAN_SECONDS; assisted = true; bars();
+      const [a, b] = L().frames;
+      view.mark(`<circle cx="${(a.x + b.x) / 2}" cy="${(a.y + b.y) / 2}" r="${dist2(a, b) / 2 + 55}" fill="none" stroke="#ffb547" stroke-width="2" stroke-dasharray="8 8"/>`);
+      say("ASTRA", "Out of time, and the scanner overheated. Both ghosts are inside the amber circle.");
+    }
+  }
+  // probe shot: say where the object will be in a third real image
+  function startProbe() {
+    phase = "probe"; probeLeft = 14; const [a, b] = L().frames, f = target.frame;
+    view.stop(); view.show(1); sound.locked();
+    view.mark(`<line class="path" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"/><circle class="ring was" cx="${a.x}" cy="${a.y}" r="18"/><circle class="ring" cx="${b.x}" cy="${b.y}" r="18"/>`);
+    hud("vyLockLabel", "PROBE"); $("vyLock").style.width = "100%";
+    say("ASTRA", `Lock held. Now launch a probe. It was at the dashed ring on ${when(a.date)} and the solid ring on ${when(b.date)}. Click where it ${target.forward ? "will be" : "was"} on ${when(f.date)}.`);
+  }
+  function probeClick(p) {
+    const f = target.frame, err = dist2(p, f) * L().arcsec_per_px;
+    probeBonus = Math.round(Math.max(0, 160 - err * 1.6)); sound.laser(); setTimeout(() => (probeBonus > 80 ? sound.locked() : sound.boom(false)), 350);
+    view.show(2); locked();
+    view.svg.insertAdjacentHTML("beforeend", `<line class="path" x1="${p.x}" y1="${L().size}" x2="${p.x}" y2="${p.y}"/><circle class="dot now" cx="${p.x}" cy="${p.y}" r="6"/><circle class="ring pulse" cx="${f.x}" cy="${f.y}" r="18"/><circle class="ring" cx="${f.x}" cy="${f.y}" r="18"/>`);
+    hud("vyRFact", `Probe: ${Math.round(err)} arcseconds from where it really was in the third real image (${when(f.date)}). +${probeBonus} data. ` + $("vyRFact").textContent);
+  }
+  function probeTick(dt) { probeLeft -= dt; hud("vyTime", Math.max(0, Math.ceil(probeLeft))); if (probeLeft <= 0) { say("ASTRA", "Launch window closed. No probe this time."); locked(); } }
+  $("vyView").addEventListener("click", (e) => {
+    if (phase !== "ghost" && phase !== "probe") return;
+    const r = $("vyView").getBoundingClientRect(), p = { x: ((e.clientX - r.left) / r.width) * L().size, y: ((e.clientY - r.top) / r.height) * L().size };
+    if (phase === "ghost") ghostClick(p); else probeClick(p);
+  });
+
+  // ---------- FINALE: shift-and-stack for a planet too faint to see ----------
+  const base = levels.find((l) => l.id === "pluto" && l.track?.length >= 6) || [...levels].sort((a, b) => (b.track?.length || 0) - (a.track?.length || 0))[0];
+  async function startStack() {
+    phase = "card"; sound.setEngine(0.2, false);
+    $("vyScan").hidden = false; $("vyScan").classList.remove("done"); $("vyResult").hidden = true; $("vyLockRow").hidden = true;
+    $("vyView").hidden = true; $("vyStackBox").hidden = false; reticle.hidden = true; hud("vyMode", "DEEP SCAN  ·  SHIFT AND STACK  ·  SIMULATED TARGET");
+    stack = await makeStackGame(base, $("vyStack"));
+    for (const id of ["vyVx", "vyVy"]) { $(id).min = -stack.max; $(id).max = stack.max; $(id).step = 0.05; $(id).value = 0; }
+    stackLeft = 110; stack.snr = stack.render(0, 0); stack.found = false; $("vyStackMark").innerHTML = "";
+    hud("vyStackInfo", `${stack.count} real SPHEREx images of one patch of sky, taken over ${Math.round(stack.days)} days, with a simulated planet hidden in each.`);
+    say("ASTRA", "Too faint for any single image. So we stack them. I have already subtracted everything that stays still: the stars are gone, leaving noise. Now guess how the planet drifts, and I slide every image back along your guess. Get it right and the planet lands on the same spot each time and adds up. Move the two drift controls. Watch the signal.");
+    phase = "stack";
+  }
+  function stackMove() {
+    if (phase !== "stack") return;
+    stack.snr = stack.render(+$("vyVx").value, +$("vyVy").value);
+    $("vySignal").style.width = Math.max(0, Math.min(100, (stack.snr / 5) * 100)) + "%";
+    const ready = stack.snr >= 3.6;
+    if (ready && !stack.found) { stack.found = true; sound.locked(); say("ASTRA", "There! Something is adding up. Click it before the signal fades."); }
+    if (!ready) stack.found = false;
+    hud("vyStackHint", ready ? "A dot has risen out of the noise. Click it." : stack.snr > 2.7 ? "Getting warmer. The stars are smearing and something is building." : "Nothing yet. Try a different drift.");
+  }
+  $("vyVx").oninput = stackMove; $("vyVy").oninput = stackMove;
+  $("vyStack").addEventListener("click", (e) => {
+    if (phase !== "stack") return;
+    const r = $("vyStack").getBoundingClientRect(), p = { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height };
+    if (stack.found && Math.hypot(p.x - stack.spot.x, p.y - stack.spot.y) < 0.07) return planetFound();
+    stackLeft -= 6; sound.fail();
+  });
+  function stackTick(dt) {
+    stackLeft -= dt; hud("vyStackTime", Math.max(0, Math.ceil(stackLeft)));
+    // once the drift is right, give the player a few seconds, then narrow down where to look
+    stack.readyFor = stack.found ? (stack.readyFor || 0) + dt : 0;
+    if (stack.readyFor > 7 && !$("vyStackMark").innerHTML) {
+      const cx = stack.spot.x * 100 + (Math.random() - 0.5) * 12, cy = stack.spot.y * 100 + (Math.random() - 0.5) * 12;
+      $("vyStackMark").innerHTML = `<circle cx="${cx}" cy="${cy}" r="15" fill="none" stroke="#ffb547" stroke-width=".6" stroke-dasharray="2 2"/>`;
+      say("ASTRA", "It is somewhere inside the amber circle. The brightest speck.");
+    }
+    if (!stack.found && $("vyStackMark").innerHTML) $("vyStackMark").innerHTML = "";
+    if (stackLeft <= 0) {      // help: set one of the two controls correctly
+      stackLeft = 90; assisted = true; $("vyVx").value = stack.truth.vx; stackMove(); sound.fail();
+      say("ASTRA", "Signal fading. I have fixed the east-west drift for you. Find the north-south drift.");
+    }
+  }
+  async function planetFound() {
+    phase = "card"; data += assisted ? 300 : 800; grades.push(assisted ? "A" : "S"); sound.locked(); bars();
+    $("vyStackMark").innerHTML = `<circle class="ring" cx="${stack.spot.x * 100}" cy="${stack.spot.y * 100}" r="5" style="stroke-width:1"/><circle class="ring pulse" cx="${stack.spot.x * 100}" cy="${stack.spot.y * 100}" r="5" style="stroke-width:1"/>`;
+    say("CONTROL", "Lock confirmed. A planet nobody could see in a single picture. Commander, that is how the real search for Planet X is done.");
+    await new Promise((ok) => setTimeout(ok, 4200));
+    await card("SIMULATED DISCOVERY", "PLANET X", "In this game. The real one, if it exists, is still out there.", 4600);
+    ending();
+  }
+
   function locked() {
     phase = "result"; const W = L(), [a, b] = W.frames, used = SCAN_SECONDS - scanLeft;
     const pts = Math.round(Math.max(0, 100 - Math.max(0, hullAtStart - hull) * 1.1 - Math.max(0, used - 7) * 2.2 - (assisted ? 30 : 0))), grade = pts >= 85 ? "S" : pts >= 65 ? "A" : pts >= 40 ? "B" : "C";
-    const bonus = { S: 300, A: 200, B: 120, C: 60 }[grade]; data += bonus; sound.locked(); bars();
+    const bonus = { S: 300, A: 200, B: 120, C: 60 }[grade] + probeBonus; data += bonus; grades[n] = grade; sound.locked(); bars();
     view.mark(`<line class="path" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"/><circle class="ring was" cx="${a.x}" cy="${a.y}" r="18"/><circle class="ring" cx="${b.x}" cy="${b.y}" r="18"/><circle class="ring pulse" cx="${b.x}" cy="${b.y}" r="18"/>`);
     $("vyLockRow").hidden = true; $("vyResult").hidden = false; $("vyScan").classList.add("done");
     hud("vyGrade", grade); $("vyGrade").className = "vy-grade g" + grade;
     hud("vyRName", W.name); hud("vyRKind", `${W.kind} · ${W.distance_au} au from the Sun`); hud("vyRBlurb", W.blurb);
     hud("vyRFact", `It moved ${W.moved_arcsec} arcseconds in ${span(W.days_between)} between these two real images. Rocks destroyed: ${kills}. Bonus: +${bonus} data.`);
-    $("vyNext").textContent = n + 1 < chapters.length ? "Warp to the next signal  (Space)" : "Finish the voyage  (Space)";
+    $("vyNext").textContent = n + 1 < chapters.length ? "Warp to the next signal  (Space)" : "Follow the last signal  (Space)";
     say("CONTROL", `Lock confirmed: ${W.name}. Position matches NASA JPL. ${grade === "S" ? "Flawless flying, Commander." : grade === "A" ? "Good work, Commander." : "We got it. Keep that hull together next time."}`);
   }
 
@@ -357,17 +479,33 @@ export function initVoyage(levels) {
   function startWarp() {
     if (phase !== "result") return;
     const from = L(); n++;
-    if (n >= chapters.length) return ending();
     phase = "warp"; $("vyScan").hidden = true; sound.warp(); sound.setEngine(1, true);
     const au = Math.abs(L().distance_au - from.distance_au), mins = L().distance_au * 8.317;
-    say("ASTRA", `Jumping ${au.toFixed(1)} au outward. At ${L().distance_au} au, sunlight takes ${mins < 90 ? Math.round(mins) + " minutes" : (mins / 60).toFixed(1) + " hours"} to arrive.`);
+    say("ASTRA", L().finale ? `Long jump: ${Math.round(au)} au, past everything we know. Out there sunlight takes ${(mins / 60).toFixed(0)} hours to arrive.` : `Jumping ${au.toFixed(1)} au outward. At ${L().distance_au} au, sunlight takes ${mins < 90 ? Math.round(mins) + " minutes" : (mins / 60).toFixed(1) + " hours"} to arrive.`);
     setTimeout(() => { if (phase === "warp") startFly(); }, 2600);
   }
-  async function ending() {
-    phase = "card"; $("vyScan").hidden = true; sound.setEngine(0.2, false);
-    await card("VOYAGE COMPLETE", `${data} DATA`, "Every world you locked is real. Planet X is still out there.", 5200);
-    $("vyHud").hidden = true; $("vyComm").hidden = true; $("vyStartBox").hidden = false; $("vyStart").textContent = "Fly again";
-    phase = "idle"; sound.setEngine(0, false); n = 0;
+  function ending() {
+    phase = "idle"; $("vyScan").hidden = true; $("vyHud").hidden = true; $("vyComm").hidden = true; sound.setEngine(0, false);
+    const score = { S: 4, A: 3, B: 2, C: 1 }, avg = grades.reduce((t, g) => t + score[g], 0) / Math.max(1, grades.length);
+    hud("vyEndRank", avg >= 3.6 ? "ACE DISCOVERER" : avg >= 2.8 ? "DEEP-SPACE PILOT" : avg >= 2 ? "SURVEY PILOT" : "CADET");
+    hud("vyEndData", data);
+    $("vyEndGrades").innerHTML = [...chapters, FINALE].map((c, i) => `<li><span>${c.finale ? "Planet X (simulated)" : c.name}</span><b class="vy-grade g${grades[i] || "C"}">${grades[i] || "-"}</b></li>`).join("");
+    $("vyEnd").hidden = false; n = 0;
+  }
+  // opening: Earth orbit, the mission, then the first jump
+  async function opening() {
+    phase = "card"; n = 0; hull = 100; data = 0; grades.length = 0;
+    zone = ZONES.giants; scene.fog.color.set(0x030a14); scene.background.set(0x030a14); nebulae.forEach((nb, i) => nb.material.color.set(ZONES.giants.glow[i]));
+    if (world) scene.remove(world);
+    world = makeWorld("earth"); world.position.set(-62, -6, -150); world.scale.setScalar(58); scene.add(world);
+    $("vyHud").hidden = true; sound.setEngine(0.4, false);
+    await card("EARTH ORBIT  ·  2026", "PLANET HUNTER", "A voyage to the edge of the Solar System", 3400);
+    say("CONTROL", "Commander. NASA's SPHEREx telescope has mapped the whole sky, again and again. In its pictures, ten points of light refuse to stay still. Go and find out what they are.");
+    await new Promise((ok) => setTimeout(ok, 6200));
+    say("ASTRA", "And there is an eleventh signal, far past the rest. Too faint to be sure. Course laid in. Jumping to the asteroid belt.");
+    await new Promise((ok) => setTimeout(ok, 4600));
+    phase = "warp"; sound.warp(); sound.setEngine(1, true);
+    setTimeout(() => { if (phase === "warp") startFly(); }, 2400);
   }
   $("vyNext").onclick = startWarp;
 
@@ -380,7 +518,8 @@ export function initVoyage(levels) {
   addEventListener("keyup", (e) => keys.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key));
   holder.addEventListener("pointermove", (e) => { const r = holder.getBoundingClientRect(); mouse.x = ((e.clientX - r.left) / r.width) * 2 - 1; mouse.y = -(((e.clientY - r.top) / r.height) * 2 - 1); mouse.used = true; });
   holder.addEventListener("pointerdown", () => (firing = true)); addEventListener("pointerup", () => (firing = false));
-  $("vyStart").onclick = () => { sound.start(); n = 0; hull = 100; data = 0; $("vyStartBox").hidden = true; startFly(); };
+  $("vyStart").onclick = () => { sound.start(); $("vyStartBox").hidden = true; opening(); };
+  $("vyAgain").onclick = () => { $("vyEnd").hidden = true; opening(); };
 
   // ---------- draw ----------
   function resize() { const w = holder.clientWidth, h = holder.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
@@ -391,6 +530,7 @@ export function initVoyage(levels) {
     if (root.offsetParent === null) { last = now; sound.setEngine(0, false); return; }
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
     if (phase === "fly") fly(dt); else if (phase === "arrive") arrive(dt); else if (phase === "scan") scan(dt);
+    else if (phase === "ghost") ghostTick(dt); else if (phase === "probe") probeTick(dt); else if (phase === "stack") stackTick(dt);
     const moving = phase === "fly", flow = phase === "warp" ? 950 : moving ? speed * (boost ? BOOST : 1) : phase === "arrive" ? 40 : 14, len = Math.max(0.4, flow * 0.05);
     for (let i = 0; i < NS; i++) { const s = stars[i]; s.z += flow * dt; if (s.z > 20) { s.z = -470; s.x = rand(-110, 110); s.y = rand(-70, 70); } sp.set([s.x, s.y, s.z, s.x, s.y, s.z - len], i * 6); }
     starGeo.attributes.position.needsUpdate = true;
@@ -412,11 +552,12 @@ export function initVoyage(levels) {
     ship.children.forEach((c) => { if (c.userData.nav) c.material.opacity = (now % 1000) < 500 ? 1 : 0.15; });
     shield.material.opacity = shieldT > 0 ? 0.22 + 0.1 * Math.sin(now / 90) : 0; shield.rotation.y += dt * 2;
     if (world) world.userData.body.rotation.y += dt * 0.12;
-    if (!moving && phase !== "arrive") { ship.rotation.z *= 0.92; ship.rotation.x *= 0.92; ship.position.y += (Math.sin(now / 700) * 0.4 - 1.5 - ship.position.y) * dt * 1.5; ship.position.x += ((phase === "scan" || phase === "result" ? -7 : 0) - ship.position.x) * dt * 1.2; }
+    if (!moving && phase !== "arrive") { ship.rotation.z *= 0.92; ship.rotation.x *= 0.92; ship.position.y += (Math.sin(now / 700) * 0.4 - 1.5 - ship.position.y) * dt * 1.5; ship.position.x += ((["scan", "result", "ghost", "probe", "stack"].includes(phase) ? -7 : 0) - ship.position.x) * dt * 1.2; }
     renderer.render(scene, camera);
   }
   resize(); requestAnimationFrame(frame);
 
   // used by the browser check
-  window.__voyage = { state: () => ({ phase, n, hull, data, lock, kills, frames: phase === "scan" || phase === "result" ? L().frames : null, size: L().size, i: view.i }), arrive: () => { travelled = goal; }, safe: () => { hull = 1e6; } };
+  window.__voyage = { state: () => ({ phase, n, hull, data, lock, kills, scanType, frames: ["scan", "result", "ghost", "probe"].includes(phase) ? L().frames : null, target: target?.frame, size: L().size, i: view.i, truth: stack?.truth, spot: stack?.spot, snr: stack?.snr }),
+    arrive: () => { travelled = goal; }, safe: () => { hull = 1e6; }, skipTo: (k) => { n = k; hull = 1e6; $("vyStartBox").hidden = true; $("vyEnd").hidden = true; startFly(); } };
 }

@@ -1,6 +1,6 @@
 // English / Bahasa Malaysia. English text is the key; ms.js holds the Malay for each key.
 // Switching language reloads the page, so every screen is drawn again in the chosen language.
-import { MS } from "./ms.js?v=15";
+import { MS } from "./ms.js?v=22";
 
 export const lang = localStorage.getItem("lang") === "ms" ? "ms" : "en";
 export const locale = lang === "ms" ? "ms-MY" : "en-GB";
