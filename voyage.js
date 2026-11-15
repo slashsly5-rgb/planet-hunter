@@ -6,8 +6,8 @@
 // The ship, debris, lasers, radio chatter, sounds and the look of each world are game fiction.
 // The scanner pictures, positions, distances and sunlight levels are real.
 import * as THREE from "./vendor/three.module.min.js";
-import { $, Viewer, span } from "./viewer.js?v=47";
-import { makeStackGame } from "./stackgame.js?v=47";
+import { $, Viewer, span } from "./viewer.js?v=48";
+import { makeStackGame } from "./stackgame.js?v=48";
 import { EffectComposer } from "./vendor/postprocessing/EffectComposer.js";
 import { RenderPass } from "./vendor/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "./vendor/postprocessing/UnrealBloomPass.js";
@@ -307,7 +307,8 @@ export function initVoyage(levels) {
     rocks.filter((r) => r.live).forEach((r) => (r.m.position.z = rand(-460, -130)));
     $("vyScan").hidden = true; $("vyHud").hidden = false; bars(); sound.setEngine(1, false);
     await card(L().finale ? "FINAL CHAPTER  ·  BEYOND THE KUIPER BELT" : `CHAPTER ${n + 1}  ·  ${zone.name}`, L().finale ? "THE DARK" : L().name.toUpperCase(), L().finale ? "300 au from the Sun  ·  no known world" : `${L().kind}  ·  ${L().distance_au} au from the Sun`);
-    say("CONTROL", L().finale ? "Commander, there is something else out here. Fainter than anything we have locked. Nothing is charted at this distance. Get us there in one piece." : n === 0 ? (PHONE ? "Commander, SPHEREx picked up something moving out here. Punch through the debris and get us a scanner lock. Drag your finger to steer and fire. Use the buttons for missiles and boost."
+    say("CONTROL", L().finale ? "Commander, there is something else out here. Fainter than anything we have locked. Nothing is charted at this distance. Get us there in one piece." : n === 0 ? (tilt ? "Commander, SPHEREx picked up something moving out here. Punch through the debris and get us a scanner lock. Tilt your phone to steer. The lasers fire by themselves. Use the buttons for missiles and boost."
+        : PHONE ? "Commander, SPHEREx picked up something moving out here. Punch through the debris and get us a scanner lock. Drag your finger to steer and fire. Use the buttons for missiles and boost."
         : "Commander, SPHEREx picked up something moving out here. Punch through the debris and get us a scanner lock. Steer with the mouse, hold the left button for lasers, right click for a missile, Space to boost.")
       : pick([`Next signal: ${L().name}, ${L().distance_au} au out. The field is thicker here. Watch your hull.`, `${L().name} ahead. Sunlight is down to ${$("vySun").textContent} of what Earth gets. Stay sharp.`, `Signal bearing confirmed: ${L().name}. Clear a path, Commander.`]));
     phase = "fly";
@@ -337,14 +338,15 @@ export function initVoyage(levels) {
   function fly(dt) {
     boost = keys.has(" ") || keys.has("Shift");
     const v = speed * (boost ? BOOST : 1), kx = (keys.has("ArrowRight") || keys.has("d") ? 1 : 0) - (keys.has("ArrowLeft") || keys.has("a") ? 1 : 0), ky = (keys.has("ArrowUp") || keys.has("w") ? 1 : 0) - (keys.has("ArrowDown") || keys.has("s") ? 1 : 0);
-    if (kx || ky) { mouse.used = false; aim.x = THREE.MathUtils.clamp(aim.x + kx * dt * 2, -1, 1); aim.y = THREE.MathUtils.clamp(aim.y + ky * dt * 2, -1, 1); } else if (mouse.used) aim.set(mouse.x, mouse.y);
+    if (tilt) aim.set(tilt.x, tilt.y);
+    else if (kx || ky) { mouse.used = false; aim.x = THREE.MathUtils.clamp(aim.x + kx * dt * 2, -1, 1); aim.y = THREE.MathUtils.clamp(aim.y + ky * dt * 2, -1, 1); } else if (mouse.used) aim.set(mouse.x, mouse.y);
     const tx = aim.x * 13 * Math.min(1, camera.aspect * 1.15), ty = aim.y * 7.5, px = ship.position.x;      // a tall phone screen sees a narrower strip
     ship.position.x += (tx - ship.position.x) * Math.min(1, dt * 6); ship.position.y += (ty - ship.position.y) * Math.min(1, dt * 6);
     ship.rotation.z = THREE.MathUtils.lerp(ship.rotation.z, THREE.MathUtils.clamp(-(ship.position.x - px) / Math.max(dt, 0.001) * 0.04, -1.1, 1.1), 0.18);
     ship.rotation.x = THREE.MathUtils.lerp(ship.rotation.x, (ty - ship.position.y) * 0.06, 0.2);
     travelled += v * dt;
     // weapons
-    fireAt -= dt; if ((firing || keys.has("z") || keys.has("Control")) && fireAt <= 0) { fireBolts(); fireAt = rapidT > 0 ? FIRE_EVERY * 0.45 : FIRE_EVERY; }
+    fireAt -= dt; if ((firing || tilt || keys.has("z") || keys.has("Control")) && fireAt <= 0)      // when steering by tilt, the lasers fire by themselves { fireBolts(); fireAt = rapidT > 0 ? FIRE_EVERY * 0.45 : FIRE_EVERY; }
     for (const b of bolts) if (b.live) { b.m.position.z -= BOLT_SPEED * dt; if (b.m.position.z < -430) { b.live = false; b.m.visible = false; } }
     moveMissiles(dt, v);
     // spawning: the field thickens every chapter
@@ -602,6 +604,23 @@ export function initVoyage(levels) {
   });
   addEventListener("keyup", (e) => keys.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key));
   holder.addEventListener("pointermove", (e) => { const r = holder.getBoundingClientRect(); mouse.x = ((e.clientX - r.left) / r.width) * 2 - 1; mouse.y = -(((e.clientY - r.top) / r.height) * 2 - 1); mouse.used = true; });
+  // phones: tilt to steer. Left/right tilt moves the ship sideways; tipping the top of the phone away or towards you moves it up or down.
+  let tilt = null, tiltZero = null;
+  function onTilt(e) {
+    if (e.gamma == null || e.beta == null) return;
+    const ang = screen.orientation?.angle ?? window.orientation ?? 0;      // the sensor axes swap when the phone is held sideways
+    const lr = ang === 90 ? e.beta : ang === 270 || ang === -90 ? -e.beta : e.gamma, fb = ang === 90 ? -e.gamma : ang === 270 || ang === -90 ? e.gamma : e.beta;
+    if (!tiltZero) tiltZero = { fb };                                     // however the phone is held at the start counts as level
+    tilt = { x: THREE.MathUtils.clamp(lr / 24, -1, 1), y: THREE.MathUtils.clamp(-(fb - tiltZero.fb) / 20, -1, 1) };
+  }
+  async function enableTilt() {      // must be called from a tap: iPhones ask the player for permission
+    if (!PHONE || !window.DeviceOrientationEvent || enableTilt.on) return;
+    try {
+      if (typeof DeviceOrientationEvent.requestPermission === "function" && (await DeviceOrientationEvent.requestPermission()) !== "granted") return;
+      addEventListener("deviceorientation", onTilt); enableTilt.on = true;
+    } catch { /* no sensor or permission refused: finger steering still works */ }
+  }
+  $("vyTouchCentre").addEventListener("pointerdown", (e) => { e.preventDefault(); tiltZero = null; });
   // mouse: left button fires, right button launches. Touch: a finger on the screen steers and fires; on-screen buttons launch and boost.
   let steerId = null;
   const steerTo = (e) => { const r = holder.getBoundingClientRect(); mouse.x = ((e.clientX - r.left) / r.width) * 2 - 1; mouse.y = -(((e.clientY - r.top) / r.height) * 2 - 1); mouse.used = true; };
@@ -614,8 +633,8 @@ export function initVoyage(levels) {
   // touch has no hover: a finger on the scanner moves the reticle
   $("vyView").addEventListener("pointerdown", (e) => $("vyView").dispatchEvent(new PointerEvent("pointermove", e)));
   root.addEventListener("contextmenu", (e) => e.preventDefault());      // right click launches a missile instead of opening the browser menu
-  $("vyStart").onclick = () => { sound.start(); $("vyStartBox").hidden = true; opening(); };
-  $("vyAgain").onclick = () => { $("vyEnd").hidden = true; opening(); };
+  $("vyStart").onclick = () => { sound.start(); enableTilt(); $("vyStartBox").hidden = true; opening(); };
+  $("vyAgain").onclick = () => { enableTilt(); $("vyEnd").hidden = true; opening(); };
 
   // ---------- draw ----------
   function resize() { const w = holder.clientWidth, h = holder.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); composer?.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
@@ -655,6 +674,6 @@ export function initVoyage(levels) {
   resize(); requestAnimationFrame(frame);
 
   // used by the browser check
-  window.__voyage = { state: () => ({ phase, n, hull, data, lock, kills, fired, scanType, frames: ["scan", "result", "ghost", "probe"].includes(phase) ? L().frames : null, target: target?.frame, size: L().size, i: view.i, truth: stack?.truth, spot: stack?.spot, snr: stack?.snr }),
+  window.__voyage = { state: () => ({ phase, n, hull, data, lock, kills, fired, tilt: !!tilt, shipX: ship.position.x, shipY: ship.position.y, scanType, frames: ["scan", "result", "ghost", "probe"].includes(phase) ? L().frames : null, target: target?.frame, size: L().size, i: view.i, truth: stack?.truth, spot: stack?.spot, snr: stack?.snr }),
     arrive: () => { travelled = goal; }, safe: () => { hull = 1e6; }, skipTo: (k) => { n = k; hull = 1e6; $("vyStartBox").hidden = true; $("vyEnd").hidden = true; startFly(); } };
 }

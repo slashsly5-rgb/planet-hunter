@@ -448,3 +448,5 @@ button.slabel.dim:hover, button.slabel.earth:hover, button.slabel.scan:hover, bu
   .vy-scan { top: 122px; } .vy-buff { top: 122px; }
 }
 @media (max-width: 760px) { .vy-touch { bottom: 150px; } .vy-touch button { width: 70px; height: 70px; } }
+#vyTouchCentre { width: 58px; height: 58px; font-size: 10px; align-self: center; border-color: #8fa0c8; color: #c8d2ee; }
+@media (max-width: 760px) { .vy-touch { bottom: 138px; gap: 8px; } }

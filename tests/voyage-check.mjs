@@ -36,6 +36,7 @@ await cdp("Emulation.setDeviceMetricsOverride", { width: +W, height: +H, deviceS
 await cdp("Page.navigate", { url: (process.env.PH_URL || "http://localhost:8765") + "/index.html#voyage" });
 await sleep(+process.env.PH_WAIT || 5000);
 await shot("v1-start.png");
+if (+W < 600) await cdp("DeviceOrientation.setDeviceOrientationOverride", { alpha: 0, beta: 45, gamma: 0 });
 await js(`document.querySelector("#vyStart").click()`); await sleep(2500);
 await shot("v2-opening.png");
 const log = [];
@@ -43,6 +44,12 @@ for (let chapter = 0; chapter < 3; chapter++) {
   log.push(`chapter ${chapter + 1}: reached fly = ${await until(["fly"], 40000)}`);
   await js(`window.__voyage.safe()`);
   await move(900, 300); await sleep(1400); await move(500, 600); await sleep(1400);
+  if (chapter === 0 && +W < 600) {      // phone: tilting steers
+    const tiltTo = async (gamma, beta) => { await cdp("DeviceOrientation.setDeviceOrientationOverride", { alpha: 0, beta, gamma }); await sleep(1300); return await st(); };
+    const level = await tiltTo(0, 45), right = await tiltTo(24, 45), left = await tiltTo(-24, 45), up = await tiltTo(0, 25);
+    log.push(`tilt active = ${right.tilt}; level x ${level.shipX.toFixed(1)}; tilt right x ${right.shipX.toFixed(1)}; tilt left x ${left.shipX.toFixed(1)}; tip away y ${up.shipY.toFixed(1)}; auto-fire rocks destroyed ${up.kills}`);
+    await tiltTo(0, 45);
+  }
   if (chapter === 0) {      // right click launches a missile
     const before = await st();
     for (const type of ["mousePressed", "mouseReleased"]) await cdp("Input.dispatchMouseEvent", { type, x: 600, y: 500, button: "right", buttons: 2, clickCount: 1 });
